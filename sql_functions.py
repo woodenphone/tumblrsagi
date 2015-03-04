@@ -65,7 +65,8 @@ def add_post_to_db(connection,post_dict,info_dict):
 
 
 
-
+def add_image_to_db(connection,image_filename):
+    pass
 
 
 

@@ -34,86 +34,89 @@ TABLES['posts'] = (
     "  `date_saved` int NOT NULL,"# The unix time the post was saved
     # From API
     # All Post Types
-    "  `blog_name` text NOT NULL,"#String	The short name used to uniquely identify a blog
-    "  `id` int NOT NULL,"#Number	The post's unique ID
-    "  `post_url` text NOT NULL,"#	String	The location of the post
-    "  `type` text NOT NULL,"#String	The type of post	See the type request parameter
-    "  `timestamp` text NOT NULL,"#	Number	The time of the post, in seconds since the epoch
-    "  `date` text NOT NULL,"#	String	The GMT date and time of the post, as a string
-    "  `format` text NOT NULL,"#String	The post format: html or markdown
-    "  `reblog_key` text NOT NULL,"#	String	The key used to reblog this post	See the /post/reblog method
-    "  `tags` text NOT NULL,"#Array (string)	Tags applied to the post
-    "  `bookmarklet` bool,"#	Boolean	Indicates whether the post was created via the Tumblr bookmarklet	Exists only if true
-    "  `mobile` bool,"#Boolean	Indicates whether the post was created via mobile/email publishing	Exists only if true
-    "  `source_url` text NOT NULL,"#String	The URL for the source of the content (for quotes, reblogs, etc.)	Exists only if there's a content source
-    "  `source_title` text NOT NULL,"#String	The title of the source site	Exists only if there's a content source
-    "  `liked` bool,"#Boolean	Indicates if a user has already liked a post or not	Exists only if the request is fully authenticated with OAuth.
-    "  `state` text NOT NULL,"# String	Indicates the current state of the post	States are published, queued, draft and private
-    "  `total_posts` text NOT NULL,"#String	Indicates the current state of the post	States are published, queued, draft and private
+    "  `all_posts_blog_name` text NOT NULL,"#String	The short name used to uniquely identify a blog
+    "  `all_posts_id` int NOT NULL,"#Number	The post's unique ID
+    "  `all_posts_post_url` text NOT NULL,"#	String	The location of the post
+    "  `all_posts_type` text NOT NULL,"#String	The type of post	See the type request parameter
+    "  `all_posts_timestamp` text NOT NULL,"#	Number	The time of the post, in seconds since the epoch
+    "  `all_posts_date` text NOT NULL,"#	String	The GMT date and time of the post, as a string
+    "  `all_posts_format` text NOT NULL,"#String	The post format: html or markdown
+    "  `all_posts_reblog_key` text NOT NULL,"#	String	The key used to reblog this post	See the /post/reblog method
+    "  `all_posts_tags` text NOT NULL,"#Array (string)	Tags applied to the post
+    "  `all_posts_bookmarklet` bool,"#	Boolean	Indicates whether the post was created via the Tumblr bookmarklet	Exists only if true
+    "  `all_posts_mobile` bool,"#Boolean	Indicates whether the post was created via mobile/email publishing	Exists only if true
+    "  `all_posts_source_url` text,"#String	The URL for the source of the content (for quotes, reblogs, etc.)	Exists only if there's a content source
+    "  `all_posts_source_title` text,"#String	The title of the source site	Exists only if there's a content source
+    "  `all_posts_liked` bool,"#Boolean	Indicates if a user has already liked a post or not	Exists only if the request is fully authenticated with OAuth.
+    "  `all_posts_state` text NOT NULL,"# String	Indicates the current state of the post	States are published, queued, draft and private
+    "  `all_posts_total_posts` text NOT NULL,"#String	Indicates the current state of the post	States are published, queued, draft and private
     # Text Posts
-    "  `title` text,"# 	String	The optional title of the post
-    "  `body` text,"# 	String	The full post body
+    "  `text_title` text,"# 	String	The optional title of the post
+    "  `text_body` text,"# 	String	The full post body
     # Photo posts
-    "  `photos` text,"# Array	Photo objects with properties:
-    "  `caption` text,"#	String	The user-supplied caption
-    "  `width` int,"#	Number	The width of the photo or photoset
-    "  `height` int,"#	Number	The height of the photo or photoset
+    "  `photo_photos` text,"# Array	Photo objects with properties:
+    "  `photo_caption` text,"#	String	The user-supplied caption
+    "  `photo_width` int,"#	Number	The width of the photo or photoset
+    "  `photo_height` int,"#	Number	The height of the photo or photoset
     # Quote Posts
-    "  `text` text,"# 	String	The text of the quote (can be modified by the user when posting)
-    "  `source` text,"# 	String	Full HTML for the source of the quote
+    "  `quote_text` text,"# 	String	The text of the quote (can be modified by the user when posting)
+    "  `quote_source` text,"# 	String	Full HTML for the source of the quote
     # Link Posts
-    "  `title` text,"#	String	The title of the page the link points to
-    "  `url` text,"#	String	The link
-    "  `description` text,"#	String	A user-supplied description
+    "  `link_title` text,"#	String	The title of the page the link points to
+    "  `link_url` text,"#	String	The link
+    "  `link_description` text,"#	String	A user-supplied description
     # Chat Posts
-    "  `title` text,"#String	The optional title of the post
-    "  `body` text,"#String	The full chat body
-    "  `dialogue` text,"#Array	Array of objects
+    "  `chat_title` text,"#String	The optional title of the post
+    "  `chat_body` text,"#String	The full chat body
+    "  `chat_dialogue` text,"#Array	Array of objects
     # Audio Posts
-    "  `caption` text,"#	String	The user-supplied caption
-    "  `player` text,"#String	HTML for embedding the audio player
-    "  `plays` int,"#	Number	Number of times the audio post has been played
-    "  `album_art` text,"#String	Location of the audio file's ID3 album art image
-    "  `artist` text,"#String	The audio file's ID3 artist value
-    "  `album` text,"#String	The audio file's ID3 album value
-    "  `track_name` text,"#	String	The audio file's ID3 title value
-    "  `track_number` int,"#Number	The audio file's ID3 track value
-    "  `year` text,"#Number	The audio file's ID3 year value
+    "  `audio_caption` text,"#	String	The user-supplied caption
+    "  `audio_player` text,"#String	HTML for embedding the audio player
+    "  `audio_plays` int,"#	Number	Number of times the audio post has been played
+    "  `audio_album_art` text,"#String	Location of the audio file's ID3 album art image
+    "  `audio_artist` text,"#String	The audio file's ID3 artist value
+    "  `audio_album` text,"#String	The audio file's ID3 album value
+    "  `audio_track_name` text,"#	String	The audio file's ID3 title value
+    "  `audio_track_number` int,"#Number	The audio file's ID3 track value
+    "  `audio_year` int,"#Number	The audio file's ID3 year value
     # Video Posts
-    "  `caption` text,"#String	The user-supplied caption
-    "  `player` text,"#Array of embed objects	Object fields within the array:
+    "  `video_caption` text,"#String	The user-supplied caption
+    "  `video_player` text,"#Array of embed objects	Object fields within the array:
     # Answer Posts
-    "  `asking_name` text,"#String	The blog name of the user asking the question
-    "  `asking_url` text,"#	String	The blog URL of the user asking the question
-    "  `question` text,"#	String	The question being asked
-    "  `answer` text,"#String	The answer given
+    "  `answer_asking_name` text,"#String	The blog name of the user asking the question
+    "  `answer_asking_url` text,"#	String	The blog URL of the user asking the question
+    "  `answer_question` text,"#	String	The question being asked
+    "  `answer_answer` text,"#String	The answer given
     #
     "  PRIMARY KEY (`primary_key`)"
     ") ENGINE=InnoDB")
 
-# The metadata associated with a chapter, as given by the API page for a story
+
+# Blogs
+#https://www.tumblr.com/docs/en/api/v2
 TABLES['blogs'] = (
     "CREATE TABLE `blogs` ("
     # Local stuff
     "  `primary_key` int NOT NULL AUTO_INCREMENT,"# Is used only as primary key
-    "  `version` int NOT NULL,"# The version of this story this row is associated with
-    "  `parent_story_id` int NOT NULL,"# The site-assigned ID for a story
-    "  `chapter_number` int NOT NULL,"# Determined based on order chapters appear in API
-    # From site
-    "  `id` int NOT NULL,"# id is name used in API, referred to as story_id elsewhere to avoid confusion
-    "  `link` text,"
-    "  `title` text NOT NULL,"
-    "  `views` int NOT NULL,"
-    "  `words` int NOT NULL,"
+    # From /info
+    "  `info_title` text,"#String	The display title of the blog	Compare name
+    "  `info_posts` int,"#Number	The total number of posts to this blog
+    "  `info_name` text,"#String	The short blog name that appears before tumblr.com in a standard blog hostname (and before the domain in a custom blog hostname)	Compare title
+    "  `info_updated` int,"#	Number	The time of the most recent post, in seconds since the epoch
+    "  `info_description` text,"#String	You guessed it! The blog's description
+    "  `info_ask` bool,"#Boolean	Indicates whether the blog allows questions
+    "  `info_ask_anon` bool,"#	Boolean	Indicates whether the blog allows anonymous questions	Returned only if ask is true
+    "  `info_likes` int,"#Number	Number of likes for this user	Returned only if this is the user's primary blog and sharing of likes is enabled
+
     "  PRIMARY KEY (`primary_key`)"
     ") ENGINE=InnoDB")
+
 
 # The text for an individual chapter, as given bu the chapter download links
 TABLES['media'] = (
     "CREATE TABLE `media` ("
     # Local stuff
     "  `primary_key` int NOT NULL AUTO_INCREMENT,"# Is used only as primary key
-    "  `version` int NOT NULL,"# The version of this story this row is associated with
     "  `date_added` int NOT NULL,"# Unix timestamp when row was added
     "  `url`  text NOT NULL,"# URL the media came from
     "  `hash_md5b64`  text NOT NULL,"# md5 file hash encoded in base 64
@@ -121,7 +124,17 @@ TABLES['media'] = (
     ") ENGINE=InnoDB")
 
 
-
+# Does nothing.
+TABLES['goggles'] = (
+    "CREATE TABLE `goggles` ("
+    # Local stuff
+    "  `primary_key` int NOT NULL AUTO_INCREMENT,"# Is used only as primary key
+    "  `version` int NOT NULL,"# Unused
+    "  `wearer` text,"# Unused
+    "  `left_lens` text,"# Unused
+    "  `right_lens` text,"# Unused
+    "  PRIMARY KEY (`primary_key`)"
+    ") ENGINE=InnoDB")
 
 
 def setup_max_size(connection):
