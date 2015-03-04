@@ -1,0 +1,5 @@
+config/
+debug/
+*test.txt
+config.py
+*.pyc
