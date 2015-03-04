@@ -11,9 +11,12 @@
 
 import pytumblr
 
+
 from utils import * # General utility functions
-from config import * # Settings and configuration
 from sql_functions import *
+
+import config # Settings and configuration
+
 
 
 class tumblr_blog:
@@ -45,10 +48,12 @@ class tumblr_blog:
         return
 
     def load_posts(self):
-        page_counter = 0
+        """Load posts for the blog"""
+        page_counter = -1 # -1 so we start at 0
         prev_page_posts_list = ["prev page"]# Dummy value
         this_page_posts_list = ["this page"]# Dummy value
         while page_counter <= 100:# TOO SMALL, INCREASE LATER
+            page_counter += 1
             # Load API page
             offset = page_counter*20 # Maximum posts per page is 20
             page_url = "http://api.tumblr.com/v2/blog/"+self.blog_url+"/posts/text?api_key="+self.consumer_key+"&offset="+str(offset)
@@ -69,24 +74,30 @@ class tumblr_blog:
                 break
             # Add posts to post list
             for current_post_dict in this_page_posts_list:
-                self.posts.append(current_post_dict)
+                self.posts_list.append(current_post_dict)
             # Update duplicate check list
             prev_page_posts_list = this_page_posts_list
             continue
         return
 
     def get_posts(self):
-        if len(self.posts) == 0:
-            self.load_posts()
-        return self.posts
+        try:
+            if len(self.posts_list) > 0:
+                return self.posts_list
+        except AttributeError:
+            pass
+        self.load_posts()
+        return self.posts_list
 
     def insert_posts_into_db(self):
-        posts = get_posts
+        posts_list = self.get_posts()
         counter = 0
         for post_dict in posts_list:
             counter += 1
-            sql_functions.add_post_to_db(self.connection,post_dict,self.info_dict)
+            add_post_to_db(self.connection,post_dict,self.info_dict)
             logging.debug("Inserting "+str(counter)+"th post")
+        # Commit/save new data
+        self.connection.commit()
         return
 
 
@@ -97,9 +108,14 @@ class tumblr_blog:
 
 
 def classy_play():
-    blog = tumblr_blog(connection=None, consumer_key = config.consumer_key, blog_url = "citriccomics.tumblr.com")
+    logging.debug("Opening DB connection")
+    connection = mysql.connector.connect(**config.sql_login)
+    blog = tumblr_blog(connection, consumer_key = config.consumer_key, blog_url = "citriccomics.tumblr.com")
     posts = blog.get_posts()
     logging.debug("posts"+repr(posts))
+    blog.insert_posts_into_db()
+    logging.debug("Closing DB connection")
+    connection.close()
 
 
 
@@ -115,6 +131,7 @@ def process_iamge(image_url):
     # Compare hash with DB
     # If hash is in DB, add URL to db and return
     # If hash is not in DB, save it to disk and add image data to the DB
+    pass
 
 
 def save_images(post_dict):
@@ -147,7 +164,7 @@ def load_api_raw():
     # Check that api responed correctly
     if api_dict["meta"]["status"] == 200:
         page_posts = api_dict["response"]["posts"]
-        post.b
+
 
 
 
@@ -161,7 +178,7 @@ def main():
     try:
         setup_logging(log_file_path=os.path.join("debug","tumblr-api-dumper-log.txt"))
         # Program
-        load_api_raw()
+        #load_api_raw()
         classy_play()
         # /Program
         logging.info("Finished, exiting.")
