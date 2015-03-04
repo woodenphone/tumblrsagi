@@ -37,27 +37,32 @@ def generate_insert_query(table_name,value_names):
 
 def add_post_to_db(connection,post_dict,info_dict):
     cursor =  connection.cursor()
-    logging.debug(repr(locals()))
+    logging.debug(repr(post_dict))
+    logging.debug(repr(info_dict))
     row_to_insert = {} # TODO, Waiting on ATC for DB design # actually fuck waiting he can clean this up later
     # Local stuff
     row_to_insert["date_saved"] = get_current_unix_time()
+    row_to_insert["version"] = 0# FIXME
+    # Things not in API docs
+    row_to_insert["misc_slug"] = (post_dict["slug"] if ("slug" in post_dict.keys()) else None)# What does this do?
+    row_to_insert["text_short_url"] = (post_dict["short_url"] if ("short_url" in post_dict.keys()) else None)# shortened url?
     # All posts
-    row_to_insert["all_posts_blog_name"] = post_dict["body"]
-    row_to_insert["all_posts_id"] = post_dict["highlighted"]
-    row_to_insert["all_posts_post_url"] = post_dict["reblog_key"]
-    row_to_insert["all_posts_type"] = post_dict["format"]
+    row_to_insert["all_posts_blog_name"] = post_dict["blog_name"]
+    row_to_insert["all_posts_id"] =  post_dict["id"]
+    row_to_insert["all_posts_post_url"] = post_dict["post_url"]
+    row_to_insert["all_posts_type"] = post_dict["type"]
     row_to_insert["all_posts_timestamp"] = post_dict["timestamp"]
-    row_to_insert["all_posts_date"] = post_dict["note_count"]
-    row_to_insert["all_posts_format"] = "FIXME"# post_dict["tags"]# FIXME
-    row_to_insert["all_posts_reblog_key"] = post_dict["id"]
-    row_to_insert["all_posts_tags"] = post_dict["post_url"]
+    row_to_insert["all_posts_date"] = post_dict["date"]
+    row_to_insert["all_posts_format"] =post_dict["format"]
+    row_to_insert["all_posts_reblog_key"] = post_dict["reblog_key"]
+    row_to_insert["all_posts_tags"] = json.dumps(post_dict["tags"])# FIXME! Disabled for coding (JSON?)
     row_to_insert["all_posts_bookmarklet"] = (post_dict["bookmarklet"] if ("bookmarklet" in post_dict.keys()) else None)# Optional in api
     row_to_insert["all_posts_mobile"] = (post_dict["mobile"] if ("mobile" in post_dict.keys()) else None)# Optional in api
     row_to_insert["all_posts_source_url"] = (post_dict["source_url"] if ("source_url" in post_dict.keys()) else None)# Optional in api
     row_to_insert["all_posts_source_title"] = (post_dict["source_title"] if ("source_title" in post_dict.keys()) else None)# Optional in api
-    row_to_insert["all_posts_liked"] = post_dict["title"]
-    row_to_insert["all_posts_state"] = post_dict["type"]
-    row_to_insert["all_posts_total_posts"] = post_dict["slug"]
+    row_to_insert["all_posts_liked"] = (post_dict["liked"] if ("liked" in post_dict.keys()) else None)# Can be absent based on expreience
+    row_to_insert["all_posts_state"] = post_dict["state"]
+    #row_to_insert["all_posts_total_posts"] = post_dict["total_posts"]# Move to blogs table?
     # Text posts
     if post_dict["type"] == "text":
         row_to_insert["text_title"] = post_dict["title"]

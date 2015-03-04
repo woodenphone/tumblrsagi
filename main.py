@@ -93,7 +93,7 @@ class tumblr_blog:
         posts_list = self.get_posts()
         counter = 0
         for post_dict in posts_list:
-            counter += 1
+            counter += 1#
             add_post_to_db(self.connection,post_dict,self.info_dict)
             logging.debug("Inserting "+str(counter)+"th post")
         # Commit/save new data

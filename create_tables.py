@@ -32,24 +32,27 @@ TABLES['posts'] = (
     "  `primary_key` int NOT NULL AUTO_INCREMENT,"# Is used only as primary key
     "  `version` int NOT NULL,"# The version of this post this row is associated with
     "  `date_saved` int NOT NULL,"# The unix time the post was saved
+    # Missing from API docs
+    "  `misc_slug` text,"#
+    "  `misc_short_url` text,"#
     # From API
     # All Post Types
     "  `all_posts_blog_name` text NOT NULL,"#String	The short name used to uniquely identify a blog
-    "  `all_posts_id` int NOT NULL,"#Number	The post's unique ID
+    "  `all_posts_id` bigint NOT NULL,"#Number	The post's unique ID
     "  `all_posts_post_url` text NOT NULL,"#	String	The location of the post
     "  `all_posts_type` text NOT NULL,"#String	The type of post	See the type request parameter
     "  `all_posts_timestamp` text NOT NULL,"#	Number	The time of the post, in seconds since the epoch
     "  `all_posts_date` text NOT NULL,"#	String	The GMT date and time of the post, as a string
     "  `all_posts_format` text NOT NULL,"#String	The post format: html or markdown
-    "  `all_posts_reblog_key` text NOT NULL,"#	String	The key used to reblog this post	See the /post/reblog method
-    "  `all_posts_tags` text NOT NULL,"#Array (string)	Tags applied to the post
+    "  `all_posts_reblog_key` text,"#	String	The key used to reblog this post	See the /post/reblog method
+    "  `all_posts_tags` text,"#Array (string)	Tags applied to the post
     "  `all_posts_bookmarklet` bool,"#	Boolean	Indicates whether the post was created via the Tumblr bookmarklet	Exists only if true
     "  `all_posts_mobile` bool,"#Boolean	Indicates whether the post was created via mobile/email publishing	Exists only if true
     "  `all_posts_source_url` text,"#String	The URL for the source of the content (for quotes, reblogs, etc.)	Exists only if there's a content source
     "  `all_posts_source_title` text,"#String	The title of the source site	Exists only if there's a content source
     "  `all_posts_liked` bool,"#Boolean	Indicates if a user has already liked a post or not	Exists only if the request is fully authenticated with OAuth.
     "  `all_posts_state` text NOT NULL,"# String	Indicates the current state of the post	States are published, queued, draft and private
-    "  `all_posts_total_posts` text NOT NULL,"#String	Indicates the current state of the post	States are published, queued, draft and private
+    #"  `all_posts_total_posts` int,"#Number	The total number of post available for this request, useful for paginating through results
     # Text Posts
     "  `text_title` text,"# 	String	The optional title of the post
     "  `text_body` text,"# 	String	The full post body
