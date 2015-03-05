@@ -36,6 +36,7 @@ def generate_insert_query(table_name,value_names):
 
 
 def add_post_to_db(connection,post_dict,info_dict):
+    """Insert a post into the DB"""
     cursor =  connection.cursor()
     logging.debug(repr(post_dict))
     logging.debug(repr(info_dict))
@@ -124,8 +125,73 @@ def add_post_to_db(connection,post_dict,info_dict):
 
 
 
-def add_image_to_db(connection,image_filename):
-    pass
+def add_blog_to_db(connection,info_dict):
+    """Insert blog info into the DB"""
+    cursor =  connection.cursor()
+    logging.debug(repr(info_dict))
+    row_to_insert = {} # TODO, Waiting on ATC for DB design # actually fuck waiting he can clean this up later
+    # Local stuff
+    row_to_insert["date_last_saved"] = get_current_unix_time()
+    # from /info, documented
+    row_to_insert["info_title"] = info_dict["title"]
+    row_to_insert["info_posts"] = info_dict["posts"]
+    row_to_insert["info_name"] = info_dict["name"]
+    row_to_insert["info_updated"] = info_dict["updated"]
+    row_to_insert["info_description"] = info_dict["description"]
+    row_to_insert["info_ask"] = info_dict["ask"]
+    row_to_insert["info_ask_anon"] = info_dict["ask_anon"]
+    row_to_insert["info_likes"] = info_dict["likes"]
+    # from /info, undocumented
+    row_to_insert["info_is_nsfw"] = (info_dict["is_nsfw"] if ("is_nsfw" in info_dict.keys()) else None)# Undocumented
+    row_to_insert["info_share_likes"] = (info_dict["share_likes"] if ("share_likes" in info_dict.keys()) else None)# Undocumented
+    row_to_insert["info_url"] = (info_dict["url"] if ("url" in info_dict.keys()) else None)# Undocumented
+    row_to_insert["info_ask_page_title"] = (info_dict["ask_page_title"] if ("ask_page_title" in info_dict.keys()) else None)# Undocumented
+
+
+    # Insert dict into DB
+    fields = row_to_insert.keys()
+    values = row_to_insert.values()
+    query = generate_insert_query(table_name="posts",value_names=fields)
+    logging.debug(repr(query))
+    result = cursor.execute(query, values)
+    cursor.close()
+    return
+
+
+
+
+def add_media_to_db(connection,media_url,media_hash_md5b32):
+    """Insert media information for a URL into the DB"""
+    cursor =  connection.cursor()
+    logging.debug(repr(image_filename))
+    logging.debug(repr(info_dict))
+    row_to_insert = {} # TODO, Waiting on ATC for DB design # actually fuck waiting he can clean this up later
+    # Local stuff
+    row_to_insert["date_last_saved"] = get_current_unix_time()
+    # Things not in API docs
+    row_to_insert["misc_slug"] = (post_dict["slug"] if ("slug" in post_dict.keys()) else None)# What does this do?
+    row_to_insert["misc_short_url"] = (post_dict["short_url"] if ("short_url" in post_dict.keys()) else None)# shortened url?
+    # from /info
+    row_to_insert["info_title"] = info_dict["title"]
+    row_to_insert["info_posts"] = info_dict["posts"]
+    row_to_insert["info_name"] = info_dict["name"]
+    row_to_insert["info_updated"] = info_dict["updated"]
+    row_to_insert["info_description"] = info_dict["description"]
+    row_to_insert["info_ask"] = info_dict["ask"]
+    row_to_insert["info_ask_anon"] = info_dict["ask_anon"]
+    row_to_insert["info_likes"] = info_dict["likes"]
+    row_to_insert[""] = info_dict[""]
+    row_to_insert["all_posts_bookmarklet"] = (info_dict["bookmarklet"] if ("bookmarklet" in info_dict.keys()) else None)# Optional in api
+
+
+    # Insert dict into DB
+    fields = row_to_insert.keys()
+    values = row_to_insert.values()
+    query = generate_insert_query(table_name="posts",value_names=fields)
+    logging.debug(repr(query))
+    result = cursor.execute(query, values)
+    cursor.close()
+    return
 
 
 

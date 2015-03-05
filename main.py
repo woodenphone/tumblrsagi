@@ -13,8 +13,8 @@ import pytumblr
 
 
 from utils import * # General utility functions
-from sql_functions import *
-
+from sql_functions import *# Database interaction
+from media_handlers import *# Media finding, extractiong, ect
 import config # Settings and configuration
 
 
@@ -83,9 +83,9 @@ class tumblr_blog:
             continue
         # Make sure we got all posts
         number_of_posts_retrieved = len(self.posts_list)
+        logging.info("number_of_posts_retrieved: "+repr(number_of_posts_retrieved)+", self.post_count: "+repr(self.post_count))
         if number_of_posts_retrieved < self.post_count:
             logging.error("Post count from API was higher than the number of posts retrieved!")
-            logging.error("number_of_posts_retrieved: "+repr(number_of_posts_retrieved)+", self.post_count: "+repr(self.post_count))
             logging.error(repr(locals()))
         return
 
@@ -102,15 +102,27 @@ class tumblr_blog:
         posts_list = self.get_posts()
         counter = 0
         for post_dict in posts_list:
-            counter += 1#
+            counter += 1
+            # Handle links for the post
+            # Extract links from the post
+            all_post_links = extract_post_links(post_dict)
+            # Select which links have media
+            post_media_links = choose_media_links(all_post_links)
+            # For each media link, check against DB and if applicable download it
+            handle_media(post_dict)
+            # Replace links with something frontend can use later
+            # Insert links into the DB
             add_post_to_db(self.connection,post_dict,self.info_dict)
             logging.debug("Inserting "+str(counter)+"th post")
         # Commit/save new data
         self.connection.commit()
         return
 
-
-
+    def insert_user_into_db(self):
+        """Add blog information to blogs DB"""
+        logging.debug("Adding blog info to DB")
+        add_blog_to_db(connection,info_dict)
+        return
 
 
 
@@ -130,35 +142,16 @@ def classy_play():
 
 
 
-def find_images(post_dict):
-    pass
-
-def process_iamge(image_url):
-    # Compare url with DB
-    # Load image URL
-    # Generate image hash
-    # Compare hash with DB
-    # If hash is in DB, add URL to db and return
-    # If hash is not in DB, save it to disk and add image data to the DB
-    pass
 
 
-def save_images(post_dict):
-    pass
 
 
 
 
 
 # Functional
-
-
-
-
 def process_blog():
     return
-
-
 
 
 def load_api_raw():
@@ -173,8 +166,6 @@ def load_api_raw():
     # Check that api responed correctly
     if api_dict["meta"]["status"] == 200:
         page_posts = api_dict["response"]["posts"]
-
-
 
 
 def load_api_pytumblr():

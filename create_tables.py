@@ -102,16 +102,22 @@ TABLES['blogs'] = (
     "CREATE TABLE `blogs` ("
     # Local stuff
     "  `primary_key` int NOT NULL AUTO_INCREMENT,"# Is used only as primary key
-    # From /info
+    "  `date_last_saved` int,"# Unix time of date last saved
+    # From /info, documented
     "  `info_title` text,"#String	The display title of the blog	Compare name
     "  `info_posts` int,"#Number	The total number of posts to this blog
     "  `info_name` text,"#String	The short blog name that appears before tumblr.com in a standard blog hostname (and before the domain in a custom blog hostname)	Compare title
-    "  `info_updated` int,"#	Number	The time of the most recent post, in seconds since the epoch
+    "  `info_updated` bigint,"#	Number	The time of the most recent post, in seconds since the epoch
     "  `info_description` text,"#String	You guessed it! The blog's description
     "  `info_ask` bool,"#Boolean	Indicates whether the blog allows questions
     "  `info_ask_anon` bool,"#	Boolean	Indicates whether the blog allows anonymous questions	Returned only if ask is true
     "  `info_likes` int,"#Number	Number of likes for this user	Returned only if this is the user's primary blog and sharing of likes is enabled
-
+    # From /info, undocumented
+    "  `info_is_nsfw` bool,"
+    "  `info_share_likes` bool,"
+    "  `info_url` bool,"
+    "  `info_ask_page_title` text,"
+    #
     "  PRIMARY KEY (`primary_key`)"
     ") ENGINE=InnoDB")
 
@@ -123,7 +129,8 @@ TABLES['media'] = (
     "  `primary_key` int NOT NULL AUTO_INCREMENT,"# Is used only as primary key
     "  `date_added` int NOT NULL,"# Unix timestamp when row was added
     "  `url`  text NOT NULL,"# URL the media came from
-    "  `hash_md5b64`  text NOT NULL,"# md5 file hash encoded in base 64
+    "  `hash_md5b64`  text NOT NULL,"# md5 file hash encoded in base 32 (cannot trust caps sensitive filenames)
+    #
     "  PRIMARY KEY (`primary_key`)"
     ") ENGINE=InnoDB")
 
@@ -137,6 +144,8 @@ TABLES['goggles'] = (
     "  `wearer` text,"# Unused
     "  `left_lens` text,"# Unused
     "  `right_lens` text,"# Unused
+    "  `strap_size` text,"# Unused
+    #
     "  PRIMARY KEY (`primary_key`)"
     ") ENGINE=InnoDB")
 
