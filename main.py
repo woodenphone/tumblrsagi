@@ -27,6 +27,7 @@ class tumblr_blog:
         self.blog_username = blog_username
         self.connection = connection
         self.posts_list = []# List of post dicts
+        self.post_count = None # Number of posts the API says the blog has
         # Load blog info from API
         self.load_info()
         return
@@ -45,6 +46,8 @@ class tumblr_blog:
             logging.debug(repr(locals()))
             assert(False)
         self.info_dict = info_dict
+        self.post_count = info_dict["response"]["blog"]["posts"]
+        logging.debug("post_count: "+repr(self.post_count))
         return
 
     def load_posts(self):
@@ -78,6 +81,12 @@ class tumblr_blog:
             # Update duplicate check list
             prev_page_posts_list = this_page_posts_list
             continue
+        # Make sure we got all posts
+        number_of_posts_retrieved = len(self.posts_list)
+        if number_of_posts_retrieved < self.post_count:
+            logging.error("Post count from API was higher than the number of posts retrieved!")
+            logging.error("number_of_posts_retrieved: "+repr(number_of_posts_retrieved)+", self.post_count: "+repr(self.post_count))
+            logging.error(repr(locals()))
         return
 
     def get_posts(self):
@@ -110,7 +119,7 @@ class tumblr_blog:
 def classy_play():
     logging.debug("Opening DB connection")
     connection = mysql.connector.connect(**config.sql_login)
-    blog = tumblr_blog(connection, consumer_key = config.consumer_key, blog_url = "citriccomics.tumblr.com")
+    blog = tumblr_blog(connection, consumer_key = config.consumer_key, blog_url = "tsitra360.tumblr.com")
     posts = blog.get_posts()
     logging.debug("posts"+repr(posts))
     blog.insert_posts_into_db()

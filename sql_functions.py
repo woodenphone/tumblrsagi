@@ -45,7 +45,7 @@ def add_post_to_db(connection,post_dict,info_dict):
     row_to_insert["version"] = 0# FIXME
     # Things not in API docs
     row_to_insert["misc_slug"] = (post_dict["slug"] if ("slug" in post_dict.keys()) else None)# What does this do?
-    row_to_insert["text_short_url"] = (post_dict["short_url"] if ("short_url" in post_dict.keys()) else None)# shortened url?
+    row_to_insert["misc_short_url"] = (post_dict["short_url"] if ("short_url" in post_dict.keys()) else None)# shortened url?
     # All posts
     row_to_insert["all_posts_blog_name"] = post_dict["blog_name"]
     row_to_insert["all_posts_id"] =  post_dict["id"]
@@ -86,28 +86,28 @@ def add_post_to_db(connection,post_dict,info_dict):
     elif post_dict["type"] == "chat":
         row_to_insert["chat_title"] = post_dict["title"]
         row_to_insert["chat_body"] = post_dict["body"]
-        row_to_insert["FIELD_NAME"] = post_dict[""]
+        row_to_insert["chat_dialogue"] = post_dict["dialogue"]
     # Audio Posts
     elif post_dict["type"] == "audio":
-        row_to_insert["FIELD_NAME"] = post_dict[""]
-        row_to_insert["FIELD_NAME"] = post_dict[""]
-        row_to_insert["FIELD_NAME"] = post_dict[""]
-        row_to_insert["FIELD_NAME"] = post_dict[""]
-        row_to_insert["FIELD_NAME"] = post_dict[""]
-        row_to_insert["FIELD_NAME"] = post_dict[""]
-        row_to_insert["FIELD_NAME"] = post_dict[""]
-        row_to_insert["FIELD_NAME"] = post_dict[""]
-        row_to_insert["FIELD_NAME"] = post_dict[""]
+        row_to_insert["audio_caption"] = post_dict["caption"]
+        row_to_insert["audio_player"] = post_dict["player"]
+        row_to_insert["audio_plays"] = post_dict["plays"]
+        row_to_insert["audio_album_art"] = post_dict[""]
+        row_to_insert["audio_artist"] = post_dict["artist"]
+        row_to_insert["audio_album"] = post_dict["album"]
+        row_to_insert["audio_track_name"] = post_dict["track_name"]
+        row_to_insert["audio_track_number"] = post_dict["track_number"]
+        row_to_insert["audio_year"] = post_dict["year"]
     # Video Posts
     elif post_dict["type"] == "video":
-        row_to_insert["FIELD_NAME"] = post_dict[""]
-        row_to_insert["FIELD_NAME"] = post_dict[""]
+        row_to_insert["video_caption"] = post_dict["caption"]
+        row_to_insert["video_player"] = post_dict["player"]
     # Answer Posts
     elif post_dict["type"] == "answer":
-        row_to_insert["FIELD_NAME"] = post_dict[""]
-        row_to_insert["FIELD_NAME"] = post_dict[""]
-        row_to_insert["FIELD_NAME"] = post_dict[""]
-        row_to_insert["FIELD_NAME"] = post_dict[""]
+        row_to_insert["answer_asking_name"] = post_dict["asking_name"]
+        row_to_insert["answer_asking_url"] = post_dict["asking_url"]
+        row_to_insert["answer_question"] = post_dict["question"]
+        row_to_insert["answer_answer"] = post_dict["answer"]
     else:
         logging.error("Unknown post type!")
         logging.error(repr(locals()))

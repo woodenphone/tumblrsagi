@@ -25,6 +25,7 @@ DB_NAME = config.sql_login["database"]
 
 TABLES = {}
 # The posts in a blog
+# <type>_<api_field_name>
 # https://www.tumblr.com/docs/en/api/v2
 TABLES['posts'] = (
     "CREATE TABLE `posts` ("
