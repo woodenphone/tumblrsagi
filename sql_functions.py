@@ -160,38 +160,29 @@ def add_blog_to_db(connection,info_dict):
 
 
 
-def add_media_to_db(connection,media_url,media_hash_md5b32):
+def add_image_to_db(connection,media_url,sha512base64_hash,filename,time_of_retreival):
     """Insert media information for a URL into the DB"""
     cursor =  connection.cursor()
     logging.debug(repr(image_filename))
     logging.debug(repr(info_dict))
-    row_to_insert = {} # TODO, Waiting on ATC for DB design # actually fuck waiting he can clean this up later
-    # Local stuff
-    row_to_insert["date_last_saved"] = get_current_unix_time()
-    # Things not in API docs
-    row_to_insert["misc_slug"] = (post_dict["slug"] if ("slug" in post_dict.keys()) else None)# What does this do?
-    row_to_insert["misc_short_url"] = (post_dict["short_url"] if ("short_url" in post_dict.keys()) else None)# shortened url?
-    # from /info
-    row_to_insert["info_title"] = info_dict["title"]
-    row_to_insert["info_posts"] = info_dict["posts"]
-    row_to_insert["info_name"] = info_dict["name"]
-    row_to_insert["info_updated"] = info_dict["updated"]
-    row_to_insert["info_description"] = info_dict["description"]
-    row_to_insert["info_ask"] = info_dict["ask"]
-    row_to_insert["info_ask_anon"] = info_dict["ask_anon"]
-    row_to_insert["info_likes"] = info_dict["likes"]
-    row_to_insert[""] = info_dict[""]
-    row_to_insert["all_posts_bookmarklet"] = (info_dict["bookmarklet"] if ("bookmarklet" in info_dict.keys()) else None)# Optional in api
-
-
+    # Check for existing records for the file hash
+    check_query = ""
+    check_result = cursor.execute(check_query, values)
+    media_already_saved = False# Was there a hash collission
+    # Insert new row for the new URL
+    row_to_insert = {}
+    row_to_insert["date_added"] = time_of_retreival
+    row_to_insert["media_url"] = media_url
+    row_to_insert["sha512base64_hash"] = sha512base64_hash
+    row_to_insert["filename"] = filename
     # Insert dict into DB
     fields = row_to_insert.keys()
     values = row_to_insert.values()
-    query = generate_insert_query(table_name="posts",value_names=fields)
-    logging.debug(repr(query))
-    result = cursor.execute(query, values)
+    insert_query = generate_insert_query(table_name="posts",value_names=fields)
+    logging.debug(repr(insert_query))
+    insert_result = cursor.execute(insert_query, values)
     cursor.close()
-    return
+    return media_already_saved # Tell the calling function if the media was already saved from another URL
 
 
 

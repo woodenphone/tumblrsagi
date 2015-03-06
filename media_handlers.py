@@ -53,7 +53,7 @@ def extract_post_links(post_dict):
 
 
 
-def process_image_links(post_links):
+def process_image_links(post_dict, post_links):
     """Select which links to download and then try to save them"""
     logging.debug("Processing image links")
     image_links = post_links
@@ -70,19 +70,19 @@ def download_image_link(image_link):
     # Check if URL is in the DB already, if so return.
     # Load URL
     file_data = get(image_link)
+    time_of_retreival = get_current_unix_time()
     # Generate hash
-    sha512base32_hash = hash_file_data(file_data)
-    logging.debug("sha512base32_hash: "+repr(sha512base32_hash))
+    sha512base64_hash = hash_file_data(file_data)
     # Generate filename for output file (With extention)
     cropped_full_image_url = image_link.split("?")[0]# Remove after ?
     full_image_filename = os.path.split(cropped_full_image_url)[1]
     extention = full_image_filename.split(".")[-1]
-    #filename = sha512base32_hash+extention
-    filename = str(get_current_unix_time())+"."+extention
+    filename = str(time_of_retreival)+"."+extention
     logging.debug("filename: "+repr(filename))
     file_path = generate_media_file_path_timestamp(root_path=config.root_path,filename=filename)
     logging.debug("file_path: "+repr(file_path))
     # Compare hash with database and add new entry for this URL
+    add_image_to_db(connection,media_url,sha512base64_hash,filename,time_of_retreival)
     # If hash was already in DB, return
     # Save file to disk, using the hash as a filename
     save_file(filenamein=file_path,data=file_data,force_save=False)
@@ -96,11 +96,13 @@ def hash_file_data(file_data):
     m.update(file_data)
     raw_hash = m.digest()
     logging.debug("raw_hash: "+repr(raw_hash))
+    sha512base64_hash = base64.b64encode(raw_hash)
     sha512base32_hash = base64.b32encode(raw_hash)
     sha512base16_hash = base64.b16encode(raw_hash)
+    logging.debug("sha512base64_hash: "+repr(sha512base64_hash))
     logging.debug("sha512base32_hash: "+repr(sha512base32_hash))
     logging.debug("sha512base16_hash: "+repr(sha512base16_hash))
-    return sha512base32_hash
+    return sha512base64_hash
 
 def generate_media_file_path_hash(root_path,filename):
     assert(len(filename) == 128)# Filenames should be of fixed length
@@ -121,7 +123,7 @@ def handle_media(post_dict):
     # Extract links from post
     post_links = extract_post_links(post_dict)
     # Send links to a function for each type of media link
-    process_image_links(post_links)
+    process_image_links(post_dict, post_links)
     return
 
 

@@ -33,6 +33,7 @@ TABLES['posts'] = (
     "  `primary_key` int NOT NULL AUTO_INCREMENT,"# Is used only as primary key
     "  `version` int NOT NULL,"# The version of this post this row is associated with
     "  `date_saved` int NOT NULL,"# The unix time the post was saved
+    "  `processed_body` text,"# Text of the post after links have been processed
     # Missing from API docs
     "  `misc_slug` text,"#
     "  `misc_short_url` text,"#
@@ -128,8 +129,8 @@ TABLES['media'] = (
     # Local stuff
     "  `primary_key` int NOT NULL AUTO_INCREMENT,"# Is used only as primary key
     "  `date_added` int NOT NULL,"# Unix timestamp when row was added
-    "  `url`  text NOT NULL,"# URL the media came from
-    "  `hash_md5b64`  text NOT NULL,"# md5 file hash encoded in base 32 (cannot trust caps sensitive filenames)
+    "  `media_url`  text NOT NULL,"# URL the media came from
+    "  `sha512base64_hash`  text NOT NULL,"#
     #
     "  PRIMARY KEY (`primary_key`)"
     ") ENGINE=InnoDB")
