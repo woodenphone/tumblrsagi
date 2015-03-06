@@ -1,5 +1,6 @@
 config/
 debug/
+download/
 *test.txt
 config.py
 *.pyc

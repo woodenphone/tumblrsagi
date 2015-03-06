@@ -15,6 +15,7 @@ import base64 # Needed to do base32 encoding of filenames
 import re
 import logging
 from utils import *
+import config # User settings
 
 def find_links_src(html):
     """Given string containing '<img src="http://media.tumblr.com/tumblr_m7g6koAnx81r3kwau.jpg"/>'
@@ -76,11 +77,15 @@ def download_image_link(image_link):
     cropped_full_image_url = image_link.split("?")[0]# Remove after ?
     full_image_filename = os.path.split(cropped_full_image_url)[1]
     extention = full_image_filename.split(".")[-1]
-    filename = sha512base32_hash+extention
+    #filename = sha512base32_hash+extention
+    filename = str(get_current_unix_time())+"."+extention
     logging.debug("filename: "+repr(filename))
+    file_path = generate_media_file_path_timestamp(root_path=config.root_path,filename=filename)
+    logging.debug("file_path: "+repr(file_path))
     # Compare hash with database and add new entry for this URL
     # If hash was already in DB, return
     # Save file to disk, using the hash as a filename
+    save_file(filenamein=file_path,data=file_data,force_save=False)
     return
 
 
@@ -97,10 +102,16 @@ def hash_file_data(file_data):
     logging.debug("sha512base16_hash: "+repr(sha512base16_hash))
     return sha512base32_hash
 
-def generate_media_file_path(root_path,filename):
+def generate_media_file_path_hash(root_path,filename):
     assert(len(filename) == 128)# Filenames should be of fixed length
-    folder = filename[0:16]
+    folder = filename[0:4]
     file_path = os.path.join(root_path,folder,filename)
+    return file_path
+
+def generate_media_file_path_timestamp(root_path,filename):
+    first_four_chars = filename[0:4]
+    second_two_chars = filename[4:6]
+    file_path = os.path.join(root_path,first_four_chars,second_two_chars,filename)
     return file_path
 
 
