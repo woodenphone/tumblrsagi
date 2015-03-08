@@ -239,6 +239,23 @@ def get_current_unix_time():
     return timestamp
 
 
+
+def merge_dicts(*dict_args):
+    # http://stackoverflow.com/questions/38987/how-can-i-merge-two-python-dictionaries-in-a-single-expression
+    '''
+    Given any number of dicts, shallow copy and merge into a new dict,
+    precedence goes to key value pairs in latter dicts.
+    '''
+    result = {}
+    for dictionary in dict_args:
+        result.update(dictionary)
+    return result
+
+
+
+
+
+
 def main():
     pass
 

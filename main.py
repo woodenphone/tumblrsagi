@@ -27,7 +27,8 @@ class tumblr_blog:
         self.blog_username = blog_username
         self.connection = connection
         self.posts_list = []# List of post dicts
-        self.post_count = None # Number of posts the API says the blog has
+        self.info_post_count = None # Number of posts the /info API says the blog has
+        self.posts_post_count = None # Number of posts the /posts API says the blog has
         # Load blog info from API
         self.load_info()
         return
@@ -46,8 +47,8 @@ class tumblr_blog:
             logging.debug(repr(locals()))
             assert(False)
         self.info_dict = info_dict
-        self.post_count = info_dict["response"]["blog"]["posts"]
-        logging.debug("post_count: "+repr(self.post_count))
+        self.info_post_count = info_dict["response"]["blog"]["posts"]
+        logging.debug("self.info_post_count: "+repr(self.info_post_count))
         return
 
     def load_posts(self):
@@ -69,24 +70,41 @@ class tumblr_blog:
                 logging.error("Bad response, stopping scan for posts.")
                 logging.debug(repr(locals()))
                 break
+            # Check how many posts the blog says it has
+            if page_counter == 1:
+                self.posts_post_count = page_dict["response"]["total_posts"]
+                logging.info("Blog thinks it has "+repr(self.posts_post_count)+" posts.")
             # Add posts
             this_page_posts_list = page_dict["response"]["posts"]
+
+            # Exit conditions
             # Stop if duplicate results
             if this_page_posts_list == prev_page_posts_list:
-                logging.info("Last pages post match this pages posts")
+                logging.info("Last pages post match this pages posts.")
+                break
+            # Stop if no posts
+            if len(this_page_posts_list) == 0:
+                logging.error("No posts found on this page.")
                 break
             # Add posts to post list
             for current_post_dict in this_page_posts_list:
                 self.posts_list.append(current_post_dict)
+                break
             # Update duplicate check list
             prev_page_posts_list = this_page_posts_list
             continue
+
         # Make sure we got all posts
         number_of_posts_retrieved = len(self.posts_list)
-        logging.info("number_of_posts_retrieved: "+repr(number_of_posts_retrieved)+", self.post_count: "+repr(self.post_count))
-        if number_of_posts_retrieved < self.post_count:
-            logging.error("Post count from API was higher than the number of posts retrieved!")
+        logging.info("number_of_posts_retrieved: "+repr(number_of_posts_retrieved)+
+        ", self.posts_post_count: "+repr(self.posts_post_count)+", self.info_post_count: "+repr(self.info_post_count))
+        if number_of_posts_retrieved < self.posts_post_count:
+            logging.error("Post count from /posts API was higher than the number of posts retrieved!")
             logging.error(repr(locals()))
+        if number_of_posts_retrieved < self.info_post_count:
+            logging.error("Post count from /info API was higher than the number of posts retrieved!")
+            logging.error(repr(locals()))
+        logging.info("Finished loading posts.")
         return
 
     def get_posts(self):
@@ -106,13 +124,11 @@ class tumblr_blog:
             # Handle links for the post
             # Extract links from the post
             all_post_links = extract_post_links(post_dict)
-            # Select which links have media
-            post_media_links = choose_media_links(all_post_links)
             # For each media link, check against DB and if applicable download it
-            handle_media(post_dict)
+            link_to_hash_dict = handle_media(post_dict)# {LINK:HASH}
             # Replace links with something frontend can use later
             # Insert links into the DB
-            add_post_to_db(self.connection,post_dict,self.info_dict)
+            add_post_to_db(self.connection,processed_post_dict,self.info_dict,link_to_hash_dict)
             logging.debug("Inserting "+str(counter)+"th post")
         # Commit/save new data
         self.connection.commit()
@@ -124,14 +140,16 @@ class tumblr_blog:
         add_blog_to_db(connection,info_dict)
         return
 
-
+    def process_posts_for_media(self):
+        # TODO FIXME
+        handle_media(connection,post_dict)
 
 
 
 def classy_play():
     logging.debug("Opening DB connection")
     connection = mysql.connector.connect(**config.sql_login)
-    blog = tumblr_blog(connection, consumer_key = config.consumer_key, blog_url = "tsitra360.tumblr.com")
+    blog = tumblr_blog(connection, consumer_key = config.consumer_key, blog_url = "shadygames1.tumblr.com")
     posts = blog.get_posts()
     logging.debug("posts"+repr(posts))
     blog.insert_posts_into_db()

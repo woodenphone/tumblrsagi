@@ -131,6 +131,7 @@ TABLES['media'] = (
     "  `date_added` int NOT NULL,"# Unix timestamp when row was added
     "  `media_url`  text NOT NULL,"# URL the media came from
     "  `sha512base64_hash`  text NOT NULL,"#
+    "  `filename`  text NOT NULL,"#
     #
     "  PRIMARY KEY (`primary_key`)"
     ") ENGINE=InnoDB")
