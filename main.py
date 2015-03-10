@@ -125,10 +125,10 @@ class tumblr_blog:
             # Extract links from the post
             all_post_links = extract_post_links(post_dict)
             # For each media link, check against DB and if applicable download it
-            link_to_hash_dict = handle_media(post_dict)# {LINK:HASH}
+            blah_post_dict = handle_media(post_dict)
             # Replace links with something frontend can use later
             # Insert links into the DB
-            add_post_to_db(self.connection,processed_post_dict,self.info_dict,link_to_hash_dict)
+            add_post_to_db(self.connection,processed_post_dict,self.info_dict)
             logging.debug("Inserting "+str(counter)+"th post")
         # Commit/save new data
         self.connection.commit()

@@ -18,6 +18,8 @@ from utils import *
 from sql_functions import *
 import config # User settings
 
+
+
 def find_links_src(html):
     """Given string containing '<img src="http://media.tumblr.com/tumblr_m7g6koAnx81r3kwau.jpg"/>'
     return ['http://media.tumblr.com/tumblr_m7g6koAnx81r3kwau.jpg']
@@ -52,8 +54,6 @@ def extract_post_links(post_dict):
     return links
 
 
-
-
 def process_image_links(connection,post_dict, post_links):
     """Select which links to download and then try to save them"""
     logging.debug("Processing image links")
@@ -72,8 +72,6 @@ def download_youtube_link(connection,post_link):
     return
 
 
-
-
 def process_youtube_links(connection,post_dict,post_links):
     """Download youtube links"""
     youtube_domains = [
@@ -89,7 +87,6 @@ def process_youtube_links(connection,post_dict,post_links):
                 video_id_in_db = False # Disabled for coding FIXME
                 # If ID is not in the DB, download it and add to DB
                 download_youtube_link(connection,post_link)
-
 
 
 def download_image_link(connection,media_url):
@@ -121,10 +118,7 @@ def download_image_link(connection,media_url):
         logging.debug("Hash was not in DB, saving file: "+repr(file_path))
         save_file(filenamein=file_path,data=file_data,force_save=False)
     connection.commit()
-    return
-
-
-
+    return sha512base64_hash
 
 
 def hash_file_data(file_data):
@@ -142,6 +136,7 @@ def hash_file_data(file_data):
     logging.debug("sha512base16_hash: "+repr(sha512base16_hash))
     return sha512base64_hash
 
+
 def generate_media_file_path_hash(root_path,filename):
     assert(len(filename) == 128)# Filenames should be of fixed length
     folder = filename[0:4]
@@ -155,37 +150,67 @@ def generate_media_file_path_timestamp(root_path,filename):
     return file_path
 
 
+##def handle_media(connection,post_dict):
+##    """Encapsulate all functions relating to processing media"""
+##    logging.debug("Handling media and links")
+##    # Extract links from post
+##    post_links = extract_post_links(post_dict)
+##    logging.debug("post_links: "+repr(post_links))
+##    # Remove links that are already in the DB and store mappings for those that are
+##    old_link_mapping_dict = {} # {HASH:LINK}
+##    new_links = []
+##    for link_to_check in post_links:
+##        link_hash = check_if_link_in_db(cursor,media_url)
+##        if link_hash is None:# Put on queue to check if no record exists
+##            new_links.append(link_to_check)
+##        else:# Add exisiting mapping tif record ixists
+##            old_link_mapping_dict[link_to_check] = link_hash
+##    logging.debug("new_links: "+repr(new_links))
+##    logging.debug("old_link_mapping_dict: "+repr(old_link_mapping_dict))
+##    # Send links to a function for each type of media link
+##    image_mapping_dict = process_image_links(connection,post_dict,new_links)
+##    youtube_mapping_dict = process_youtube_links(connection,post_dict,new_links)
+##    # Join link to hash mappings # {LINK:HASH}
+##    link_to_hash_dict = merge_dicts(
+##    image_mapping_dict,
+##    youtube_mapping_dict
+##    )
+##    logging.debug("link_to_hash_dict: "+repr(link_to_hash_dict))
+##    return link_to_hash_dict
+
+
+def download_media(cursor,media_url):
+    """Download a new link"""
+    # Images
+    media_hash = download_image_link(connection,image_link)
+    return media_hash
+
+
 def handle_media(connection,post_dict):
-    """Encapsulate all functions relating to processing media"""
-    logging.debug("Handling media and links")
-    # Extract links from post
-    post_links = extract_post_links(post_dict)
-    logging.debug("post_links: "+repr(post_links))
-    # Remove links that are already in the DB and store mappings for those that are
-    old_link_mapping_dict = {} # {LINK:HASH}
-    new_links = []
-    for link_to_check in post_links:
-        link_hash = check_if_link_in_db(cursor,media_url)
-        if link_hash is None:# Put on queue to check if no record exists
-            new_links.append(link_to_check)
-        else:# Add exisiting mapping tif record ixists
-            old_link_mapping_dict[link_to_check] = link_hash
-    logging.debug("new_links: "+repr(new_links))
-    logging.debug("old_link_mapping_dict: "+repr(old_link_mapping_dict))
-    # Send links to a function for each type of media link
-    image_mapping_dict = process_image_links(connection,post_dict,new_links)
-    youtube_mapping_dict = process_youtube_links(connection,post_dict,new_links)
-    # Join link to hash mappings # {LINK:HASH}
-    link_to_hash_dict = merge_dicts(
-    image_mapping_dict,
-    youtube_mapping_dict
-    )
-    logging.debug("link_to_hash_dict: "+repr(link_to_hash_dict))
-    return link_to_hash_dict
-
-
-
-
+    # Iterate through post fields and find links
+    fields_to_check = ["body",]
+    for field_to_check in fields_to_check:
+        try:
+            original_field_data = post_dict[field_to_check]
+        except KeyError, err:
+            continue
+        # EFind all links in the field
+        field_links = extract_field_links(original_field_data)
+        # Process each link in the field
+        for link in field_links:
+            # Lookup link in DB
+            link_hash = check_if_link_in_db(cursor,media_url)
+            if link_hash is None:
+                # Download unknown link
+                link_hash = download_media(cursor,media_url)
+            else:
+                pass # No need to redownload
+            # Replace link with identifier and hash "%%LINK=HASH_HASH_HASH%%/LINK%%
+            new_field_data = original_field_data
+        # Overwrite old field
+        post_dict[field_to_check] = new_field_data
+    # Send back updated post
+    return post_dict
 
 
 
