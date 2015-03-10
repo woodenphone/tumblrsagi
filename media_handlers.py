@@ -187,6 +187,10 @@ def download_media(cursor,media_url):
 
 
 def handle_media(connection,post_dict):
+    handle_images(connection,post_dict)
+
+
+
     # Iterate through post fields and find links
     fields_to_check = ["body",]
     for field_to_check in fields_to_check:
@@ -211,6 +215,73 @@ def handle_media(connection,post_dict):
         post_dict[field_to_check] = new_field_data
     # Send back updated post
     return post_dict
+
+
+
+
+def replace_links(link_dict,post_dict):
+    """Replace all instances of a link in a post with a marker string for whoever does the frontend
+    link_dict = {link:hash}
+    post_dict = {field:_datastring}
+    Return
+    """
+    new_post_dict = post_dict# Copy over everything so any fields without links
+    marker_prefix = "%%LINK="
+    marker_suffix = "KNIL%%"
+    for link in link_dict:
+        for field in post_dict:
+            # String replacement
+
+
+
+
+def handle_image_links(connection,post_dict):
+    """Find, check, and save images linked to by a post"""
+    # Find all links in post dict
+    found_links = []
+    for field_to_check in fields_to_check:
+        try:
+            original_field_data = post_dict[field_to_check]
+        except KeyError, err:
+            continue
+        # Confirm it's a string or unicode string
+        field_type = type(field_to_check)
+        logging.debug("field_type: "+repr(field_type))
+        if (field_type == type("blah")) or (field_type == type(u"blah")) ):
+            # Find all links in the field
+            field_links = extract_field_links(original_field_data)
+            found_links.append(field_links)
+        continue
+
+    # Select whick links are image links
+    link_extentions = [
+    "jpg","jpeg",
+    "gif",
+    "png",
+    ]
+    image_links = []
+    for found_link in found_links:
+        after_last_dot = found_link.split(".")[-1]
+        before_first_q_mark = after_last_dot.split("?")[0]
+        for extention in link_extention:
+            if extention in before_first_q_mark:
+                image_links.append(found_link)
+    # Save image links
+    link_hash_dict = {}# {link:hash}
+    for image_link in image_links:
+        sha512base64_hash =  download_image_link(connection,image_link)
+        link_hash_dict[image_link] = sha512base64_hash# {link:hash}
+        continue
+    return link_hash_dict
+
+
+
+
+def save_media(connection,post_dict):
+    # Get list of links
+    all_post_links = extract_post_links(post_dict)
+    # Save image links
+
 
 
 
