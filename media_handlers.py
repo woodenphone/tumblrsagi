@@ -266,6 +266,16 @@ def handle_image_links(connection,all_post_links):
     return link_hash_dict
 
 
+def handle_tumblr_photos(connection,post_dict):
+    """Download the photos section from tumblr posts"""
+    # Return if post has no photos
+    # Grab photo links from API dict
+    # Check the photo links against the DB to see if they have already been saved
+    # Save new photo links
+    return link_hash_dict
+
+
+
 def save_media(connection,post_dict):
     logging.info("Saving post media")
     logging.debug("post_dict"+repr(post_dict))
@@ -283,12 +293,15 @@ def save_media(connection,post_dict):
         else:
             new_links.append(post_link)
     logging.debug("new_links"+repr(new_links))
-    # Save image links
+    # Save image links (Remote)
     image_link_dict = handle_image_links(connection,new_links)
+    # Save photos sections (Tumblr)
+    tumblr_photos_link_dict = handle_tumblr_photos(connection,post_dict)
     # Join mapping dicts
     link_to_hash_dict = merge_dicts(
     preexisting_link_dict,
     image_link_dict,
+    tumblr_photos_link_dict,
     )
     logging.debug("link_to_hash_dict"+repr(link_to_hash_dict))
     # Replace links with marker string
