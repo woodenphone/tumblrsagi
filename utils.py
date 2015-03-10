@@ -252,7 +252,24 @@ def merge_dicts(*dict_args):
     return result
 
 
-
+def flatten(sequence,contents=[]):
+    """Take a dict, tuple, or list, and flatten it."""
+    # Flatten dicts
+    if (type(sequence) == type({})):
+        for dict_key in sequence.keys():
+            field = sequence[dict_key]
+            if ( (type(field) == type({})) or (type(field) == type([])) or (type(field) == type((1,2)))):
+                contents.append(flatten(field,contents))
+            else:
+                contents.append(field)
+    # Flatten lists and tuples
+    elif (
+    (type(sequence) == type([])) or
+    (type(sequence) == type(()))
+    ):
+        for item in sequence:
+            contents.append(item)
+    return contents
 
 
 

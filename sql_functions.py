@@ -44,6 +44,7 @@ def add_post_to_db(connection,post_dict,info_dict):
     # Local stuff
     row_to_insert["date_saved"] = get_current_unix_time()
     row_to_insert["version"] = 0# FIXME
+    row_to_insert["link_to_hash_dict"] = json.dumps(post_dict["link_to_hash_dict"])# Link mappings
     # Things not in API docs
     row_to_insert["misc_slug"] = (post_dict["slug"] if ("slug" in post_dict.keys()) else None)# What does this do?
     row_to_insert["misc_short_url"] = (post_dict["short_url"] if ("short_url" in post_dict.keys()) else None)# shortened url?

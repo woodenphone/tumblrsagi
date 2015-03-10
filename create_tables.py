@@ -33,7 +33,7 @@ TABLES['posts'] = (
     "  `primary_key` int NOT NULL AUTO_INCREMENT,"# Is used only as primary key
     "  `version` int NOT NULL,"# The version of this post this row is associated with
     "  `date_saved` int NOT NULL,"# The unix time the post was saved
-    "  `processed_body` text,"# Text of the post after links have been processed
+    "  `link_to_hash_dict` text,"# Text of the post after links have been processed
     # Missing from API docs
     "  `misc_slug` text,"#
     "  `misc_short_url` text,"#
