@@ -46,22 +46,25 @@ def extract_post_links(post_dict):
     """Run all applicable extractors for a post"""
     links = []
     # Collect links in the post text
-    html = post_dict["body"]
-    links.append(find_links_src(html))
-    links.append(find_url_links(html))
+    fields = post_dict.keys()
+    for field in fields:
+        if ( (type(field) == type("")) or (type(field) == type("u")) ):
+            html = post_dict["body"]
+            links += find_links_src(html)
+            links += find_url_links(html)
     # Collect links in
     logging.debug("all links found in post: "+repr(links))
     return links
 
 
-def process_image_links(connection,post_dict, post_links):
-    """Select which links to download and then try to save them"""
-    logging.debug("Processing image links")
-    logging.warning("disabled:image chooser")
-    image_links = post_links
-    for image_link in image_links:
-        download_image_link(connection,image_link)
-    return
+##def process_image_links(connection,post_dict, post_links):
+##    """Select which links to download and then try to save them"""
+##    logging.debug("Processing image links")
+##    logging.warning("disabled:image chooser")
+##    image_links = post_links
+##    for image_link in image_links:
+##        download_image_link(connection,image_link)
+##    return
 
 
 
@@ -179,80 +182,64 @@ def generate_media_file_path_timestamp(root_path,filename):
 ##    return link_to_hash_dict
 
 
-def download_media(cursor,media_url):
-    """Download a new link"""
-    # Images
-    media_hash = download_image_link(connection,image_link)
-    return media_hash
+##def download_media(cursor,media_url):
+##    """Download a new link"""
+##    # Images
+##    media_hash = download_image_link(connection,image_link)
+##    return media_hash
 
 
-def handle_media(connection,post_dict):
-    handle_images(connection,post_dict)
-
-
-
-    # Iterate through post fields and find links
-    fields_to_check = ["body",]
-    for field_to_check in fields_to_check:
-        try:
-            original_field_data = post_dict[field_to_check]
-        except KeyError, err:
-            continue
-        # EFind all links in the field
-        field_links = extract_field_links(original_field_data)
-        # Process each link in the field
-        for link in field_links:
-            # Lookup link in DB
-            link_hash = check_if_link_in_db(cursor,media_url)
-            if link_hash is None:
-                # Download unknown link
-                link_hash = download_media(cursor,media_url)
-            else:
-                pass # No need to redownload
-            # Replace link with identifier and hash "%%LINK=HASH_HASH_HASH%%/LINK%%
-            new_field_data = original_field_data
-        # Overwrite old field
-        post_dict[field_to_check] = new_field_data
-    # Send back updated post
-    return post_dict
-
-
+##def handle_media(connection,post_dict):
+##    handle_images(connection,post_dict)
+##    # Iterate through post fields and find links
+##    fields_to_check = ["body",]
+##    for field_to_check in fields_to_check:
+##        try:
+##            original_field_data = post_dict[field_to_check]
+##        except KeyError, err:
+##            continue
+##        # EFind all links in the field
+##        field_links = extract_field_links(original_field_data)
+##        # Process each link in the field
+##        for link in field_links:
+##            # Lookup link in DB
+##            link_hash = check_if_link_in_db(cursor,media_url)
+##            if link_hash is None:
+##                # Download unknown link
+##                link_hash = download_media(cursor,media_url)
+##            else:
+##                pass # No need to redownload
+##            # Replace link with identifier and hash "%%LINK=HASH_HASH_HASH%%/LINK%%
+##            new_field_data = original_field_data
+##        # Overwrite old field
+##        post_dict[field_to_check] = new_field_data
+##    # Send back updated post
+##    return post_dict
 
 
 def replace_links(link_dict,post_dict):
     """Replace all instances of a link in a post with a marker string for whoever does the frontend
     link_dict = {link:hash}
     post_dict = {field:_datastring}
-    Return
+    Return post dict with links replaced
     """
     new_post_dict = post_dict# Copy over everything so any fields without links
     marker_prefix = "%%LINK="
-    marker_suffix = "KNIL%%"
+    marker_suffix = "%KNIL%%"
     for link in link_dict:
         for field in post_dict:
             # String replacement
+            new_link_string = marker_prefix+link+marker_suffix
+            field = string.replace(field, link, new_link_string)
+            field = field
+    return post_dict
 
 
-
-
-def handle_image_links(connection,post_dict):
-    """Find, check, and save images linked to by a post"""
+def handle_image_links(connection,all_post_links):
+    """Check and save images linked to by a post
+    return link_hash_dict = {}# {link:hash}"""
+    logging.debug("all_post_links"+repr(all_post_links))
     # Find all links in post dict
-    found_links = []
-    for field_to_check in fields_to_check:
-        try:
-            original_field_data = post_dict[field_to_check]
-        except KeyError, err:
-            continue
-        # Confirm it's a string or unicode string
-        field_type = type(field_to_check)
-        logging.debug("field_type: "+repr(field_type))
-        if (field_type == type("blah")) or (field_type == type(u"blah")) ):
-            # Find all links in the field
-            field_links = extract_field_links(original_field_data)
-            found_links.append(field_links)
-        continue
-
     # Select whick links are image links
     link_extentions = [
     "jpg","jpeg",
@@ -260,12 +247,12 @@ def handle_image_links(connection,post_dict):
     "png",
     ]
     image_links = []
-    for found_link in found_links:
-        after_last_dot = found_link.split(".")[-1]
+    for link in all_post_links:
+        after_last_dot = link.split(".")[-1]
         before_first_q_mark = after_last_dot.split("?")[0]
-        for extention in link_extention:
+        for extention in link_extentions:
             if extention in before_first_q_mark:
-                image_links.append(found_link)
+                image_links.append(link)
     # Save image links
     link_hash_dict = {}# {link:hash}
     for image_link in image_links:
@@ -275,12 +262,35 @@ def handle_image_links(connection,post_dict):
     return link_hash_dict
 
 
-
-
 def save_media(connection,post_dict):
+    logging.info("Saving post media")
+    logging.debug("post_dict"+repr(post_dict))
     # Get list of links
     all_post_links = extract_post_links(post_dict)
+    logging.debug("all_post_links"+repr(all_post_links))
+    # Remove links already in DB
+    preexisting_link_dict = {}# TODO FIXME
+    logging.debug("preexisting_link_dict"+repr(preexisting_link_dict))
+    new_links = []
+    preexisting_links = preexisting_link_dict.keys()
+    for post_link in all_post_links:
+        if post_link in preexisting_links:
+            continue
+        else:
+            new_links.append(post_link)
+    logging.debug("new_links"+repr(new_links))
     # Save image links
+    image_link_dict = handle_image_links(connection,new_links)
+    # Join mapping dicts
+    link_to_hash_dict = merge_dicts(
+    preexisting_link_dict,
+    image_link_dict,
+    )
+    logging.debug("link_to_hash_dict"+repr(link_to_hash_dict))
+    # Replace links with marker string
+    new_post_dict = replace_links(link_to_hash_dict,post_dict)
+    logging.debug("new_post_dict"+repr(new_post_dict))
+    return new_post_dict
 
 
 

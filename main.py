@@ -60,7 +60,10 @@ class tumblr_blog:
             page_counter += 1
             # Load API page
             offset = page_counter*20 # Maximum posts per page is 20
-            page_url = "http://api.tumblr.com/v2/blog/"+self.blog_url+"/posts/text?api_key="+self.consumer_key+"&offset="+str(offset)
+            if offset != 0:
+                page_url = "http://api.tumblr.com/v2/blog/"+self.blog_url+"/posts/?api_key="+self.consumer_key+"&offset="+str(offset)
+            else:
+                page_url = "http://api.tumblr.com/v2/blog/"+self.blog_url+"/posts/?api_key="+self.consumer_key
             logging.debug("page_url"+repr(page_url))
             page_json = get(page_url)
             page_dict = json.loads(page_json)
@@ -76,20 +79,21 @@ class tumblr_blog:
                 logging.info("Blog thinks it has "+repr(self.posts_post_count)+" posts.")
             # Add posts
             this_page_posts_list = page_dict["response"]["posts"]
+            logging.debug("this_page_posts_list"+repr(this_page_posts_list))
+            logging.debug("posts on this page:"+repr(len(this_page_posts_list)))
 
             # Exit conditions
             # Stop if duplicate results
             if this_page_posts_list == prev_page_posts_list:
-                logging.info("Last pages post match this pages posts.")
+                logging.info("Last pages post match this pages posts, stopping loading posts.")
                 break
             # Stop if no posts
             if len(this_page_posts_list) == 0:
-                logging.error("No posts found on this page.")
+                logging.error("No posts found on this page, stopping loading posts.")
                 break
             # Add posts to post list
             for current_post_dict in this_page_posts_list:
                 self.posts_list.append(current_post_dict)
-                break
             # Update duplicate check list
             prev_page_posts_list = this_page_posts_list
             continue
@@ -101,9 +105,11 @@ class tumblr_blog:
         if number_of_posts_retrieved < self.posts_post_count:
             logging.error("Post count from /posts API was higher than the number of posts retrieved!")
             logging.error(repr(locals()))
+            assert(False)# Stop for easier debugging
         if number_of_posts_retrieved < self.info_post_count:
             logging.error("Post count from /info API was higher than the number of posts retrieved!")
             logging.error(repr(locals()))
+            assert(False)# Stop for easier debugging
         logging.info("Finished loading posts.")
         return
 
@@ -123,12 +129,12 @@ class tumblr_blog:
             counter += 1
             # Handle links for the post
             # Extract links from the post
-            all_post_links = extract_post_links(post_dict)
+            #all_post_links = extract_post_links(post_dict)
             # For each media link, check against DB and if applicable download it
-            blah_post_dict = handle_media(post_dict)
+            new_post_dict = save_media(self.connection,post_dict)
             # Replace links with something frontend can use later
             # Insert links into the DB
-            add_post_to_db(self.connection,processed_post_dict,self.info_dict)
+            add_post_to_db(self.connection,new_post_dict,self.info_dict)
             logging.debug("Inserting "+str(counter)+"th post")
         # Commit/save new data
         self.connection.commit()
@@ -149,7 +155,7 @@ class tumblr_blog:
 def classy_play():
     logging.debug("Opening DB connection")
     connection = mysql.connector.connect(**config.sql_login)
-    blog = tumblr_blog(connection, consumer_key = config.consumer_key, blog_url = "shadygames1.tumblr.com")
+    blog = tumblr_blog(connection, consumer_key = config.consumer_key, blog_url = "zaggatar.tumblr.com")
     posts = blog.get_posts()
     logging.debug("posts"+repr(posts))
     blog.insert_posts_into_db()

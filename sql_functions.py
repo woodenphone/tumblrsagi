@@ -38,8 +38,8 @@ def generate_insert_query(table_name,value_names):
 def add_post_to_db(connection,post_dict,info_dict):
     """Insert a post into the DB"""
     cursor =  connection.cursor()
-    logging.debug(repr(post_dict))
-    logging.debug(repr(info_dict))
+    logging.debug("post_dict: "+repr(post_dict))
+    logging.debug("info_dict: "+repr(info_dict))
     row_to_insert = {} # TODO, Waiting on ATC for DB design # actually fuck waiting he can clean this up later
     # Local stuff
     row_to_insert["date_saved"] = get_current_unix_time()
@@ -70,10 +70,10 @@ def add_post_to_db(connection,post_dict,info_dict):
         row_to_insert["text_body"] = post_dict["body"]
     # Photo posts
     elif post_dict["type"] == "photo":
-        row_to_insert["photo_photos"] = post_dict[""]
-        row_to_insert["photo_caption"] = post_dict["caption"]
-        row_to_insert["photo_width"] = post_dict["width"]
-        row_to_insert["photo_height"] = post_dict["height"]
+        row_to_insert["photo_photos"] = None#post_dict[""]
+        row_to_insert["photo_caption"] = None#post_dict["caption"]
+        row_to_insert["photo_width"] = None#post_dict["width"]
+        row_to_insert["photo_height"] = None#post_dict["height"]
     # Quote posts
     elif post_dict["type"] == "quote":
         row_to_insert["quote_text"] = post_dict["text"]
@@ -128,7 +128,7 @@ def add_post_to_db(connection,post_dict,info_dict):
 def add_blog_to_db(connection,info_dict):
     """Insert blog info into the DB"""
     cursor =  connection.cursor()
-    logging.debug(repr(info_dict))
+    logging.debug("info_dict: "+repr(info_dict))
     row_to_insert = {} # TODO, Waiting on ATC for DB design # actually fuck waiting he can clean this up later
     # Local stuff
     row_to_insert["date_last_saved"] = get_current_unix_time()
