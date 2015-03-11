@@ -40,6 +40,7 @@ def add_post_to_db(connection,post_dict,info_dict):
     cursor =  connection.cursor()
     logging.debug("post_dict: "+repr(post_dict))
     logging.debug("info_dict: "+repr(info_dict))
+    # Build row to insert
     row_to_insert = {} # TODO, Waiting on ATC for DB design # actually fuck waiting he can clean this up later
     # Local stuff
     row_to_insert["date_saved"] = get_current_unix_time()
@@ -55,7 +56,7 @@ def add_post_to_db(connection,post_dict,info_dict):
     row_to_insert["all_posts_type"] = post_dict["type"]
     row_to_insert["all_posts_timestamp"] = post_dict["timestamp"]
     row_to_insert["all_posts_date"] = post_dict["date"]
-    row_to_insert["all_posts_format"] =post_dict["format"]
+    row_to_insert["all_posts_format"] = post_dict["format"]
     row_to_insert["all_posts_reblog_key"] = post_dict["reblog_key"]
     row_to_insert["all_posts_tags"] = json.dumps(post_dict["tags"])# FIXME! Disabled for coding (JSON?)
     row_to_insert["all_posts_bookmarklet"] = (post_dict["bookmarklet"] if ("bookmarklet" in post_dict.keys()) else None)# Optional in api
@@ -103,7 +104,7 @@ def add_post_to_db(connection,post_dict,info_dict):
     # Video Posts
     elif post_dict["type"] == "video":
         row_to_insert["video_caption"] = post_dict["caption"]
-        row_to_insert["video_player"] = post_dict["player"]
+        row_to_insert["video_player"] = "FIXME"#post_dict["player"]
     # Answer Posts
     elif post_dict["type"] == "answer":
         row_to_insert["answer_asking_name"] = post_dict["asking_name"]
@@ -114,6 +115,9 @@ def add_post_to_db(connection,post_dict,info_dict):
         logging.error("Unknown post type!")
         logging.error(repr(locals()))
         assert(False)
+    #
+    if config.log_db_rows:
+        logging.debug("row_to_insert: "+repr(row_to_insert))
     # Insert dict into DB
     fields = row_to_insert.keys()
     values = row_to_insert.values()
@@ -147,8 +151,9 @@ def add_blog_to_db(connection,info_dict):
     row_to_insert["info_share_likes"] = (info_dict["share_likes"] if ("share_likes" in info_dict.keys()) else None)# Undocumented
     row_to_insert["info_url"] = (info_dict["url"] if ("url" in info_dict.keys()) else None)# Undocumented
     row_to_insert["info_ask_page_title"] = (info_dict["ask_page_title"] if ("ask_page_title" in info_dict.keys()) else None)# Undocumented
-
-
+    #
+    if config.log_db_rows:
+        logging.debug("row_to_insert: "+repr(row_to_insert))
     # Insert dict into DB
     fields = row_to_insert.keys()
     values = row_to_insert.values()
@@ -193,6 +198,9 @@ def add_image_to_db(connection,media_url,sha512base64_hash,image_filename,time_o
     row_to_insert["media_url"] = media_url
     row_to_insert["sha512base64_hash"] = sha512base64_hash
     row_to_insert["filename"] = image_filename
+    #
+    if config.log_db_rows:
+        logging.debug("row_to_insert: "+repr(row_to_insert))
     # Insert dict into DB
     fields = row_to_insert.keys()
     values = row_to_insert.values()

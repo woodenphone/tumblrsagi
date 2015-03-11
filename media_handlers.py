@@ -324,7 +324,7 @@ def save_media(connection,post_dict):
         else:
             new_links.append(post_link)
     logging.debug("new_links: "+repr(new_links))
-    # Save image links (Remote)
+    # Save image links (Remote) ex. http://foo.com/image.jpg
     if config.save_images:
         image_link_dict = handle_image_links(connection,new_links)# {link:hash}
     else:
