@@ -9,13 +9,13 @@
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
 
-
+import mysql.connector
 import hashlib# Needed to hash file data
 import base64 # Needed to do base32 encoding of filenames
 import re
 import logging
 from utils import *
-from sql_functions import *
+import sql_functions
 import config # User settings
 
 
@@ -116,7 +116,7 @@ def download_image_link(connection,media_url):
     file_path = generate_media_file_path_timestamp(root_path=config.root_path,filename=image_filename)
     logging.debug("file_path: "+repr(file_path))
     # Compare hash with database and add new entry for this URL
-    media_already_saved = add_image_to_db(connection,media_url,sha512base64_hash,image_filename,time_of_retreival)
+    media_already_saved = sql_functions.add_image_to_db(connection,media_url,sha512base64_hash,image_filename,time_of_retreival)
     # If hash was already in DB, return
     if media_already_saved:
         logging.debug("Hash already in DB, no need to save file to disk")
@@ -126,6 +126,18 @@ def download_image_link(connection,media_url):
         save_file(filenamein=file_path,data=file_data,force_save=False)
     connection.commit()
     return sha512base64_hash
+
+
+def download_image_links(connection,media_urls):
+    # Save image links
+    link_hash_dict = {}# {link:hash}
+    for media_urls in media_urls:
+        sha512base64_hash =  download_image_link(connection,media_urls)
+        link_hash_dict[media_urls] = sha512base64_hash# {link:hash}
+        continue
+    return link_hash_dict# {link:hash}
+
+
 
 
 def hash_file_data(file_data):
@@ -167,7 +179,7 @@ def generate_media_file_path_timestamp(root_path,filename):
 ##    old_link_mapping_dict = {} # {HASH:LINK}
 ##    new_links = []
 ##    for link_to_check in post_links:
-##        link_hash = check_if_link_in_db(cursor,media_url)
+##        link_hash = sql_functions.check_if_link_in_db(connection,media_url)
 ##        if link_hash is None:# Put on queue to check if no record exists
 ##            new_links.append(link_to_check)
 ##        else:# Add exisiting mapping tif record ixists
@@ -186,7 +198,7 @@ def generate_media_file_path_timestamp(root_path,filename):
 ##    return link_to_hash_dict
 
 
-##def download_media(cursor,media_url):
+##def download_media(connection,media_url):
 ##    """Download a new link"""
 ##    # Images
 ##    media_hash = download_image_link(connection,image_link)
@@ -207,10 +219,10 @@ def generate_media_file_path_timestamp(root_path,filename):
 ##        # Process each link in the field
 ##        for link in field_links:
 ##            # Lookup link in DB
-##            link_hash = check_if_link_in_db(cursor,media_url)
+##            link_hash = sql_functions.check_if_link_in_db(connection,media_url)
 ##            if link_hash is None:
 ##                # Download unknown link
-##                link_hash = download_media(cursor,media_url)
+##                link_hash = sql_functions.download_media(connection,media_url)
 ##            else:
 ##                pass # No need to redownload
 ##            # Replace link with identifier and hash "%%LINK=HASH_HASH_HASH%%/LINK%%
@@ -258,21 +270,39 @@ def handle_image_links(connection,all_post_links):
             if extention in before_first_q_mark:
                 image_links.append(link)
     # Save image links
-    link_hash_dict = {}# {link:hash}
-    for image_link in image_links:
-        sha512base64_hash =  download_image_link(connection,image_link)
-        link_hash_dict[image_link] = sha512base64_hash# {link:hash}
-        continue
-    return link_hash_dict
+    link_hash_dict = download_image_links(connection,image_links)
+    return link_hash_dict# {link:hash}
 
 
 def handle_tumblr_photos(connection,post_dict):
     """Download the photos section from tumblr posts"""
     # Return if post has no photos
+    if "photos" not in post_dict.keys():
+        return {}
     # Grab photo links from API dict
+    photos_list = post_dict["photos"]
+    logging.debug("photos_list: "+repr(photos_list))
+    photo_url_list = []
+    for photo_dict in photos_list:
+        # Grab original size url
+        logging.debug("photo_dict: "+repr(photo_dict))
+        original_size_url = photo_dict["original_size"]["url"]
+        photo_url_list.append(original_size_url)
+        # Grab alt size urls
+        alt_sizes_list = photo_dict["alt_sizes"]
+        for alt_size_dict in alt_sizes_list:
+            alt_size_url = alt_size_dict["url"]
+            photo_url_list.append(alt_size_url)
+    logging.debug("photo_url_list: "+repr(photo_url_list))
     # Check the photo links against the DB to see if they have already been saved
+    photo_urls_to_save = []
+    for photo_link in photo_url_list:
+        link_already_saved = sql_functions.check_if_link_in_db(connection,photo_link)
+        if link_already_saved:
+            photo_urls_to_save.append(photo_link)
     # Save new photo links
-    return link_hash_dict
+    link_hash_dict = download_image_links(connection,photo_urls_to_save)
+    return link_hash_dict# {link:hash}
 
 
 
@@ -283,8 +313,9 @@ def save_media(connection,post_dict):
     all_post_links = extract_post_links(post_dict)
     logging.debug("all_post_links"+repr(all_post_links))
     # Remove links already in DB
-    preexisting_link_dict = {}# TODO FIXME
-    logging.debug("preexisting_link_dict"+repr(preexisting_link_dict))
+    logging.warning("Preexisting link check is disabled.")
+    preexisting_link_dict = {}# {link:hash}# TODO FIXME
+    logging.debug("preexisting_link_dict: "+repr(preexisting_link_dict))
     new_links = []
     preexisting_links = preexisting_link_dict.keys()
     for post_link in all_post_links:
@@ -292,22 +323,28 @@ def save_media(connection,post_dict):
             continue
         else:
             new_links.append(post_link)
-    logging.debug("new_links"+repr(new_links))
+    logging.debug("new_links: "+repr(new_links))
     # Save image links (Remote)
-    image_link_dict = handle_image_links(connection,new_links)
+    if config.save_images:
+        image_link_dict = handle_image_links(connection,new_links)# {link:hash}
+    else:
+        image_link_dict = {}
     # Save photos sections (Tumblr)
-    tumblr_photos_link_dict = handle_tumblr_photos(connection,post_dict)
-    # Join mapping dicts
+    if config.save_photos:
+        tumblr_photos_link_dict = handle_tumblr_photos(connection,post_dict)# {link:hash}
+    else:
+        tumblr_photos_link_dict = {}
+    # Join mapping dicts # {link:hash}
     link_to_hash_dict = merge_dicts(
     preexisting_link_dict,
     image_link_dict,
     tumblr_photos_link_dict,
     )
-    logging.debug("link_to_hash_dict"+repr(link_to_hash_dict))
+    logging.debug("link_to_hash_dict: "+repr(link_to_hash_dict))
     # Replace links with marker string
     new_post_dict = replace_links(link_to_hash_dict,post_dict)
     new_post_dict["link_to_hash_dict"] = link_to_hash_dict
-    logging.debug("new_post_dict"+repr(new_post_dict))
+    logging.debug("new_post_dict: "+repr(new_post_dict))
     return new_post_dict
 
 

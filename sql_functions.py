@@ -161,7 +161,7 @@ def add_blog_to_db(connection,info_dict):
 
 
 
-def check_if_link_in_db(cursor,media_url):
+def check_if_link_in_db(connection,media_url):
     """Lookup a URL in the media DB.
     Return True if any matches found; otherwise return False."""
     logging.warning("disabled:check_if_link_in_db")
