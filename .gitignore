@@ -4,3 +4,4 @@ download/
 *test.txt
 config.py
 *.pyc
+youtube-dl/

@@ -58,6 +58,7 @@ class tumblr_blog:
         this_page_posts_list = ["this page"]# Dummy value
         while page_counter <= 100:# TOO SMALL, INCREASE LATER
             page_counter += 1
+            logging.info("Loading page "+repr(page_counter))
             # Load API page
             offset = page_counter*20 # Maximum posts per page is 20
             if offset != 0:
@@ -150,6 +151,13 @@ class tumblr_blog:
         # TODO FIXME
         handle_media(connection,post_dict)
 
+    def list_posts(self):
+        """Output posts to log file for debugging"""
+        c = 0
+        for post in self.posts_list:
+            c += 1
+            logging.debug(repr(c)+": "+repr(post))
+        return
 
 
 def classy_play():
@@ -158,6 +166,7 @@ def classy_play():
     blog = tumblr_blog(connection, consumer_key = config.consumer_key, blog_url = "tsitra360.tumblr.com")
     posts = blog.get_posts()
     logging.debug("posts"+repr(posts))
+    blog.list_posts()
     blog.insert_posts_into_db()
     logging.debug("Closing DB connection")
     connection.close()
