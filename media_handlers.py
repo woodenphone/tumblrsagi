@@ -307,6 +307,14 @@ def handle_video_posts(connection,post_dict):
         assert(False)
     return
 
+def handle_audio_posts(connection,post_dict):
+    """Download audio from audio posts"""
+    # translated from xkit's audio_downloader.js
+    m_url = post_dict["audio_url"]
+    if "https://www.tumblr.com/audio_file/" :
+        m_url = "http://a.tumblr.com/" + m_url.split("/")[-1] + "o1.mp3"
+
+    return
 
 def save_media(connection,post_dict):
     #logging.info("Saving post media")

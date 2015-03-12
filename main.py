@@ -168,7 +168,7 @@ class tumblr_blog:
 def classy_play():
     logging.debug("Opening DB connection")
     connection = mysql.connector.connect(**config.sql_login)
-    blog = tumblr_blog(connection, consumer_key = config.consumer_key, blog_url = "tsitra360.tumblr.com")
+    blog = tumblr_blog(connection, consumer_key = config.consumer_key, blog_url = "askbuttonsmom.tumblr.com")
     posts = blog.get_posts(max_pages=10)
     logging.debug("posts"+repr(posts))
     #blog.print_posts()
