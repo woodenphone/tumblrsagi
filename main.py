@@ -51,13 +51,17 @@ class tumblr_blog:
         logging.debug("self.info_post_count: "+repr(self.info_post_count))
         return
 
-    def load_posts(self):
+    def load_posts(self,max_pages=None):
         """Load posts for the blog"""
         page_counter = -1 # -1 so we start at 0
         prev_page_posts_list = ["prev page"]# Dummy value
         this_page_posts_list = ["this page"]# Dummy value
         while page_counter <= 100:# TOO SMALL, INCREASE LATER
             page_counter += 1
+            if max_pages is not None:
+                if page_counter > max_pages:
+                    logging.info("Reached max pages")
+                    break
             logging.info("Loading page "+repr(page_counter))
             # Load API page
             offset = page_counter*20 # Maximum posts per page is 20
@@ -65,10 +69,10 @@ class tumblr_blog:
                 page_url = "http://api.tumblr.com/v2/blog/"+self.blog_url+"/posts/?api_key="+self.consumer_key+"&offset="+str(offset)
             else:
                 page_url = "http://api.tumblr.com/v2/blog/"+self.blog_url+"/posts/?api_key="+self.consumer_key
-            logging.debug("page_url"+repr(page_url))
+            logging.debug("page_url: "+repr(page_url))
             page_json = get(page_url)
             page_dict = json.loads(page_json)
-            logging.debug("page_dict"+repr(page_dict))
+            #logging.debug("page_dict: "+repr(page_dict))
             # Stop if bad response
             if page_dict["meta"]["status"] != 200:
                 logging.error("Bad response, stopping scan for posts.")
@@ -80,8 +84,8 @@ class tumblr_blog:
                 logging.info("Blog thinks it has "+repr(self.posts_post_count)+" posts.")
             # Add posts
             this_page_posts_list = page_dict["response"]["posts"]
-            logging.debug("this_page_posts_list"+repr(this_page_posts_list))
-            logging.debug("posts on this page:"+repr(len(this_page_posts_list)))
+            logging.debug("this_page_posts_list: "+repr(this_page_posts_list))
+            logging.debug("posts on this page: "+repr(len(this_page_posts_list)))
 
             # Exit conditions
             # Stop if duplicate results
@@ -103,24 +107,25 @@ class tumblr_blog:
         number_of_posts_retrieved = len(self.posts_list)
         logging.info("number_of_posts_retrieved: "+repr(number_of_posts_retrieved)+
         ", self.posts_post_count: "+repr(self.posts_post_count)+", self.info_post_count: "+repr(self.info_post_count))
-        if number_of_posts_retrieved < self.posts_post_count:
-            logging.error("Post count from /posts API was higher than the number of posts retrieved!")
-            logging.error(repr(locals()))
-            assert(False)# Stop for easier debugging
-        if number_of_posts_retrieved < self.info_post_count:
-            logging.error("Post count from /info API was higher than the number of posts retrieved!")
-            logging.error(repr(locals()))
-            assert(False)# Stop for easier debugging
+        if max_pages is None:# Only run these tests if max_pages option not used
+            if number_of_posts_retrieved < self.posts_post_count:
+                logging.error("Post count from /posts API was higher than the number of posts retrieved!")
+                logging.error(repr(locals()))
+                assert(False)# Stop for easier debugging
+            if number_of_posts_retrieved < self.info_post_count:
+                logging.error("Post count from /info API was higher than the number of posts retrieved!")
+                logging.error(repr(locals()))
+                assert(False)# Stop for easier debugging
         logging.info("Finished loading posts.")
         return
 
-    def get_posts(self):
+    def get_posts(self,max_pages=None):
         try:
             if len(self.posts_list) > 0:
                 return self.posts_list
         except AttributeError:
             pass
-        self.load_posts()
+        self.load_posts(max_pages)
         return self.posts_list
 
     def insert_posts_into_db(self):
@@ -151,7 +156,7 @@ class tumblr_blog:
         # TODO FIXME
         handle_media(connection,post_dict)
 
-    def list_posts(self):
+    def print_posts(self):
         """Output posts to log file for debugging"""
         c = 0
         for post in self.posts_list:
@@ -164,9 +169,9 @@ def classy_play():
     logging.debug("Opening DB connection")
     connection = mysql.connector.connect(**config.sql_login)
     blog = tumblr_blog(connection, consumer_key = config.consumer_key, blog_url = "tsitra360.tumblr.com")
-    posts = blog.get_posts()
+    posts = blog.get_posts(max_pages=10)
     logging.debug("posts"+repr(posts))
-    blog.list_posts()
+    #blog.print_posts()
     blog.insert_posts_into_db()
     logging.debug("Closing DB connection")
     connection.close()

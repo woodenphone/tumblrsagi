@@ -27,7 +27,7 @@ def find_links_src(html):
     """
     embed_regex = """<\w+?\s+?src=["']([^>]+)["']/>"""
     links = re.findall(embed_regex,html, re.DOTALL)
-    logging.debug("src embed links: "+repr(links))
+    #logging.debug("src embed links: "+repr(links))
     return links
 
 
@@ -50,15 +50,15 @@ def extract_post_links(post_dict):
     # Mangle dicts and lists into strings
     flat_post_dict = flatten(post_dict)
     for field in flat_post_dict:
-        logging.debug("field: "+repr(field))
+        #logging.debug("field: "+repr(field))
         # Text fields
         if ( (type(field) == type("")) or (type(field) == type(u"")) ):
             html = field
-            logging.debug("html: "+repr(html))
+            #logging.debug("html: "+repr(html))
             links += find_links_src(field)
             links += find_url_links(field)
     #elif ( (type(field) == type({})) or (type(field) == type([])) ):
-    logging.debug("all links found in post: "+repr(links))
+    #logging.debug("all links found in post: "+repr(links))
     return links
 
 
@@ -305,24 +305,38 @@ def handle_tumblr_photos(connection,post_dict):
     link_hash_dict = download_image_links(connection,photo_urls_to_save)
     return link_hash_dict# {link:hash}
 
+def move_file(original_path,final_path):
+    """Move a file from one location to another"""
+    # Make sure output folder exists
+    output_dir = os.path.dirname(final_path)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    # Move file
+    shutil.copy2(original_path, final_path)
+    return
+
 
 def handle_tumblr_videos(connection,post_dict):
     """Download tumblr-hosted videos from video posts"""
+    logging.debug("Processing tumblr video")
     video_page = post_dict["post_url"]
+    logging.debug("post_dict"+repr(post_dict))
     post_id = str(post_dict["id"])
     logging.debug("video_page: "+repr(video_page))
     logging.debug("post_id: "+repr(post_id))
     # Check if video is already saved
+    logging.warning("CODE VIDEO DB STUFF")# TODO FIXME
     # Form command to run
     # Define arguments. see this url for help
     # https://github.com/rg3/youtube-dl
     program_path = os.path.join("youtube-dl","youtube-dl.exe")
+    assert(os.path.exists(program_path))
     ignore_errors = "-i"
     safe_filenames = "--restrict-filenames"
     output_arg = "-o"
     info_json_arg = "--write-info-json"
     description_arg ="--write-description"
-    output_dir = os.path.join("download","temp")
+    output_dir = os.path.join(config.root_path,"temp")
     output_template = os.path.join(output_dir, post_id+".%(ext)s")
     # "youtube-dl.exe -i --restrict-filenames -o --write-info-json --write-description"
     command = [program_path, ignore_errors, safe_filenames, info_json_arg, description_arg, output_arg, output_template, video_page]
@@ -332,51 +346,72 @@ def handle_tumblr_videos(connection,post_dict):
     logging.debug("command_result: "+repr(command_result))
     # Verify download worked
     # Read info JSON file
-    expected_info_path = os.path.join(output_dir, post_id+".json")
+    expected_info_path = os.path.join(output_dir, post_id+".info.json")
     info_json = read_file(expected_info_path)
     yt_dl_info_dict = json.loads(info_json)
     logging.debug("yt_dl_info_dict: "+repr(yt_dl_info_dict))
+    # Grab file path
     media_temp_filepath = yt_dl_info_dict["_filename"]
+    media_temp_filename = os.path.basename(media_temp_filepath)
+    logging.debug("media_temp_filepath: "+repr(media_temp_filepath))
+    # Check that video file given in info JSON exists
+    assert(os.path.exists(media_temp_filepath))
     # Generate hash for media file
     file_data = read_file(media_temp_filepath)
     sha512base64_hash = hash_file_data(file_data)
+    # Decide where to put the file
     # Check if hash is in media DB
-    # Move file to media DL location
+    logging.warning("CODE VIDEO DB STUFF")# TODO FIXME
+    preexisting_filepath = None# TODO FIXME
+    if preexisting_filepath is not None:
+        # Delete duplicate file if media is already saved
+        logging.info("Deleting duplicate video file")
+        final_media_filepath = preexisting_filepath
+    else:
+        # Move file to media DL location
+        logging.info("Moving video to final location")
 
-    logging.debug("media_temp_filepath: "+repr(media_temp_filepath))
-    media_output_filepath = os.path.join(root_path, "blah","foo.bar")
-    shutil.copy2(media_temp_filepath, media_output_filepath)
-
-
-
+        final_media_filepath = os.path.join(config.root_path, "blah","foo.bar")
+        move_file(media_temp_filepath,final_media_filepath)
+        assert(os.path.exists(final_media_filepath))
     # Add video to DB
-
+    logging.warning("CODE VIDEO DB STUFF")# TODO FIXME
     return
 
 
 def handle_youtube_video(connection,post_dict):
     """Download youtube videos from video posts"""
+    logging.debug("Processing youtube video")
+    logging.debug("post_dict"+repr(post_dict))
     # Get youtube link
     # Call youtube-dl
+    logging.warning("CODE VIDEO DB STUFF")# TODO FIXME
     return
 
 
 def handle_video_posts(connection,post_dict):
     # Check if post is a video post
-    if post_dict[type] != u"video":
+    if post_dict["type"] != u"video":
         return
+    logging.debug("Post is video")
     # Youtube
-    if post_dict[video_type] == u"youtube":
+    if post_dict["video_type"] == u"youtube":
+        logging.debug("Post is youtube")
         return handle_youtube_video(connection,post_dict)
     # Tumblr
-    if post_dict[video_type] == u"tumblr":
+    elif post_dict["video_type"] == u"tumblr":
+        logging.debug("Post is tumblr video")
         return handle_tumblr_videos(connection,post_dict)
+    else:
+        logging.error("Unknown video type!")
+        assert(False)
     return
 
 
 def save_media(connection,post_dict):
-    logging.info("Saving post media")
-    logging.debug("post_dict"+repr(post_dict))
+    #logging.info("Saving post media")
+    #logging.debug("post_dict"+repr(post_dict))
+    logging.debug('post_dict["type"] '+repr(post_dict["type"] ))
     # Get list of links
     all_post_links = extract_post_links(post_dict)
     logging.debug("all_post_links"+repr(all_post_links))
@@ -394,7 +429,7 @@ def save_media(connection,post_dict):
     logging.debug("new_links: "+repr(new_links))
     # Save image links (Remote) ex. http://foo.com/image.jpg
     if config.save_images:
-        pass#image_link_dict = handle_image_links(connection,new_links)# {link:hash}
+        image_link_dict={}# = handle_image_links(connection,new_links)# {link:hash}
     else:
         image_link_dict = {}
     # Save photos sections (Tumblr)
