@@ -393,22 +393,30 @@ def save_media(connection,post_dict):
         else:
             new_links.append(post_link)
     logging.debug("new_links: "+repr(new_links))
+
     # Save image links (Remote) ex. http://foo.com/image.jpg
     if config.save_images:
         image_link_dict={}# = handle_image_links(connection,new_links)# {link:hash}
     else:
         image_link_dict = {}
+
     # Save photos sections (Tumblr)
     if config.save_photos:
         tumblr_photos_link_dict = handle_tumblr_photos(connection,post_dict)# {link:hash}
     else:
         tumblr_photos_link_dict = {}
+
     # Save videos, both tumblr and youtube (Tumblr & Youtube)
     if config.save_videos:
         handle_video_posts(connection,post_dict)
+
+    # Saved linked videos
+    # TODO FIXME
+
     # Save audio
     if config.save_audio:
         handle_audio_posts(connection,post_dict)
+
     # Join mapping dicts # {link:hash}
     link_to_hash_dict = merge_dicts(
     preexisting_link_dict,
