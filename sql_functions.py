@@ -92,15 +92,15 @@ def add_post_to_db(connection,post_dict,info_dict):
         row_to_insert["chat_dialogue"] = post_dict["dialogue"]
     # Audio Posts
     elif post_dict["type"] == "audio":
-        row_to_insert["audio_caption"] = post_dict["caption"]
-        row_to_insert["audio_player"] = post_dict["player"]
-        row_to_insert["audio_plays"] = post_dict["plays"]
-        row_to_insert["audio_album_art"] = post_dict[""]
-        row_to_insert["audio_artist"] = post_dict["artist"]
-        row_to_insert["audio_album"] = post_dict["album"]
-        row_to_insert["audio_track_name"] = post_dict["track_name"]
-        row_to_insert["audio_track_number"] = post_dict["track_number"]
-        row_to_insert["audio_year"] = post_dict["year"]
+        row_to_insert["audio_caption"] = (post_dict["caption"] if ("caption" in post_dict.keys()) else None)
+        row_to_insert["audio_player"] = (post_dict["player"] if ("player" in post_dict.keys()) else None)
+        row_to_insert["audio_plays"] = (post_dict["plays"] if ("plays" in post_dict.keys()) else None)
+        row_to_insert["audio_album_art"] = (post_dict["album_art"] if ("album_art" in post_dict.keys()) else None)
+        row_to_insert["audio_artist"] = (post_dict["artist"] if ("artist" in post_dict.keys()) else None)
+        row_to_insert["audio_album"] = (post_dict["album"] if ("album" in post_dict.keys()) else None)
+        row_to_insert["audio_track_name"] = (post_dict["track_name"] if ("track_name" in post_dict.keys()) else None)
+        row_to_insert["audio_track_number"] = (post_dict["track_number"] if ("track_number" in post_dict.keys()) else None)
+        row_to_insert["audio_year"] = (post_dict["year"] if ("year" in post_dict.keys()) else None)
     # Video Posts
     elif post_dict["type"] == "video":
         row_to_insert["video_caption"] = post_dict["caption"]

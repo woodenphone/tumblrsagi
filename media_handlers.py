@@ -13,6 +13,7 @@ import mysql.connector
 import hashlib# Needed to hash file data
 import base64 # Needed to do base32 encoding of filenames
 import subprocess# For video downloads
+import urllib# For encoding audio urls
 import re
 import logging
 from utils import *
@@ -188,11 +189,12 @@ def handle_tumblr_photos(connection,post_dict):
         logging.debug("photo_dict: "+repr(photo_dict))
         original_size_url = photo_dict["original_size"]["url"]
         photo_url_list.append(original_size_url)
-        # Grab alt size urls
-        alt_sizes_list = photo_dict["alt_sizes"]
-        for alt_size_dict in alt_sizes_list:
-            alt_size_url = alt_size_dict["url"]
-            photo_url_list.append(alt_size_url)
+        if config.save_all_photo_sizes:
+            # Grab alt size urls
+            alt_sizes_list = photo_dict["alt_sizes"]
+            for alt_size_dict in alt_sizes_list:
+                alt_size_url = alt_size_dict["url"]
+                photo_url_list.append(alt_size_url)
     logging.debug("photo_url_list: "+repr(photo_url_list))
     # Check the photo links against the DB to see if they have already been saved
     photo_urls_to_save = []
@@ -226,6 +228,7 @@ def handle_tumblr_videos(connection,post_dict):
     logging.debug("post_id: "+repr(post_id))
     # Check if video is already saved
     logging.warning("CODE VIDEO DB STUFF")# TODO FIXME
+
     # Form command to run
     # Define arguments. see this url for help
     # https://github.com/rg3/youtube-dl
@@ -241,9 +244,12 @@ def handle_tumblr_videos(connection,post_dict):
     # "youtube-dl.exe -i --restrict-filenames -o --write-info-json --write-description"
     command = [program_path, ignore_errors, safe_filenames, info_json_arg, description_arg, output_arg, output_template, video_page]
     logging.debug("command: "+repr(command))
+
     # Call youtube-dl
     command_result = subprocess.call(command)
     logging.debug("command_result: "+repr(command_result))
+    time_of_retreival = get_current_unix_time()
+
     # Verify download worked
     # Read info JSON file
     expected_info_path = os.path.join(output_dir, post_id+".info.json")
@@ -256,9 +262,11 @@ def handle_tumblr_videos(connection,post_dict):
     logging.debug("media_temp_filepath: "+repr(media_temp_filepath))
     # Check that video file given in info JSON exists
     assert(os.path.exists(media_temp_filepath))
+
     # Generate hash for media file
     file_data = read_file(media_temp_filepath)
     sha512base64_hash = hash_file_data(file_data)
+
     # Decide where to put the file
     # Check if hash is in media DB
     logging.warning("CODE VIDEO DB STUFF")# TODO FIXME
@@ -266,12 +274,16 @@ def handle_tumblr_videos(connection,post_dict):
     if preexisting_filepath is not None:
         # Delete duplicate file if media is already saved
         logging.info("Deleting duplicate video file")
+        logging.warning("CODE VIDEO DUPLICATE DELETE STUFF")# TODO FIXME
         final_media_filepath = preexisting_filepath
     else:
         # Move file to media DL location
         logging.info("Moving video to final location")
-
-        final_media_filepath = os.path.join(config.root_path, "blah","foo.bar")
+        # Generate output filepath
+        file_ext = media_temp_filename.split(".")[-1]
+        filename = str(time_of_retreival)+file_ext
+        final_media_filepath = generate_media_file_path_timestamp(root_path=config.root_path,filename=filename)
+        # Move file to final location
         move_file(media_temp_filepath,final_media_filepath)
         assert(os.path.exists(final_media_filepath))
     # Add video to DB
@@ -307,14 +319,60 @@ def handle_video_posts(connection,post_dict):
         assert(False)
     return
 
+
+def handle_tumblr_audio(connection,post_dict):
+    """Download tumblr-hosted audio from audio posts"""
+    assert(post_dict["audio_type"] == u"tumblr")
+    # Generate a link to the audio file
+    api_media_url = post_dict["audio_url"]
+    # This is basically check if url starts with this string
+    if "https://www.tumblr.com/audio_file/" in api_media_url:
+        # and here it sets the de-facto URL for downloading
+        media_url = "http://a.tumblr.com/" + urllib.quote(api_media_url.split("/")[-1]) + "o1.mp3"
+    else:
+        media_url = api_media_url
+    logging.debug("media_url: "+repr(media_url))
+
+    # Check the DB to see if media is already saved
+    logging.warning("CODE AUDIO DB STUFF")# TODO FIXME
+    hash_already_saved = False #TODO FIXME
+    if hash_already_saved:
+        logging.debug("URL is already in DB, no need to save file.")
+        return
+
+    # Load the media file
+    file_data = get(media_url)
+    time_of_retreival = get_current_unix_time()
+
+    # Check if file is saved already using file hash
+    sha512base64_hash = hash_file_data(file_data)
+    logging.debug("sha512base64_hash: "+repr(sha512base64_hash))
+    logging.warning("CODE AUDIO DB STUFF")# TODO FIXME
+    hash_already_saved = False #TODO FIXME
+    if hash_already_saved:
+        logging.debug("Hash is already in DB, no need to save file.")
+        return
+
+    # Generate filename
+    image_filename = str(time_of_retreival)+".mp3"
+    logging.debug("image_filename: "+repr(image_filename))
+    file_path = generate_media_file_path_timestamp(root_path=config.root_path,filename=image_filename)
+    # Save media to disk
+    save_file(filenamein=file_path,data=file_data,force_save=False)
+
+
 def handle_audio_posts(connection,post_dict):
     """Download audio from audio posts"""
-    # translated from xkit's audio_downloader.js
-    m_url = post_dict["audio_url"]
-    if "https://www.tumblr.com/audio_file/" :
-        m_url = "http://a.tumblr.com/" + m_url.split("/")[-1] + "o1.mp3"
-
+    # Determing if post is tumblr audio
+    if post_dict["type"] != u"audio":
+        return
+    # Tumblr hosted audio
+    if post_dict["audio_type"] == u"tumblr":
+        logging.debug("Post is tumblr audio")
+        return handle_tumblr_audio(connection,post_dict)
     return
+
+
 
 def save_media(connection,post_dict):
     #logging.info("Saving post media")
@@ -348,6 +406,9 @@ def save_media(connection,post_dict):
     # Save videos, both tumblr and youtube (Tumblr & Youtube)
     if config.save_videos:
         handle_video_posts(connection,post_dict)
+    # Save audio
+    if config.save_audio:
+        handle_audio_posts(connection,post_dict)
     # Join mapping dicts # {link:hash}
     link_to_hash_dict = merge_dicts(
     preexisting_link_dict,
