@@ -9,7 +9,7 @@
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
 import random
-
+import urllib
 from utils import *
 
 API_KEY = "fuiKNFp9vQFvjLNvx4sUwti4Yb5yGutBN4Xh10LXZhhRKjWlV4"
@@ -24,7 +24,7 @@ def download(post_id,username):# ln 54
     api_url = "https://api.tumblr.com/v2/blog/" + username + ".tumblr.com/posts" + "?api_key=" + API_KEY + "&id=" + post_id#ln 56
     logging.debug("api_url: "+repr(api_url))
     api_json = get(api_url)# ln 58-62
-    api_dict = json.loads(api_json)
+    api_dict = json.loads(api_json)["response"]
     logging.debug("api_dict: "+repr(api_dict))
 
     # Verify API data
@@ -53,7 +53,8 @@ def download(post_id,username):# ln 54
         # m_id = audio_name.replace(/\W/g, '') + "__" + audio_author.replace(/\W/g, '')
         m_id = re.sub('\w/g', '', audio_name) + "__" + re.sub('\w/g', '', audio_author)# ln 89
     # http://www.xkit.info/seven/helpers/audioget.php?fln=" + m_url + "&id=" + m_id + "\"
-    download_link = "http://www.xkit.info/seven/helpers/audioget.php?fln=" + m_url + "&id=" + m_id + "\\"# ln 97-98
+    download_link = "http://www.xkit.info/seven/helpers/audioget.php?fln=" + urllib.quote(m_url) + "&id=" + urllib.quote(m_id)# ln 97-98
+    logging.debug("download_link: "+repr(download_link))
     media_file_data = get(download_link)
     file_path = os.path.join("download", "test", "test.mp3")
     save_file(filenamein=file_path,data=media_file_data,force_save=True)
@@ -89,6 +90,7 @@ def make_id():
 
 
 def main():
+    setup_logging(log_file_path=os.path.join("debug","audio_downloader-log.txt"))
     download(post_id="111911672818",username="askbuttonsmom")
 
 if __name__ == '__main__':
