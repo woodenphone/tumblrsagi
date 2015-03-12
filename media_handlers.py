@@ -62,41 +62,6 @@ def extract_post_links(post_dict):
     return links
 
 
-##def process_image_links(connection,post_dict, post_links):
-##    """Select which links to download and then try to save them"""
-##    logging.debug("Processing image links")
-##    logging.warning("disabled:image chooser")
-##    image_links = post_links
-##    for image_link in image_links:
-##        download_image_link(connection,image_link)
-##    return
-
-
-
-def download_youtube_link(connection,post_link):
-    """Download a youtube link"""
-    # Call youtube_dl?
-    # Insert info to DB
-    return
-
-
-def process_youtube_links(connection,post_dict,post_links):
-    """Download youtube links"""
-    youtube_domains = [
-    "youtube.com"
-    ]
-    for youtube_domain in youtube_domains:
-        for post_link in post_links:
-            if youtube_domain in post_link:
-                # Extract video ID
-                video_id = ""
-                # Check if video ID is in the DB
-                logging.warning("disabled:video ID check")
-                video_id_in_db = False # Disabled for coding FIXME
-                # If ID is not in the DB, download it and add to DB
-                download_youtube_link(connection,post_link)
-
-
 def download_image_link(connection,media_url):
     """Load an image link and hash the data recieved,
     then add an entry to the DB for the URL
@@ -139,8 +104,6 @@ def download_image_links(connection,media_urls):
     return link_hash_dict# {link:hash}
 
 
-
-
 def hash_file_data(file_data):
     """Take the data from a file and hash it for deduplication
     Return a base32 encoded hash of the data"""
@@ -168,70 +131,6 @@ def generate_media_file_path_timestamp(root_path,filename):
     second_two_chars = filename[4:6]
     file_path = os.path.join(root_path,first_four_chars,second_two_chars,filename)
     return file_path
-
-
-##def handle_media(connection,post_dict):
-##    """Encapsulate all functions relating to processing media"""
-##    logging.debug("Handling media and links")
-##    # Extract links from post
-##    post_links = extract_post_links(post_dict)
-##    logging.debug("post_links: "+repr(post_links))
-##    # Remove links that are already in the DB and store mappings for those that are
-##    old_link_mapping_dict = {} # {HASH:LINK}
-##    new_links = []
-##    for link_to_check in post_links:
-##        link_hash = sql_functions.check_if_link_in_db(connection,media_url)
-##        if link_hash is None:# Put on queue to check if no record exists
-##            new_links.append(link_to_check)
-##        else:# Add exisiting mapping tif record ixists
-##            old_link_mapping_dict[link_to_check] = link_hash
-##    logging.debug("new_links: "+repr(new_links))
-##    logging.debug("old_link_mapping_dict: "+repr(old_link_mapping_dict))
-##    # Send links to a function for each type of media link
-##    image_mapping_dict = process_image_links(connection,post_dict,new_links)
-##    youtube_mapping_dict = process_youtube_links(connection,post_dict,new_links)
-##    # Join link to hash mappings # {LINK:HASH}
-##    link_to_hash_dict = merge_dicts(
-##    image_mapping_dict,
-##    youtube_mapping_dict
-##    )
-##    logging.debug("link_to_hash_dict: "+repr(link_to_hash_dict))
-##    return link_to_hash_dict
-
-
-##def download_media(connection,media_url):
-##    """Download a new link"""
-##    # Images
-##    media_hash = download_image_link(connection,image_link)
-##    return media_hash
-
-
-##def handle_media(connection,post_dict):
-##    handle_images(connection,post_dict)
-##    # Iterate through post fields and find links
-##    fields_to_check = ["body",]
-##    for field_to_check in fields_to_check:
-##        try:
-##            original_field_data = post_dict[field_to_check]
-##        except KeyError, err:
-##            continue
-##        # EFind all links in the field
-##        field_links = extract_field_links(original_field_data)
-##        # Process each link in the field
-##        for link in field_links:
-##            # Lookup link in DB
-##            link_hash = sql_functions.check_if_link_in_db(connection,media_url)
-##            if link_hash is None:
-##                # Download unknown link
-##                link_hash = sql_functions.download_media(connection,media_url)
-##            else:
-##                pass # No need to redownload
-##            # Replace link with identifier and hash "%%LINK=HASH_HASH_HASH%%/LINK%%
-##            new_field_data = original_field_data
-##        # Overwrite old field
-##        post_dict[field_to_check] = new_field_data
-##    # Send back updated post
-##    return post_dict
 
 
 def replace_links(link_dict,post_dict):
@@ -304,6 +203,7 @@ def handle_tumblr_photos(connection,post_dict):
     # Save new photo links
     link_hash_dict = download_image_links(connection,photo_urls_to_save)
     return link_hash_dict# {link:hash}
+
 
 def move_file(original_path,final_path):
     """Move a file from one location to another"""
@@ -452,8 +352,6 @@ def save_media(connection,post_dict):
     new_post_dict["link_to_hash_dict"] = link_to_hash_dict
     logging.debug("new_post_dict: "+repr(new_post_dict))
     return new_post_dict
-
-
 
 
 def main():
