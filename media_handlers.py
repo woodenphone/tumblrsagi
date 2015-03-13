@@ -295,13 +295,114 @@ def handle_youtube_video(connection,post_dict):
     """Download youtube videos from video posts"""
     logging.debug("Processing youtube video")
     logging.debug("post_dict"+repr(post_dict))
-    # Get youtube link
-    # Call youtube-dl
-    logging.warning("CODE VIDEO DB STUFF")# TODO FIXME
+    assert(post_dict["type"] == u"video")# Ensure calling code isn't broken
+    assert(post_dict["video_type"] == u"youtube")# Ensure calling code isn't broken
+
+    video_page = post_dict["post_url"]
+    post_id = str(post_dict["id"])
+    logging.debug("video_page: "+repr(video_page))
+    logging.debug("post_id: "+repr(post_id))
+
+    # Extract youtube links from video field
+    # ex. https://www.youtube.com/embed/lGIEmH3BoyA
+    video_items = post_dict["player"]
+    youtube_urls = []
+    for video_item in video_items:
+        # Get a youtube URL
+        video_item["embed_code"]
+        embed_url_regex ="""src=["']([^?"']+)\?"""
+        embed_url_search = re.search(embed_url_regex, video_item["embed_code"], re.IGNORECASE|re.DOTALL)
+        if embed_url_search:
+            embed_url = embed_url_search.group(1)
+            youtube_urls.append(embed_url)
+        continue
+
+    # Check if videos are already saved
+    new_youtube_urls = []
+    for youtube_url in youtube_urls:
+        logging.warning("CODE VIDEO DB STUFF")# TODO FIXME
+        new_youtube_urls.append(youtube_url)# TODO FIXME
+        continue
+
+    # Download each new video
+    for new_youtube_url in new_youtube_urls:
+        logging.debug("new_youtube_url: "+repr(new_youtube_url))
+        # Form command to run
+        # Define arguments. see this url for help
+        # https://github.com/rg3/youtube-dl
+        program_path = os.path.join("youtube-dl","youtube-dl.exe")
+        assert(os.path.exists(program_path))
+        ignore_errors = "-i"
+        safe_filenames = "--restrict-filenames"
+        output_arg = "-o"
+        info_json_arg = "--write-info-json"
+        description_arg ="--write-description"
+        output_dir = os.path.join(config.root_path,"temp")
+        output_template = os.path.join(output_dir, post_id+".%(ext)s")
+        # "youtube-dl.exe -i --restrict-filenames -o --write-info-json --write-description"
+        command = [program_path, ignore_errors, safe_filenames, info_json_arg, description_arg, output_arg, output_template, new_youtube_url]
+        logging.debug("command: "+repr(command))
+
+        # Call youtube-dl
+        command_result = subprocess.call(command)
+        logging.debug("command_result: "+repr(command_result))
+        time_of_retreival = get_current_unix_time()
+
+        # Verify download worked
+        # Read info JSON file
+        expected_info_path = os.path.join(output_dir, post_id+".info.json")
+        info_exists = os.path.exists(expected_info_path)
+        if not info_exists:
+            logging.error("Info file not found!")
+            logging.error(repr(locals()))
+        info_json = read_file(expected_info_path)
+        yt_dl_info_dict = json.loads(info_json)
+        logging.debug("yt_dl_info_dict: "+repr(yt_dl_info_dict))
+        # Grab file path
+        media_temp_filepath = yt_dl_info_dict["_filename"]
+        media_temp_filename = os.path.basename(media_temp_filepath)
+        logging.debug("media_temp_filepath: "+repr(media_temp_filepath))
+        # Check that video file given in info JSON exists
+        assert(os.path.exists(media_temp_filepath))
+
+        # Generate hash for media file
+        file_data = read_file(media_temp_filepath)
+        sha512base64_hash = hash_file_data(file_data)
+
+        # Decide where to put the file
+        # Check if hash is in media DB
+        logging.warning("CODE VIDEO DB STUFF")# TODO FIXME
+        preexisting_filepath = None# TODO FIXME
+        if preexisting_filepath is not None:
+            # Delete duplicate file if media is already saved
+            logging.info("Deleting duplicate video file")
+            logging.warning("CODE VIDEO DUPLICATE DELETE STUFF")# TODO FIXME
+            continue
+        else:
+            # Move file to media DL location
+            logging.info("Moving video to final location")
+            # Generate output filepath
+            file_ext = media_temp_filename.split(".")[-1]
+            filename = str(time_of_retreival)+"."+file_ext
+            final_media_filepath = generate_media_file_path_timestamp(root_path=config.root_path,filename=filename)
+            # Move file to final location
+            move_file(media_temp_filepath,final_media_filepath)
+            assert(os.path.exists(final_media_filepath))
+        # Add video to DB
+        logging.warning("CODE VIDEO DB STUFF")# TODO FIXME
+        continue
+    logging.debug("Finished downloading youtube embeds")
     return
 
 
+
+
+
+
+
+
 def handle_video_posts(connection,post_dict):
+    """Decide which video functions to run"""
     # Check if post is a video post
     if post_dict["type"] != u"video":
         return
@@ -375,6 +476,7 @@ def handle_audio_posts(connection,post_dict):
 
 
 def save_media(connection,post_dict):
+    """ Main function for saving a posts media"""
     #logging.info("Saving post media")
     #logging.debug("post_dict"+repr(post_dict))
     logging.debug('post_dict["type"] '+repr(post_dict["type"] ))
@@ -431,19 +533,37 @@ def save_media(connection,post_dict):
     return new_post_dict
 
 
-def main():
-    pass
-    setup_logging(log_file_path=os.path.join("debug","media-handlers-log.txt"))
+def debug():
+    """Code for debugging during programming goes here so everything is logged to file"""
     logging.debug("Opening DB connection")
     connection = mysql.connector.connect(**config.sql_login)
+
+    # Debug images
     image_post_dict = {u'highlighted': [], u'reblog_key': u'RSNOnudd', u'format': u'html', u'timestamp': 1401396780, u'note_count': 429, u'tags': [u'porn', u'furry', u'anthro', u'art', u'fantasy', u'compilation', u'myart', u'futa', u'female', u'nude', u'werewolf'], 'link_to_hash_dict': {}, u'photos': [{u'caption': u'My character Gwen, the hermaphrodite Unicorn. Short for I Guinevere.', u'original_size': {u'url': u'http://41.media.tumblr.com/51dc06d26888063e978967b9effdd79d/tumblr_n6csptiJ5u1rzato1o1_1280.jpg', u'width': 1280, u'height': 1739}, u'alt_sizes': [{u'url': u'http://41.media.tumblr.com/51dc06d26888063e978967b9effdd79d/tumblr_n6csptiJ5u1rzato1o1_1280.jpg', u'width': 1280, u'height': 1739}, {u'url': u'http://41.media.tumblr.com/51dc06d26888063e978967b9effdd79d/tumblr_n6csptiJ5u1rzato1o1_500.jpg', u'width': 500, u'height': 679}, {u'url': u'http://41.media.tumblr.com/51dc06d26888063e978967b9effdd79d/tumblr_n6csptiJ5u1rzato1o1_400.jpg', u'width': 400, u'height': 543}, {u'url': u'http://40.media.tumblr.com/51dc06d26888063e978967b9effdd79d/tumblr_n6csptiJ5u1rzato1o1_250.jpg', u'width': 250, u'height': 340}, {u'url': u'http://41.media.tumblr.com/51dc06d26888063e978967b9effdd79d/tumblr_n6csptiJ5u1rzato1o1_100.jpg', u'width': 100, u'height': 136}, {u'url': u'http://41.media.tumblr.com/51dc06d26888063e978967b9effdd79d/tumblr_n6csptiJ5u1rzato1o1_75sq.jpg', u'width': 75, u'height': 75}]}, {u'caption': u'A young man and one of his harem concubines.', u'original_size': {u'url': u'http://40.media.tumblr.com/df5d6e743955acef44262810e7e68196/tumblr_n6csptiJ5u1rzato1o2_1280.jpg', u'width': 1280, u'height': 1037}, u'alt_sizes': [{u'url': u'http://40.media.tumblr.com/df5d6e743955acef44262810e7e68196/tumblr_n6csptiJ5u1rzato1o2_1280.jpg', u'width': 1280, u'height': 1037}, {u'url': u'http://40.media.tumblr.com/df5d6e743955acef44262810e7e68196/tumblr_n6csptiJ5u1rzato1o2_500.jpg', u'width': 500, u'height': 405}, {u'url': u'http://41.media.tumblr.com/df5d6e743955acef44262810e7e68196/tumblr_n6csptiJ5u1rzato1o2_400.jpg', u'width': 400, u'height': 324}, {u'url': u'http://40.media.tumblr.com/df5d6e743955acef44262810e7e68196/tumblr_n6csptiJ5u1rzato1o2_250.jpg', u'width': 250, u'height': 203}, {u'url': u'http://41.media.tumblr.com/df5d6e743955acef44262810e7e68196/tumblr_n6csptiJ5u1rzato1o2_100.jpg', u'width': 100, u'height': 81}, {u'url': u'http://40.media.tumblr.com/df5d6e743955acef44262810e7e68196/tumblr_n6csptiJ5u1rzato1o2_75sq.jpg', u'width': 75, u'height': 75}]}, {u'caption': u'Gift-art for Robotjoe at FA.', u'original_size': {u'url': u'http://40.media.tumblr.com/027e4e40a7b6dd7437ba19bb0bf66394/tumblr_n6csptiJ5u1rzato1o3_1280.jpg', u'width': 1280, u'height': 1280}, u'alt_sizes': [{u'url': u'http://40.media.tumblr.com/027e4e40a7b6dd7437ba19bb0bf66394/tumblr_n6csptiJ5u1rzato1o3_1280.jpg', u'width': 1280, u'height': 1280}, {u'url': u'http://41.media.tumblr.com/027e4e40a7b6dd7437ba19bb0bf66394/tumblr_n6csptiJ5u1rzato1o3_500.jpg', u'width': 500, u'height': 500}, {u'url': u'http://41.media.tumblr.com/027e4e40a7b6dd7437ba19bb0bf66394/tumblr_n6csptiJ5u1rzato1o3_400.jpg', u'width': 400, u'height': 400}, {u'url': u'http://41.media.tumblr.com/027e4e40a7b6dd7437ba19bb0bf66394/tumblr_n6csptiJ5u1rzato1o3_250.jpg', u'width': 250, u'height': 250}, {u'url': u'http://40.media.tumblr.com/027e4e40a7b6dd7437ba19bb0bf66394/tumblr_n6csptiJ5u1rzato1o3_100.jpg', u'width': 100, u'height': 100}, {u'url': u'http://40.media.tumblr.com/027e4e40a7b6dd7437ba19bb0bf66394/tumblr_n6csptiJ5u1rzato1o3_75sq.jpg', u'width': 75, u'height': 75}]}, {u'caption': u'Giftart for Ritts at FA.', u'original_size': {u'url': u'http://41.media.tumblr.com/b04099342f13a3aaad3ef8d7f9f3080f/tumblr_n6csptiJ5u1rzato1o4_1280.jpg', u'width': 1280, u'height': 1152}, u'alt_sizes': [{u'url': u'http://41.media.tumblr.com/b04099342f13a3aaad3ef8d7f9f3080f/tumblr_n6csptiJ5u1rzato1o4_1280.jpg', u'width': 1280, u'height': 1152}, {u'url': u'http://40.media.tumblr.com/b04099342f13a3aaad3ef8d7f9f3080f/tumblr_n6csptiJ5u1rzato1o4_500.jpg', u'width': 500, u'height': 450}, {u'url': u'http://40.media.tumblr.com/b04099342f13a3aaad3ef8d7f9f3080f/tumblr_n6csptiJ5u1rzato1o4_400.jpg', u'width': 400, u'height': 360}, {u'url': u'http://40.media.tumblr.com/b04099342f13a3aaad3ef8d7f9f3080f/tumblr_n6csptiJ5u1rzato1o4_250.jpg', u'width': 250, u'height': 225}, {u'url': u'http://40.media.tumblr.com/b04099342f13a3aaad3ef8d7f9f3080f/tumblr_n6csptiJ5u1rzato1o4_100.jpg', u'width': 100, u'height': 90}, {u'url': u'http://41.media.tumblr.com/b04099342f13a3aaad3ef8d7f9f3080f/tumblr_n6csptiJ5u1rzato1o4_75sq.jpg', u'width': 75, u'height': 75}]}, {u'caption': u'', u'original_size': {u'url': u'http://41.media.tumblr.com/96a2f5867ff3269def55cba3ddb42282/tumblr_n6csptiJ5u1rzato1o5_1280.jpg', u'width': 1153, u'height': 1920}, u'alt_sizes': [{u'url': u'http://41.media.tumblr.com/96a2f5867ff3269def55cba3ddb42282/tumblr_n6csptiJ5u1rzato1o5_1280.jpg', u'width': 1153, u'height': 1920}, {u'url': u'http://40.media.tumblr.com/96a2f5867ff3269def55cba3ddb42282/tumblr_n6csptiJ5u1rzato1o5_500.jpg', u'width': 450, u'height': 750}, {u'url': u'http://40.media.tumblr.com/96a2f5867ff3269def55cba3ddb42282/tumblr_n6csptiJ5u1rzato1o5_400.jpg', u'width': 360, u'height': 600}, {u'url': u'http://40.media.tumblr.com/96a2f5867ff3269def55cba3ddb42282/tumblr_n6csptiJ5u1rzato1o5_250.jpg', u'width': 240, u'height': 400}, {u'url': u'http://41.media.tumblr.com/96a2f5867ff3269def55cba3ddb42282/tumblr_n6csptiJ5u1rzato1o5_100.jpg', u'width': 100, u'height': 167}, {u'url': u'http://36.media.tumblr.com/96a2f5867ff3269def55cba3ddb42282/tumblr_n6csptiJ5u1rzato1o5_75sq.jpg', u'width': 75, u'height': 75}]}, {u'caption': u'She shot herself in the face, or did others? Up to you.', u'original_size': {u'url': u'http://41.media.tumblr.com/879c064933cf138ae169a152dbd717a4/tumblr_n6csptiJ5u1rzato1o6_1280.jpg', u'width': 841, u'height': 1400}, u'alt_sizes': [{u'url': u'http://41.media.tumblr.com/879c064933cf138ae169a152dbd717a4/tumblr_n6csptiJ5u1rzato1o6_1280.jpg', u'width': 841, u'height': 1400}, {u'url': u'http://40.media.tumblr.com/879c064933cf138ae169a152dbd717a4/tumblr_n6csptiJ5u1rzato1o6_500.jpg', u'width': 451, u'height': 750}, {u'url': u'http://41.media.tumblr.com/879c064933cf138ae169a152dbd717a4/tumblr_n6csptiJ5u1rzato1o6_400.jpg', u'width': 360, u'height': 600}, {u'url': u'http://40.media.tumblr.com/879c064933cf138ae169a152dbd717a4/tumblr_n6csptiJ5u1rzato1o6_250.jpg', u'width': 240, u'height': 400}, {u'url': u'http://40.media.tumblr.com/879c064933cf138ae169a152dbd717a4/tumblr_n6csptiJ5u1rzato1o6_100.jpg', u'width': 100, u'height': 166}, {u'url': u'http://36.media.tumblr.com/879c064933cf138ae169a152dbd717a4/tumblr_n6csptiJ5u1rzato1o6_75sq.jpg', u'width': 75, u'height': 75}]}, {u'caption': u"They're now twins.", u'original_size': {u'url': u'http://36.media.tumblr.com/56df999c75b2ea6e10d9e9e3a4248db6/tumblr_n6csptiJ5u1rzato1o7_1280.jpg', u'width': 1153, u'height': 1920}, u'alt_sizes': [{u'url': u'http://36.media.tumblr.com/56df999c75b2ea6e10d9e9e3a4248db6/tumblr_n6csptiJ5u1rzato1o7_1280.jpg', u'width': 1153, u'height': 1920}, {u'url': u'http://36.media.tumblr.com/56df999c75b2ea6e10d9e9e3a4248db6/tumblr_n6csptiJ5u1rzato1o7_500.jpg', u'width': 450, u'height': 750}, {u'url': u'http://41.media.tumblr.com/56df999c75b2ea6e10d9e9e3a4248db6/tumblr_n6csptiJ5u1rzato1o7_400.jpg', u'width': 360, u'height': 600}, {u'url': u'http://40.media.tumblr.com/56df999c75b2ea6e10d9e9e3a4248db6/tumblr_n6csptiJ5u1rzato1o7_250.jpg', u'width': 240, u'height': 400}, {u'url': u'http://41.media.tumblr.com/56df999c75b2ea6e10d9e9e3a4248db6/tumblr_n6csptiJ5u1rzato1o7_100.jpg', u'width': 100, u'height': 167}, {u'url': u'http://41.media.tumblr.com/56df999c75b2ea6e10d9e9e3a4248db6/tumblr_n6csptiJ5u1rzato1o7_75sq.jpg', u'width': 75, u'height': 75}]}, {u'caption': u'This is knot a funny joke.', u'original_size': {u'url': u'http://36.media.tumblr.com/dd7b3f0723d26d0cf9a5daff5cb82e8a/tumblr_n6csptiJ5u1rzato1o8_1280.jpg', u'width': 1000, u'height': 1000}, u'alt_sizes': [{u'url': u'http://36.media.tumblr.com/dd7b3f0723d26d0cf9a5daff5cb82e8a/tumblr_n6csptiJ5u1rzato1o8_1280.jpg', u'width': 1000, u'height': 1000}, {u'url': u'http://40.media.tumblr.com/dd7b3f0723d26d0cf9a5daff5cb82e8a/tumblr_n6csptiJ5u1rzato1o8_500.jpg', u'width': 500, u'height': 500}, {u'url': u'http://40.media.tumblr.com/dd7b3f0723d26d0cf9a5daff5cb82e8a/tumblr_n6csptiJ5u1rzato1o8_400.jpg', u'width': 400, u'height': 400}, {u'url': u'http://36.media.tumblr.com/dd7b3f0723d26d0cf9a5daff5cb82e8a/tumblr_n6csptiJ5u1rzato1o8_250.jpg', u'width': 250, u'height': 250}, {u'url': u'http://40.media.tumblr.com/dd7b3f0723d26d0cf9a5daff5cb82e8a/tumblr_n6csptiJ5u1rzato1o8_100.jpg', u'width': 100, u'height': 100}, {u'url': u'http://40.media.tumblr.com/dd7b3f0723d26d0cf9a5daff5cb82e8a/tumblr_n6csptiJ5u1rzato1o8_75sq.jpg', u'width': 75, u'height': 75}]}, {u'caption': u'Gift-art for Quillu at FA.', u'original_size': {u'url': u'http://41.media.tumblr.com/e02229ba14b4fb3be2866595e371aaa7/tumblr_n6csptiJ5u1rzato1o9_1280.jpg', u'width': 800, u'height': 1410}, u'alt_sizes': [{u'url': u'http://41.media.tumblr.com/e02229ba14b4fb3be2866595e371aaa7/tumblr_n6csptiJ5u1rzato1o9_1280.jpg', u'width': 800, u'height': 1410}, {u'url': u'http://40.media.tumblr.com/e02229ba14b4fb3be2866595e371aaa7/tumblr_n6csptiJ5u1rzato1o9_500.jpg', u'width': 426, u'height': 750}, {u'url': u'http://41.media.tumblr.com/e02229ba14b4fb3be2866595e371aaa7/tumblr_n6csptiJ5u1rzato1o9_400.jpg', u'width': 340, u'height': 600}, {u'url': u'http://41.media.tumblr.com/e02229ba14b4fb3be2866595e371aaa7/tumblr_n6csptiJ5u1rzato1o9_250.jpg', u'width': 227, u'height': 400}, {u'url': u'http://40.media.tumblr.com/e02229ba14b4fb3be2866595e371aaa7/tumblr_n6csptiJ5u1rzato1o9_100.jpg', u'width': 100, u'height': 176}, {u'url': u'http://41.media.tumblr.com/e02229ba14b4fb3be2866595e371aaa7/tumblr_n6csptiJ5u1rzato1o9_75sq.jpg', u'width': 75, u'height': 75}]}, {u'caption': u'Werewolf herm, in heat. Watch out!', u'original_size': {u'url': u'http://36.media.tumblr.com/3a23e75b564f5d790bb440ba2ba6140c/tumblr_n6csptiJ5u1rzato1o10_1280.jpg', u'width': 1280, u'height': 962}, u'alt_sizes': [{u'url': u'http://36.media.tumblr.com/3a23e75b564f5d790bb440ba2ba6140c/tumblr_n6csptiJ5u1rzato1o10_1280.jpg', u'width': 1280, u'height': 962}, {u'url': u'http://41.media.tumblr.com/3a23e75b564f5d790bb440ba2ba6140c/tumblr_n6csptiJ5u1rzato1o10_500.jpg', u'width': 500, u'height': 376}, {u'url': u'http://41.media.tumblr.com/3a23e75b564f5d790bb440ba2ba6140c/tumblr_n6csptiJ5u1rzato1o10_400.jpg', u'width': 400, u'height': 301}, {u'url': u'http://36.media.tumblr.com/3a23e75b564f5d790bb440ba2ba6140c/tumblr_n6csptiJ5u1rzato1o10_250.jpg', u'width': 250, u'height': 188}, {u'url': u'http://36.media.tumblr.com/3a23e75b564f5d790bb440ba2ba6140c/tumblr_n6csptiJ5u1rzato1o10_100.jpg', u'width': 100, u'height': 75}, {u'url': u'http://40.media.tumblr.com/3a23e75b564f5d790bb440ba2ba6140c/tumblr_n6csptiJ5u1rzato1o10_75sq.jpg', u'width': 75, u'height': 75}]}], u'id': 87231460597L, u'post_url': u'http://zaggatar.tumblr.com/post/87231460597/i-thought-i-would-upload-some-of-what-i-think-is', u'caption': u'<p><span>I thought I would upload s</span>ome of what I think is best of my older stuff.</p>\n<p>As you can see, I am guilty for liking horsegirls with big dicks.</p>\n<p>Enjoy.</p>', u'state': u'published', u'short_url': u'http://tmblr.co/Zlxuxu1HFPdJr', u'date': u'2014-05-29 20:53:00 GMT', u'type': u'photo', u'slug': u'i-thought-i-would-upload-some-of-what-i-think-is', u'photoset_layout': u'1111111111', u'blog_name': u'zaggatar'}
     #print flatten(image_post_dict)
     #new_post_dict = save_media(connection,image_post_dict)
     #download_image_link(connection,"https://derpicdn.net/spns/W1siZiIsIjIwMTQvMDEvMTAvMDJfNDBfMjhfNjUyX2RlcnBpYm9vcnVfYmFubmVyLnBuZyJdXQ.png")
-    video_post_dict = {u'reblog_key': u'6Z8hlyT3', u'video_url': u'http://vt.tumblr.com/tumblr_m8jzqe42w81r7jeph.mp4', u'short_url': u'http://tmblr.co/Z_sLQwR8o_kW', u'thumbnail_width': u'640', u'player': [{u'width': 250, u'embed_code': u'\n<video  id=\'embed-55004d4b23fb8993893883\' class=\'crt-video crt-skin-default\' width=\'250\' height=\'140\' poster=\'http://media.tumblr.com/tumblr_m8jzqe42w81r7jeph_frame1.jpg\' preload=\'none\' data-crt-video data-crt-options=\'{"duration":"60","hdUrl":false,"filmstrip":false}\' >\n    <source src="http://api.tumblr.com/video_file/29138611104/tumblr_m8jzqe42w81r7jeph" type="video/mp4">\n</video>\n'}, {u'width': 400, u'embed_code': u'\n<video  id=\'embed-55004d4b2476c363953508\' class=\'crt-video crt-skin-default\' width=\'400\' height=\'225\' poster=\'http://media.tumblr.com/tumblr_m8jzqe42w81r7jeph_frame1.jpg\' preload=\'none\' data-crt-video data-crt-options=\'{"duration":"60","hdUrl":false,"filmstrip":false}\' >\n    <source src="http://api.tumblr.com/video_file/29138611104/tumblr_m8jzqe42w81r7jeph" type="video/mp4">\n</video>\n'}, {u'width': 500, u'embed_code': u'\n<video  id=\'embed-55004d4b24f7f103075436\' class=\'crt-video crt-skin-default\' width=\'500\' height=\'281\' poster=\'http://media.tumblr.com/tumblr_m8jzqe42w81r7jeph_frame1.jpg\' preload=\'none\' data-crt-video data-crt-options=\'{"duration":"60","hdUrl":false,"filmstrip":false}\' >\n    <source src="http://api.tumblr.com/video_file/29138611104/tumblr_m8jzqe42w81r7jeph" type="video/mp4">\n</video>\n'}], u'duration': u'60', u'id': 29138611104L, u'post_url': u'http://tsitra360.tumblr.com/post/29138611104/preview-on-a-new-timelapse-illustration-of-mine', u'tags': [u'my little pony', u'friendship is magic', u'mlp', u'fim', u'pinkie pie', u'twilight sparkle'], u'highlighted': [], u'state': u'published', u'html5_capable': True, u'type': u'video', u'format': u'html', u'timestamp': 1344625680, u'note_count': 2, u'video_type': u'tumblr', u'date': u'2012-08-10 19:08:00 GMT', u'thumbnail_height': u'360', u'slug': u'preview-on-a-new-timelapse-illustration-of-mine', u'blog_name': u'tsitra360', u'caption': u'<p>PREVIEW on a new timelapse illustration of mine.</p>', u'thumbnail_url': u'http://media.tumblr.com/tumblr_m8jzqe42w81r7jeph_frame1.jpg'}
-    handle_tumblr_videos(connection,video_post_dict)
+
+    # Debug video
+    tumblr_video_post_dict = {u'reblog_key': u'6Z8hlyT3', u'video_url': u'http://vt.tumblr.com/tumblr_m8jzqe42w81r7jeph.mp4', u'short_url': u'http://tmblr.co/Z_sLQwR8o_kW', u'thumbnail_width': u'640', u'player': [{u'width': 250, u'embed_code': u'\n<video  id=\'embed-55004d4b23fb8993893883\' class=\'crt-video crt-skin-default\' width=\'250\' height=\'140\' poster=\'http://media.tumblr.com/tumblr_m8jzqe42w81r7jeph_frame1.jpg\' preload=\'none\' data-crt-video data-crt-options=\'{"duration":"60","hdUrl":false,"filmstrip":false}\' >\n    <source src="http://api.tumblr.com/video_file/29138611104/tumblr_m8jzqe42w81r7jeph" type="video/mp4">\n</video>\n'}, {u'width': 400, u'embed_code': u'\n<video  id=\'embed-55004d4b2476c363953508\' class=\'crt-video crt-skin-default\' width=\'400\' height=\'225\' poster=\'http://media.tumblr.com/tumblr_m8jzqe42w81r7jeph_frame1.jpg\' preload=\'none\' data-crt-video data-crt-options=\'{"duration":"60","hdUrl":false,"filmstrip":false}\' >\n    <source src="http://api.tumblr.com/video_file/29138611104/tumblr_m8jzqe42w81r7jeph" type="video/mp4">\n</video>\n'}, {u'width': 500, u'embed_code': u'\n<video  id=\'embed-55004d4b24f7f103075436\' class=\'crt-video crt-skin-default\' width=\'500\' height=\'281\' poster=\'http://media.tumblr.com/tumblr_m8jzqe42w81r7jeph_frame1.jpg\' preload=\'none\' data-crt-video data-crt-options=\'{"duration":"60","hdUrl":false,"filmstrip":false}\' >\n    <source src="http://api.tumblr.com/video_file/29138611104/tumblr_m8jzqe42w81r7jeph" type="video/mp4">\n</video>\n'}], u'duration': u'60', u'id': 29138611104L, u'post_url': u'http://tsitra360.tumblr.com/post/29138611104/preview-on-a-new-timelapse-illustration-of-mine', u'tags': [u'my little pony', u'friendship is magic', u'mlp', u'fim', u'pinkie pie', u'twilight sparkle'], u'highlighted': [], u'state': u'published', u'html5_capable': True, u'type': u'video', u'format': u'html', u'timestamp': 1344625680, u'note_count': 2, u'video_type': u'tumblr', u'date': u'2012-08-10 19:08:00 GMT', u'thumbnail_height': u'360', u'slug': u'preview-on-a-new-timelapse-illustration-of-mine', u'blog_name': u'tsitra360', u'caption': u'<p>PREVIEW on a new timelapse illustration of mine.</p>', u'thumbnail_url': u'http://media.tumblr.com/tumblr_m8jzqe42w81r7jeph_frame1.jpg'}
+    youtube_video_post_dict = {u'reblog_key': u'HfjckfH7', u'short_url': u'http://tmblr.co/ZUGffq1cfuHuJ', u'thumbnail_width': 480, u'player': [{u'width': 250, u'embed_code': u'<iframe width="250" height="140" id="youtube_iframe" src="https://www.youtube.com/embed/lGIEmH3BoyA?feature=oembed&amp;enablejsapi=1&amp;origin=http://safe.txmblr.com&amp;wmode=opaque" frameborder="0" allowfullscreen></iframe>'}, {u'width': 400, u'embed_code': u'<iframe width="400" height="225" id="youtube_iframe" src="https://www.youtube.com/embed/lGIEmH3BoyA?feature=oembed&amp;enablejsapi=1&amp;origin=http://safe.txmblr.com&amp;wmode=opaque" frameborder="0" allowfullscreen></iframe>'}, {u'width': 500, u'embed_code': u'<iframe width="500" height="281" id="youtube_iframe" src="https://www.youtube.com/embed/lGIEmH3BoyA?feature=oembed&amp;enablejsapi=1&amp;origin=http://safe.txmblr.com&amp;wmode=opaque" frameborder="0" allowfullscreen></iframe>'}], u'id': 110224285203L, u'post_url': u'http://askbuttonsmom.tumblr.com/post/110224285203/throwback-can-you-believe-its-been-almost-2yrs', u'tags': [u"button's mom", u'hardcopy', u'song', u'shadyvox'], u'highlighted': [], u'state': u'published', u'html5_capable': True, u'type': u'video', u'format': u'html', u'timestamp': 1423197599, u'note_count': 145, u'video_type': u'youtube', u'date': u'2015-02-06 04:39:59 GMT', u'thumbnail_height': 360, u'permalink_url': u'https://www.youtube.com/watch?v=lGIEmH3BoyA', u'slug': u'throwback-can-you-believe-its-been-almost-2yrs', u'blog_name': u'askbuttonsmom', u'caption': u'<p>Throwback! Can you believe it&#8217;s been almost 2yrs since this came out? Mommy&#8217;s getting old&#8230;</p>', u'thumbnail_url': u'https://i.ytimg.com/vi/lGIEmH3BoyA/hqdefault.jpg'}
+    #handle_tumblr_videos(connection,tumblr_video_post_dict)
+    handle_youtube_video(connection,youtube_video_post_dict)
+
     logging.debug("Closing DB connection")
     connection.close()
+    return
+
+
+def main():
+    try:
+        setup_logging(log_file_path=os.path.join("debug","media-handlers-log.txt"))
+        debug()
+    except Exception, e:# Log fatal exceptions
+        logging.critical("Unhandled exception!")
+        logging.exception(e)
+    return
+
 
 if __name__ == '__main__':
     main()

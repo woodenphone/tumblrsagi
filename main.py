@@ -143,6 +143,7 @@ class tumblr_blog:
             add_post_to_db(self.connection,new_post_dict,self.info_dict)
             logging.debug("Inserting "+str(counter)+"th post")
         # Commit/save new data
+        logging.debug("Committing new data to DB.")
         self.connection.commit()
         return
 
