@@ -132,6 +132,18 @@ TABLES['media'] = (
     "  `media_url`  text NOT NULL,"# URL the media came from
     "  `sha512base64_hash`  text NOT NULL,"#
     "  `filename`  text NOT NULL,"#
+    "  `extractor_used`  text NOT NULL,"#What extractor was used to grab the media
+    # Extractor specific, NULL if not applicable
+    # For youtube
+    "  `youtube_yt_dl_info_json`  text,"# what data did youtube-dl give in the info JSON?
+    "  `youtube_video_id`  text,"# what was the id from the video URL?
+    # For tumblr video
+    "  `tumblrvideo_yt_dl_info_json`  text,"# what was the id from the video URL?
+    # For tumblr audio
+    "  `tumblraudio_album_art`  text,"#
+    "  `tumblraudio_artist`  text,"#
+    # For tumblr photo fields
+
     #
     "  PRIMARY KEY (`primary_key`)"
     ") ENGINE=InnoDB")

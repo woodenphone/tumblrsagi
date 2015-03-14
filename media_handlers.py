@@ -83,7 +83,13 @@ def download_image_link(connection,media_url):
     file_path = generate_media_file_path_timestamp(root_path=config.root_path,filename=image_filename)
     logging.debug("file_path: "+repr(file_path))
     # Compare hash with database and add new entry for this URL
-    media_already_saved = sql_functions.add_image_to_db(connection,media_url,sha512base64_hash,image_filename,time_of_retreival)
+    media_already_saved = sql_functions.add_media_to_db(
+        connection,
+        media_url=media_url,
+        sha512base64_hash=sha512base64_hash,
+        media_filename=image_filename,
+        time_of_retreival=time_of_retreival,
+        extractor_used="image",)
     # If hash was already in DB, return
     if media_already_saved:
         logging.debug("Hash already in DB, no need to save file to disk")
@@ -97,6 +103,7 @@ def download_image_link(connection,media_url):
 
 def download_image_links(connection,media_urls):
     # Save image links
+    media_urls = uniquify(media_urls)
     link_hash_dict = {}# {link:hash}
     for media_urls in media_urls:
         sha512base64_hash =  download_image_link(connection,media_urls)
@@ -173,6 +180,16 @@ def handle_image_links(connection,all_post_links):
     # Save image links
     link_hash_dict = download_image_links(connection,image_links)
     return link_hash_dict# {link:hash}
+
+
+def handle_thumbnail(connection,post_dict):
+    if "thumbnail_url" in post_dict.keys():
+        logging.debug("Saving thumbnail")
+        thumbnail_link = [post_dict["thumbnail_url"]]
+        download_image_links(connection,thumbnail_link)
+    return
+
+
 
 
 def handle_tumblr_photos(connection,post_dict):
@@ -288,6 +305,14 @@ def handle_tumblr_videos(connection,post_dict):
         assert(os.path.exists(final_media_filepath))
     # Add video to DB
     logging.warning("CODE VIDEO DB STUFF")# TODO FIXME
+    sql_functions.add_media_to_db(
+        connection,
+        media_url=video_page,
+        sha512base64_hash=sha512base64_hash,
+        media_filename=final_media_filepath,
+        time_of_retreival=time_of_retreival,
+        extractor_used="tumblr_video_embed",
+        tumblrvideo_yt_dl_info_json=info_json)
     return
 
 
@@ -323,6 +348,8 @@ def handle_youtube_video(connection,post_dict):
         logging.warning("CODE VIDEO DB STUFF")# TODO FIXME
         new_youtube_urls.append(youtube_url)# TODO FIXME
         continue
+
+    new_youtube_urls = uniquify(new_youtube_urls)
 
     # Download each new video
     for new_youtube_url in new_youtube_urls:
@@ -390,6 +417,14 @@ def handle_youtube_video(connection,post_dict):
             assert(os.path.exists(final_media_filepath))
         # Add video to DB
         logging.warning("CODE VIDEO DB STUFF")# TODO FIXME
+        sql_functions.add_media_to_db(
+        connection,
+        media_url=new_youtube_url,
+        sha512base64_hash=sha512base64_hash,
+        media_filename=final_media_filepath,
+        time_of_retreival=time_of_retreival,
+        extractor_used="youtube_embed",
+        youtube_yt_dl_info_json=info_json)
         continue
     logging.debug("Finished downloading youtube embeds")
     return
@@ -424,6 +459,7 @@ def handle_video_posts(connection,post_dict):
 def handle_tumblr_audio(connection,post_dict):
     """Download tumblr-hosted audio from audio posts"""
     assert(post_dict["audio_type"] == u"tumblr")
+    logging.debug("post_dict: "+repr(post_dict))
     # Generate a link to the audio file
     api_media_url = post_dict["audio_url"]
     # This is basically check if url starts with this string
@@ -455,11 +491,18 @@ def handle_tumblr_audio(connection,post_dict):
         return
 
     # Generate filename
-    image_filename = str(time_of_retreival)+".mp3"
-    logging.debug("image_filename: "+repr(image_filename))
-    file_path = generate_media_file_path_timestamp(root_path=config.root_path,filename=image_filename)
+    audio_filename = str(time_of_retreival)+".mp3"
+    logging.debug("audio_filename: "+repr(audio_filename))
+    file_path = generate_media_file_path_timestamp(root_path=config.root_path,filename=audio_filename)
     # Save media to disk
     save_file(filenamein=file_path,data=file_data,force_save=False)
+    # Add new media to DB
+    sql_functions.add_media_to_db(connection,
+    media_url = media_url,
+    sha512base64_hash = sha512base64_hash,
+    media_filename = audio_filename,
+    time_of_retreival = time_of_retreival,
+    extractor_used = "tumblr_audio")
 
 
 def handle_audio_posts(connection,post_dict):
@@ -494,6 +537,7 @@ def save_media(connection,post_dict):
             continue
         else:
             new_links.append(post_link)
+    new_links = uniquify(new_links)
     logging.debug("new_links: "+repr(new_links))
 
     # Save image links (Remote) ex. http://foo.com/image.jpg
@@ -551,6 +595,7 @@ def debug():
     handle_youtube_video(connection,youtube_video_post_dict)
 
     logging.debug("Closing DB connection")
+    connection.commit()
     connection.close()
     return
 

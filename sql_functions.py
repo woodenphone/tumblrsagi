@@ -173,17 +173,20 @@ def check_if_link_in_db(connection,media_url):
     return True
 
 
-def add_media_to_db(connection,media_url,sha512base64_hash,media_filename,time_of_retreival):
+def add_media_to_db(connection,
+    media_url,
+    sha512base64_hash,
+    media_filename,
+    time_of_retreival,
+    extractor_used,
+    youtube_yt_dl_info_json=None,
+    tumblrvideo_yt_dl_info_json=None,
+    youtube_video_id=None):
     """Insert media information for a URL into the DB"""
     cursor =  connection.cursor()
     logging.debug("media_filename: "+repr(media_filename))
     # Check for existing records for the file hash
-    # SELECT * FROM `Content` WHERE title = 'bombshells.mp4' ORDER BY id LIMIT 1;
-    #check_query = "SELECT * FROM `media` WHERE sha512base64_hash = %s ORDER BY primary_key LIMIT 1;"
-    # "SELECT version FROM (story_metadata) WHERE id = %s ORDER BY version LIMIT 1"
-    #check_query = "SELECT sha512base64_hash FROM (media) WHERE sha512base64_hash = %s ORDER BY primary_key LIMIT 1"
     check_query = "SELECT * FROM `media` WHERE sha512base64_hash = '%s';"
-    #check_query = "SELECT * FROM `media` WHERE sha512base64_hash = '%s';" % sha512base64_hash # From #derpibooru
     logging.debug(check_query)
     cursor.execute(check_query, (sha512base64_hash))
     check_row_counter = 0
@@ -191,13 +194,26 @@ def add_media_to_db(connection,media_url,sha512base64_hash,media_filename,time_o
         check_row_counter += 1
         logging.debug("check_row: "+repr(check_row))
     media_already_saved = False# Was there a hash collission
-    # Insert new row for the new URL
+    # Generate new row for the DB
     row_to_insert = {}
     row_to_insert["date_added"] = time_of_retreival
     row_to_insert["media_url"] = media_url
     row_to_insert["sha512base64_hash"] = sha512base64_hash
     row_to_insert["filename"] = media_filename
-    #
+    row_to_insert["extractor_used"] = extractor_used
+    # Image
+    # Tumblr photos
+
+    # Video
+    # Tumblr video
+    row_to_insert["tumblrvideo_yt_dl_info_json"] = tumblrvideo_yt_dl_info_json
+    # Youtube video
+    row_to_insert["youtube_yt_dl_info_json"] = youtube_yt_dl_info_json
+    row_to_insert["youtube_video_id"] = youtube_video_id
+
+    # Audio
+    row_to_insert["filename"] = media_filename
+    # Tumblr Audio
     if config.log_db_rows:
         logging.debug("row_to_insert: "+repr(row_to_insert))
     # Insert dict into DB
