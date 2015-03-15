@@ -166,11 +166,93 @@ def add_blog_to_db(connection,info_dict):
 
 
 
+
+
+
+def lookup_field(connection,field,value):
+    """Return a list of all rows matching the given field/value pair
+    If no rows match, return None
+    ONLY set field through code, NEVER give field from outside data"""
+    logging.debug("checking DB for feild: "+repr(field)+" and value: "+repr(value))
+    cursor =  connection.cursor()
+    # Check for existing records for the file hash
+    check_query = "SELECT * FROM `media` WHERE "+field+" = '%s';"
+    logging.debug(check_query)
+    cursor.execute(check_query, (value))
+    media_already_saved = False
+    check_row_counter = 0
+    rows = []
+    for check_row in cursor:
+        check_row_counter += 1
+        logging.debug("check_row: "+repr(check_row))
+        rows.append(row)
+    logging.debug("rows: "+repr(rows))
+    cursor.close()
+    if len(rows) > 0:
+        return rows
+    else:
+        return None
+
+
+
+
 def check_if_link_in_db(connection,media_url):
     """Lookup a URL in the media DB.
     Return True if any matches found; otherwise return False."""
-    logging.warning("disabled:check_if_link_in_db")
-    return True
+    logging.debug("checking DB for media_url: "+repr(media_url))
+    cursor =  connection.cursor()
+    # Check for existing records for the file hash
+    check_query = "SELECT * FROM `media` WHERE media_url = '%s';"
+    logging.debug(check_query)
+    cursor.execute(check_query, (media_url))
+    media_already_saved = False
+    check_row_counter = 0
+    for check_row in cursor:
+        check_row_counter += 1
+        logging.debug("check_row: "+repr(check_row))
+        media_already_saved = True
+    logging.debug("media_already_saved: "+repr(media_already_saved))
+    cursor.close()
+    return media_already_saved
+
+
+def check_if_video_in_db(connection,media_url=None,youtube_id=None,sha512base64_hash=None,post_id=None):
+    """Lookup videos in db return filepath to existing media if it exists, otherwise return None"""
+    logging.debug("check_if_video_in_db"+repr(locals()))
+    logging.warning("CODE VIDEO DB STUFF")# TODO FIXME
+    cursor =  connection.cursor()
+    # Lookup each field in the DB
+    # Lookup hash
+    lookup_field(connection,field="sha512base64_hash",value=sha512base64_hash)
+    if sha512base64_hash:
+        hash_query = "SELECT * FROM `media` WHERE sha512base64_hash = '%s';"
+        logging.debug("hash_query: "+repr(hash_query))
+        cursor.execute(hash_query, (sha512base64_hash))
+        preexisting_filepath = None
+        for check_row in cursor:
+            check_row_counter += 1
+            logging.debug("check_row: "+repr(check_row))
+            preexisting_filepath = True
+        if preexisting_filepath:
+            return preexisting_filepath
+    # Lookup video ID
+
+    # Lookup media URL
+    lookup_field(connection,field="media_url",value=media_url)
+    if media_url:
+        media_url_query = "SELECT * FROM `media` WHERE media_url = '%s';"
+        logging.debug(media_url_query)
+        cursor.execute(media_url_query, (media_url))
+        preexisting_filepath = None
+        for check_row in cursor:
+            check_row_counter += 1
+            logging.debug("check_row: "+repr(check_row))
+            preexisting_filepath = True
+        if preexisting_filepath:
+            return preexisting_filepath
+    # If no field matches, return False
+    logging.debug("No field matches, video not in DB")
+    return None
 
 
 def add_media_to_db(connection,
@@ -183,6 +265,7 @@ def add_media_to_db(connection,
     tumblrvideo_yt_dl_info_json=None,
     youtube_video_id=None):
     """Insert media information for a URL into the DB"""
+
     cursor =  connection.cursor()
     logging.debug("media_filename: "+repr(media_filename))
     # Check for existing records for the file hash
