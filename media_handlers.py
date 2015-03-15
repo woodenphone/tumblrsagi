@@ -507,7 +507,6 @@ def handle_tumblr_audio(connection,post_dict):
     sha512base64_hash = hash_file_data(file_data)
     logging.debug("sha512base64_hash: "+repr(sha512base64_hash))
     logging.warning("CODE AUDIO DB STUFF")# TODO FIXME
-    lookup_field(connection,field="sha512base64_hash",value=sha512base64_hash)
     hash_already_saved = False #TODO FIXME
     if hash_already_saved:
         logging.debug("Hash is already in DB, no need to save file.")

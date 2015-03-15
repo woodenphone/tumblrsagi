@@ -128,10 +128,25 @@ class tumblr_blog:
         self.load_posts(max_pages)
         return self.posts_list
 
+    def crop_exisiting_posts(self,posts_list):
+        posts_to_compare = posts_list
+        existing_post_ids = find_blog_posts(self.connection,self.blog_username)
+        new_posts = []
+        c = 0
+        for post in posts_to_compare:
+            c += 1
+            if post["id"] in existing_post_ids:
+                continue
+            else:
+                new_posts.append(post)
+        return new_posts
+
     def insert_posts_into_db(self):
-        posts_list = self.get_posts()
+        raw_posts_list = self.get_posts()
+        # Skip duplicates
+        new_posts_list = self.crop_exisiting_posts(raw_posts_list)
         counter = 0
-        for post_dict in posts_list:
+        for post_dict in new_posts_list:
             counter += 1
             # Handle links for the post
             # Extract links from the post

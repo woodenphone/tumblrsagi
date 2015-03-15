@@ -165,7 +165,10 @@ def add_blog_to_db(connection,info_dict):
 
 
 
-
+def find_blog_posts(connection,blog_username):
+    """Lookup a blog's posts in the DB and return a list of the IDs"""
+    logging.warning("Posts lookup not implimented")# TODO FIXME
+    return []
 
 
 
@@ -173,21 +176,22 @@ def lookup_field(connection,table,field,value):
     """Return a list of all rows matching the given table/field/value group
     If no rows match, return None
     ONLY set field through code, NEVER give field from outside data"""
-    logging.debug("checking table: "+table+" for field: "+repr(field)+" and value: "+repr(value))
-    cursor =  connection.cursor()
-    # Check for existing records for the file hash
-    check_query = "SELECT * FROM `%s` WHERE %s = '%s';"
+    logging.warning("THIS IS HILARIOUSLY VULNERABLE TO INJECTION ATTACKS!")# I do not know why this isn't working, so fuck it i'll just use strings
+    logging.debug("checking media for field: "+repr(field)+" and value: "+repr(value))
+    cursor =  connection.cursor()# Grab a cursor
+    check_query = "SELECT * FROM `"+table+"` WHERE "+field+" = '"+value+"';"# Lookup query THIS IS BAD AND SHOULD NOT BE KEPT!
     logging.debug(check_query)
-    cursor.execute(check_query, (table,field,value))
-    media_already_saved = False
+    cursor.execute(check_query)
+    # Store rows found in a list
     check_row_counter = 0
     rows = []
     for row in cursor:
         check_row_counter += 1
-        logging.debug("row: "+repr(row))
+        #logging.debug("row: "+repr(row))
         rows.append(row)
-    logging.debug("rows: "+repr(rows))
+    #logging.debug("rows: "+repr(rows))
     cursor.close()
+    # Return rows if any are found
     if len(rows) > 0:
         return rows
     else:
@@ -204,7 +208,7 @@ def check_if_link_in_db(connection,media_url):
     # Check for existing records for the file hash
     check_query = "SELECT * FROM `media` WHERE media_url = '%s';"
     logging.debug(check_query)
-    cursor.execute(check_query, (media_url))
+    cursor.execute(check_query)
     media_already_saved = False
     check_row_counter = 0
     for check_row in cursor:
@@ -223,8 +227,10 @@ def check_if_video_in_db(connection,media_url=None,youtube_id=None,sha512base64_
     cursor =  connection.cursor()
     # Lookup each field in the DB
     # Lookup hash
-    lookup_field(connection,table="media",field="sha512base64_hash",value=sha512base64_hash)
     if sha512base64_hash:
+        hash_rows = lookup_field(connection,"media","sha512base64_hash",sha512base64_hash)
+        if hash_rows:
+            return hash_rows[4]
         hash_query = "SELECT * FROM `media` WHERE sha512base64_hash = '%s';"
         logging.debug("hash_query: "+repr(hash_query))
         cursor.execute(hash_query, (sha512base64_hash))
@@ -236,10 +242,15 @@ def check_if_video_in_db(connection,media_url=None,youtube_id=None,sha512base64_
         if preexisting_filepath:
             return preexisting_filepath
     # Lookup video ID
-
+    if youtube_id:
+        youtube_rows = lookup_field(connection,"media","youtube_video_id",youtube_id)
+        if youtube_rows:
+            return youtube_rows[4]
     # Lookup media URL
-    lookup_field(connection,table="media",field="media_url",value=media_url)
     if media_url:
+        url_rows = lookup_field(connection,"media","media_url",media_url)
+        if url_rows:
+            return url_rows[4]
         media_url_query = "SELECT * FROM `media` WHERE media_url = '%s';"
         logging.debug(media_url_query)
         cursor.execute(media_url_query, (media_url))
