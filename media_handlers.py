@@ -358,86 +358,89 @@ def handle_youtube_video(connection,post_dict):
         continue
     # Prevent duplicates from the same post
     new_youtube_urls = uniquify(new_youtube_urls)
-    # Download each new video
-    for new_youtube_url in new_youtube_urls:
-        logging.debug("new_youtube_url: "+repr(new_youtube_url))
-        # Form command to run
-        # Define arguments. see this url for help
-        # https://github.com/rg3/youtube-dl
-        program_path = os.path.join("youtube-dl","youtube-dl.exe")
-        assert(os.path.exists(program_path))
-        ignore_errors = "-i"
-        safe_filenames = "--restrict-filenames"
-        output_arg = "-o"
-        info_json_arg = "--write-info-json"
-        description_arg ="--write-description"
-        output_dir = os.path.join(config.root_path,"temp")
-        output_template = os.path.join(output_dir, post_id+".%(ext)s")
-        # "youtube-dl.exe -i --restrict-filenames -o --write-info-json --write-description"
-        command = [program_path, ignore_errors, safe_filenames, info_json_arg, description_arg, output_arg, output_template, new_youtube_url]
-        logging.debug("command: "+repr(command))
-        # Call youtube-dl
-        command_result = subprocess.call(command)
-        logging.debug("command_result: "+repr(command_result))
-        time_of_retreival = get_current_unix_time()
-        # Verify download worked
-        # Read info JSON file
-        expected_info_path = os.path.join(output_dir, post_id+".info.json")
-        info_exists = os.path.exists(expected_info_path)
-        if not info_exists:
-            logging.error("Info file not found!")
-            logging.error(repr(locals()))
-        info_json = read_file(expected_info_path)
-        yt_dl_info_dict = json.loads(info_json)
-        logging.debug("yt_dl_info_dict: "+repr(yt_dl_info_dict))
-        # Grab file path
-        media_temp_filepath = yt_dl_info_dict["_filename"]
-        media_temp_filename = os.path.basename(media_temp_filepath)
-        logging.debug("media_temp_filepath: "+repr(media_temp_filepath))
-        # Check that video file given in info JSON exists
-        assert(os.path.exists(media_temp_filepath))
-        # Generate hash for media file
-        file_data = read_file(media_temp_filepath)
-        sha512base64_hash = hash_file_data(file_data)
-        # Decide where to put the file
-        # Check if hash is in media DB
-        logging.warning("CODE VIDEO DB STUFF")# TODO FIXME
-        preexisting_filepath = sql_functions.check_if_video_in_db(connection,sha512base64_hash=sha512base64_hash)
-        if preexisting_filepath is not None:
-            # Delete duplicate file if media is already saved
-            logging.info("Deleting duplicate video file")
-            logging.warning("CODE VIDEO DUPLICATE DELETE STUFF")# TODO FIXME
+    if len(new_youtube_urls) > 0:
+        # Download each new video
+        for new_youtube_url in new_youtube_urls:
+            logging.debug("new_youtube_url: "+repr(new_youtube_url))
+            # Form command to run
+            # Define arguments. see this url for help
+            # https://github.com/rg3/youtube-dl
+            program_path = os.path.join("youtube-dl","youtube-dl.exe")
+            assert(os.path.exists(program_path))
+            ignore_errors = "-i"
+            safe_filenames = "--restrict-filenames"
+            output_arg = "-o"
+            info_json_arg = "--write-info-json"
+            description_arg ="--write-description"
+            output_dir = os.path.join(config.root_path,"temp")
+            output_template = os.path.join(output_dir, post_id+".%(ext)s")
+            # "youtube-dl.exe -i --restrict-filenames -o --write-info-json --write-description"
+            command = [program_path, ignore_errors, safe_filenames, info_json_arg, description_arg, output_arg, output_template, new_youtube_url]
+            logging.debug("command: "+repr(command))
+            # Call youtube-dl
+            command_result = subprocess.call(command)
+            logging.debug("command_result: "+repr(command_result))
+            time_of_retreival = get_current_unix_time()
+            # Verify download worked
+            # Read info JSON file
+            expected_info_path = os.path.join(output_dir, post_id+".info.json")
+            info_exists = os.path.exists(expected_info_path)
+            if not info_exists:
+                logging.error("Info file not found!")
+                logging.error(repr(locals()))
+            info_json = read_file(expected_info_path)
+            yt_dl_info_dict = json.loads(info_json)
+            logging.debug("yt_dl_info_dict: "+repr(yt_dl_info_dict))
+            # Grab file path
+            media_temp_filepath = yt_dl_info_dict["_filename"]
+            media_temp_filename = os.path.basename(media_temp_filepath)
+            logging.debug("media_temp_filepath: "+repr(media_temp_filepath))
+            # Check that video file given in info JSON exists
+            assert(os.path.exists(media_temp_filepath))
+            # Generate hash for media file
+            file_data = read_file(media_temp_filepath)
+            sha512base64_hash = hash_file_data(file_data)
+            # Decide where to put the file
+            # Check if hash is in media DB
+            logging.warning("CODE VIDEO DB STUFF")# TODO FIXME
+            preexisting_filepath = sql_functions.check_if_video_in_db(connection,sha512base64_hash=sha512base64_hash)
+            if preexisting_filepath is not None:
+                # Delete duplicate file if media is already saved
+                logging.info("Deleting duplicate video file")
+                logging.warning("CODE VIDEO DUPLICATE DELETE STUFF")# TODO FIXME
+                continue
+            else:
+                # Move file to media DL location
+                logging.info("Moving video to final location")
+                # Generate output filepath
+                file_ext = media_temp_filename.split(".")[-1]
+                filename = str(time_of_retreival)+"."+file_ext
+                final_media_filepath = generate_media_file_path_timestamp(root_path=config.root_path,filename=filename)
+                # Move file to final location
+                move_file(media_temp_filepath,final_media_filepath)
+                assert(os.path.exists(final_media_filepath))
+            # Add video to DB
+            logging.warning("CODE VIDEO DB STUFF")# TODO FIXME
+            sql_functions.add_media_to_db(
+            connection,
+            media_url=new_youtube_url,
+            sha512base64_hash=sha512base64_hash,
+            media_filename=final_media_filepath,
+            time_of_retreival=time_of_retreival,
+            extractor_used="youtube_embed",
+            youtube_yt_dl_info_json=info_json)
             continue
-        else:
-            # Move file to media DL location
-            logging.info("Moving video to final location")
-            # Generate output filepath
-            file_ext = media_temp_filename.split(".")[-1]
-            filename = str(time_of_retreival)+"."+file_ext
-            final_media_filepath = generate_media_file_path_timestamp(root_path=config.root_path,filename=filename)
-            # Move file to final location
-            move_file(media_temp_filepath,final_media_filepath)
-            assert(os.path.exists(final_media_filepath))
-        # Add video to DB
-        logging.warning("CODE VIDEO DB STUFF")# TODO FIXME
-        sql_functions.add_media_to_db(
-        connection,
-        media_url=new_youtube_url,
-        sha512base64_hash=sha512base64_hash,
-        media_filename=final_media_filepath,
-        time_of_retreival=time_of_retreival,
-        extractor_used="youtube_embed",
-        youtube_yt_dl_info_json=info_json)
-        continue
-    logging.debug("Finished downloading youtube embeds")
-    return {"youtube_embed":sha512base64_hash}
+        logging.debug("Finished downloading youtube embeds")
+        return {"youtube_embed":sha512base64_hash}
+    else:
+        return {}
 
 
 def handle_video_posts(connection,post_dict):
     """Decide which video functions to run"""
     # Check if post is a video post
     if post_dict["type"] != u"video":
-        return
+        return {}
     logging.debug("Post is video")
     # Youtube
     if post_dict["video_type"] == u"youtube":
@@ -507,12 +510,12 @@ def handle_soundcloud_audio(connection,post_dict):
     sha512base64_hash = hash_file_data(file_data)
     # Decide where to put the file
     # Check if hash is in media DB
-    logging.warning("CODE AUDIO DB STUFF")# TODO FIXME
-    preexisting_filepath = sql_functions.check_if_video_in_db(connection,sha512base64_hash=sha512base64_hash)
+    logging.warning("CODE SC AUDIO DB STUFF")# TODO FIXME
+    preexisting_filepath = sql_functions.check_if_audio_in_db(connection,sha512base64_hash=sha512base64_hash)
     if preexisting_filepath is not None:
         # Delete duplicate file if media is already saved
         logging.info("Deleting duplicate video file")
-        logging.warning("CODE AUDIO DUPLICATE DELETE STUFF")# TODO FIXME
+        logging.warning("CODE SC AUDIO DUPLICATE DELETE STUFF")# TODO FIXME
         return {}
     else:
         # Move file to media DL location
@@ -525,7 +528,7 @@ def handle_soundcloud_audio(connection,post_dict):
         move_file(media_temp_filepath,final_media_filepath)
         assert(os.path.exists(final_media_filepath))
     # Add video to DB
-    logging.warning("CODE AUDIO DB STUFF")# TODO FIXME
+    logging.warning("CODE SC AUDIO DB STUFF")# TODO FIXME
     sql_functions.add_media_to_db(
     connection,
     media_url=soundcloud_link,
@@ -552,22 +555,22 @@ def handle_tumblr_audio(connection,post_dict):
         media_url = api_media_url
     logging.debug("media_url: "+repr(media_url))
     # Check the DB to see if media is already saved
-    logging.warning("CODE AUDIO DB STUFF")# TODO FIXME
+    logging.warning("CODE T AUDIO DB STUFF")# TODO FIXME
     hash_already_saved = False #TODO FIXME
     if hash_already_saved:
         logging.debug("URL is already in DB, no need to save file.")
-        return
+        return {}
     # Load the media file
     file_data = get(media_url)
     time_of_retreival = get_current_unix_time()
     # Check if file is saved already using file hash
     sha512base64_hash = hash_file_data(file_data)
     logging.debug("sha512base64_hash: "+repr(sha512base64_hash))
-    logging.warning("CODE AUDIO DB STUFF")# TODO FIXME
+    logging.warning("CODE T AUDIO DB STUFF")# TODO FIXME
     hash_already_saved = False #TODO FIXME
     if hash_already_saved:
         logging.debug("Hash is already in DB, no need to save file.")
-        return
+        return {}
     # Generate filename
     audio_filename = str(time_of_retreival)+".mp3"
     logging.debug("audio_filename: "+repr(audio_filename))
@@ -671,7 +674,7 @@ def debug():
 
     # Debug audio
     soundcloud_post_dict = {u'reblog_key': u'S6VWj0Cb', u'reblog': {u'comment': u'', u'tree_html': u'<p><a class="tumblr_blog" href="http://waltzforluma.tumblr.com/post/111622677961/or-your-computer-could-overheat-while-youre">waltzforluma</a>:</p><blockquote><p>Or, your computer could overheat while you\u2019re listening to \u201cDeath Rag\u201d from Future Vision, and burst into flames!</p></blockquote>', u'trail': [{u'blog': {u'theme': {u'title_font_weight': u'regular', u'header_full_height': 262, u'title_color': u'#444444', u'header_bounds': u'0,623,262,157', u'background_color': u'#FAFAFA', u'link_color': u'#529ECC', u'header_image_focused': u'http://static.tumblr.com/a50dd34705b42b1479c2535a15461b00/oevxq7m/ZrTn5ivly/tumblr_static_tumblr_static_57wsbbc6rz0g0gk4ww8k884wk_focused_v3.png', u'show_description': True, u'header_full_width': 898, u'avatar_shape': u'circle', u'header_focus_width': 466, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'header_image_scaled': u'http://static.tumblr.com/a50dd34705b42b1479c2535a15461b00/oevxq7m/g9cn5ivlx/tumblr_static_57wsbbc6rz0g0gk4ww8k884wk_2048_v2.png', u'show_avatar': True, u'header_focus_height': 262, u'title_font': u'Garamond Classic FS', u'header_image': u'http://static.tumblr.com/a50dd34705b42b1479c2535a15461b00/oevxq7m/g9cn5ivlx/tumblr_static_57wsbbc6rz0g0gk4ww8k884wk.png'}, u'name': u'waltzforluma'}, u'comment': u'<p>Or, your computer could overheat while you\u2019re listening to \u201cDeath Rag\u201d from Future Vision, and burst into flames!</p>', u'post': {u'id': u'111622677961'}}]}, u'player': u'<iframe src="https://w.soundcloud.com/player/?url=https%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F192213990&amp;visual=true&amp;liking=false&amp;sharing=false&amp;auto_play=false&amp;show_comments=false&amp;continuous_play=false&amp;origin=tumblr" frameborder="0" allowtransparency="true" class="soundcloud_audio_player" width="500" height="500"></iframe>', u'id': 113020390888L, u'post_url': u'http://doscoon.tumblr.com/post/113020390888/waltzforluma-or-your-computer-could-overheat', u'source_title': u'waltzforluma', u'format': u'html', u'highlighted': [], u'state': u'published', u'track_name': u'Steven Universe - Death Rag', u'short_url': u'http://tmblr.co/ZlYOqv1fGYate', u'type': u'audio', u'tags': [], u'timestamp': 1425776404, u'note_count': 1014, u'source_url': u'http://waltzforluma.tumblr.com/post/111622677961/or-your-computer-could-overheat-while-youre', u'date': u'2015-03-08 01:00:04 GMT', u'plays': 38933, u'slug': u'waltzforluma-or-your-computer-could-overheat', u'album_art': u'http://38.media.tumblr.com/tumblr_nk3re1A1Cf1qzqb72_1424489834_cover.jpg', u'blog_name': u'doscoon', u'is_external': True, u'audio_url': u'https://api.soundcloud.com/tracks/192213990/stream?client_id=3cQaPshpEeLqMsNFAUw1Q', u'caption': u'<p><a class="tumblr_blog" href="http://waltzforluma.tumblr.com/post/111622677961/or-your-computer-could-overheat-while-youre">waltzforluma</a>:</p><blockquote><p>Or, your computer could overheat while you\u2019re listening to \u201cDeath Rag\u201d from Future Vision, and burst into flames!</p></blockquote>', u'audio_type': u'soundcloud', u'audio_source_url': u'https://soundcloud.com/aivisura/steven-universe-death-rag', u'embed': u'<iframe src="https://w.soundcloud.com/player/?url=https%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F192213990&amp;visual=true&amp;liking=false&amp;sharing=false&amp;auto_play=false&amp;show_comments=false&amp;continuous_play=false&amp;origin=tumblr" frameborder="0" allowtransparency="true" class="soundcloud_audio_player" width="500" height="500"></iframe>'}
-    handle_soundcloud_audio(connection,soundcloud_post_dict)
+    #handle_soundcloud_audio(connection,soundcloud_post_dict)
 
     # Debug video
     tumblr_video_post_dict = {u'reblog_key': u'S6VWj0Cb', u'reblog': {u'comment': u'', u'tree_html': u'<p><a class="tumblr_blog" href="http://waltzforluma.tumblr.com/post/111622677961/or-your-computer-could-overheat-while-youre">waltzforluma</a>:</p><blockquote><p>Or, your computer could overheat while you\u2019re listening to \u201cDeath Rag\u201d from Future Vision, and burst into flames!</p></blockquote>', u'trail': [{u'blog': {u'theme': {u'title_font_weight': u'regular', u'header_full_height': 262, u'title_color': u'#444444', u'header_bounds': u'0,623,262,157', u'background_color': u'#FAFAFA', u'link_color': u'#529ECC', u'header_image_focused': u'http://static.tumblr.com/a50dd34705b42b1479c2535a15461b00/oevxq7m/ZrTn5ivly/tumblr_static_tumblr_static_57wsbbc6rz0g0gk4ww8k884wk_focused_v3.png', u'show_description': True, u'header_full_width': 898, u'avatar_shape': u'circle', u'header_focus_width': 466, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'header_image_scaled': u'http://static.tumblr.com/a50dd34705b42b1479c2535a15461b00/oevxq7m/g9cn5ivlx/tumblr_static_57wsbbc6rz0g0gk4ww8k884wk_2048_v2.png', u'show_avatar': True, u'header_focus_height': 262, u'title_font': u'Garamond Classic FS', u'header_image': u'http://static.tumblr.com/a50dd34705b42b1479c2535a15461b00/oevxq7m/g9cn5ivlx/tumblr_static_57wsbbc6rz0g0gk4ww8k884wk.png'}, u'name': u'waltzforluma'}, u'comment': u'<p>Or, your computer could overheat while you\u2019re listening to \u201cDeath Rag\u201d from Future Vision, and burst into flames!</p>', u'post': {u'id': u'111622677961'}}]}, u'player': u'<iframe src="https://w.soundcloud.com/player/?url=https%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F192213990&amp;visual=true&amp;liking=false&amp;sharing=false&amp;auto_play=false&amp;show_comments=false&amp;continuous_play=false&amp;origin=tumblr" frameborder="0" allowtransparency="true" class="soundcloud_audio_player" width="500" height="500"></iframe>', u'id': 113020390888L, u'post_url': u'http://doscoon.tumblr.com/post/113020390888/waltzforluma-or-your-computer-could-overheat', u'source_title': u'waltzforluma', u'format': u'html', u'highlighted': [], u'state': u'published', u'track_name': u'Steven Universe - Death Rag', u'short_url': u'http://tmblr.co/ZlYOqv1fGYate', u'type': u'audio', u'tags': [], u'timestamp': 1425776404, u'note_count': 1014, u'source_url': u'http://waltzforluma.tumblr.com/post/111622677961/or-your-computer-could-overheat-while-youre', u'date': u'2015-03-08 01:00:04 GMT', u'plays': 38933, u'slug': u'waltzforluma-or-your-computer-could-overheat', u'album_art': u'http://38.media.tumblr.com/tumblr_nk3re1A1Cf1qzqb72_1424489834_cover.jpg', u'blog_name': u'doscoon', u'is_external': True, u'audio_url': u'https://api.soundcloud.com/tracks/192213990/stream?client_id=3cQaPshpEeLqMsNFAUw1Q', u'caption': u'<p><a class="tumblr_blog" href="http://waltzforluma.tumblr.com/post/111622677961/or-your-computer-could-overheat-while-youre">waltzforluma</a>:</p><blockquote><p>Or, your computer could overheat while you\u2019re listening to \u201cDeath Rag\u201d from Future Vision, and burst into flames!</p></blockquote>', u'audio_type': u'soundcloud', u'audio_source_url': u'https://soundcloud.com/aivisura/steven-universe-death-rag', u'embed': u'<iframe src="https://w.soundcloud.com/player/?url=https%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F192213990&amp;visual=true&amp;liking=false&amp;sharing=false&amp;auto_play=false&amp;show_comments=false&amp;continuous_play=false&amp;origin=tumblr" frameborder="0" allowtransparency="true" class="soundcloud_audio_player" width="500" height="500"></iframe>'}

@@ -177,10 +177,10 @@ def lookup_field(connection,table,field,value):
     If no rows match, return None
     ONLY set field through code, NEVER give field from outside data"""
     logging.warning("THIS IS HILARIOUSLY VULNERABLE TO INJECTION ATTACKS!")# I do not know why this isn't working, so fuck it i'll just use strings
-    logging.debug("checking media for field: "+repr(field)+" and value: "+repr(value))
+    #logging.debug("checking media for field: "+repr(field)+" and value: "+repr(value))
     cursor =  connection.cursor()# Grab a cursor
     check_query = "SELECT * FROM `"+table+"` WHERE "+field+" = '"+value+"';"# Lookup query THIS IS BAD AND SHOULD NOT BE KEPT!
-    logging.debug(check_query)
+    logging.debug("lookup_field check_query:"+repr(check_query))
     cursor.execute(check_query)
     # Store rows found in a list
     check_row_counter = 0
@@ -189,7 +189,7 @@ def lookup_field(connection,table,field,value):
         check_row_counter += 1
         #logging.debug("row: "+repr(row))
         rows.append(row)
-    #logging.debug("rows: "+repr(rows))
+    logging.debug("lookup_field rows: "+repr(rows))
     cursor.close()
     # Return rows if any are found
     if len(rows) > 0:
@@ -239,9 +239,6 @@ def check_if_video_in_db(connection,media_url=None,youtube_id=None,sha512base64_
     # Lookup each field in the DB
     # Lookup hash
     if sha512base64_hash:
-        hash_rows = lookup_field(connection,"media","sha512base64_hash",sha512base64_hash)
-        if hash_rows:
-            return hash_rows[4]
         hash_query = "SELECT * FROM `media` WHERE sha512base64_hash = '%s';"
         logging.debug("hash_query: "+repr(hash_query))
         cursor.execute(hash_query, (sha512base64_hash))
@@ -249,19 +246,23 @@ def check_if_video_in_db(connection,media_url=None,youtube_id=None,sha512base64_
         for check_row in cursor:
             check_row_counter += 1
             logging.debug("check_row: "+repr(check_row))
-            preexisting_filepath = True
+            preexisting_filepath = "FIXME"
         if preexisting_filepath:
             return preexisting_filepath
     # Lookup video ID
     if youtube_id:
-        youtube_rows = lookup_field(connection,"media","youtube_video_id",youtube_id)
-        if youtube_rows:
-            return youtube_rows[4]
+        youtube_id_query = "SELECT * FROM `media` WHERE youtube_video_id = '%s';"
+        logging.debug(youtube_id_query)
+        cursor.execute(youtube_id_query, (youtube_id))
+        preexisting_filepath = None
+        for check_row in cursor:
+            check_row_counter += 1
+            logging.debug("check_row: "+repr(check_row))
+            preexisting_filepath = "FIXME"
+        if preexisting_filepath:
+            return preexisting_filepath
     # Lookup media URL
     if media_url:
-        url_rows = lookup_field(connection,"media","media_url",media_url)
-        if url_rows:
-            return url_rows[4]
         media_url_query = "SELECT * FROM `media` WHERE media_url = '%s';"
         logging.debug(media_url_query)
         cursor.execute(media_url_query, (media_url))
@@ -269,7 +270,7 @@ def check_if_video_in_db(connection,media_url=None,youtube_id=None,sha512base64_
         for check_row in cursor:
             check_row_counter += 1
             logging.debug("check_row: "+repr(check_row))
-            preexisting_filepath = True
+            preexisting_filepath = "FIXME"
         if preexisting_filepath:
             return preexisting_filepath
     # If no field matches, return False
