@@ -143,7 +143,7 @@ class tumblr_blog:
 
     def insert_posts_into_db(self):
         raw_posts_list = self.get_posts()
-        # Skip duplicates
+        # Skip processing any posts that have previously been saved
         new_posts_list = self.crop_exisiting_posts(raw_posts_list)
         counter = 0
         for post_dict in new_posts_list:

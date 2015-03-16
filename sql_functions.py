@@ -220,6 +220,17 @@ def check_if_link_in_db(connection,media_url):
     return media_already_saved
 
 
+def check_if_audio_in_db(connection,soundcloud_id=None):
+    logging.debug("check_if_audio_in_db;soundcloud_id:"+repr(soundcloud_id))
+    # Lookup video ID
+    if soundcloud_id:
+        soundcloud_rows = lookup_field(connection,"media","soundcloud_id",soundcloud_id)
+        logging.debug("soundcloud_rows"+repr(soundcloud_rows))
+        if soundcloud_rows:
+            return soundcloud_rows[4]
+    return None
+
+
 def check_if_video_in_db(connection,media_url=None,youtube_id=None,sha512base64_hash=None,post_id=None):
     """Lookup videos in db return filepath to existing media if it exists, otherwise return None"""
     logging.debug("check_if_video_in_db"+repr(locals()))
