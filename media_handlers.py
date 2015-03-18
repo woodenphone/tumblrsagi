@@ -466,8 +466,10 @@ def handle_soundcloud_audio(connection,post_dict):
     # u'https://api.soundcloud.com/tracks/192213990/stream?client_id=3cQaPshpEeLqMsNFAUw1Q' to '192213990'
     soundcloud_link = post_dict["audio_url"]
     track_id = re.search("""api\.soundcloud\.com/tracks/(\d+)/stream""", soundcloud_link, re.IGNORECASE|re.DOTALL).group(1)
-    # Check if audio has been saved
-    preexisting_filepath  = sql_functions.check_if_audio_in_db(connection,soundcloud_id=None)
+
+    # Check if audio has been saved, and return if it has
+    preexisting_filepath  = sql_functions.check_if_audio_in_db(connection,soundcloud_id=None)#TODO FIXME
+
     # Grab url to send to youtube-dl
     soundcloud_url = post_dict["audio_url"]
     logging.debug("soundcloud_url: "+repr(soundcloud_url))
