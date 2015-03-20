@@ -5,3 +5,4 @@ download/
 config.py
 *.pyc
 youtube-dl/
+*.db

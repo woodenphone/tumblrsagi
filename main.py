@@ -167,6 +167,14 @@ class tumblr_blog:
         logging.debug("Adding blog info to DB")
         add_blog_to_db(connection,info_dict)
         return
+    def create_blog(self):
+        """Create blog table and populate meta-table with blog info"""
+        # Convert blog username/URL into table name
+        # Check if
+        # Create blog posts table
+        # Add entry to blogs table
+        # Commit changes
+
 
     def process_posts_for_media(self):
         # TODO FIXME

@@ -220,7 +220,7 @@ def check_if_link_in_db(connection,media_url):
     return media_already_saved
 
 
-def check_if_audio_in_db(connection,soundcloud_id=None):
+def check_if_audio_in_db(connection,soundcloud_id=None,sha512base64_hash=None):
     logging.debug("check_if_audio_in_db;soundcloud_id:"+repr(soundcloud_id))
     # Lookup video ID
     if soundcloud_id:
