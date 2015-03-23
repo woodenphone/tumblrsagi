@@ -20,7 +20,7 @@ import config # User specific settings
 Base = declarative_base()
 
 # SQLAlchemy table setup
-class media(Base):
+class Media(Base):
     __tablename__ = "media"
     # Columns
     # Locally generated
@@ -39,7 +39,7 @@ class media(Base):
     tumblraudio_album_art = sqlalchemy.Column(sqlalchemy.String())
     tumblraudio_artist = sqlalchemy.Column(sqlalchemy.String())
 
-class posts(Base):
+class Posts(Base):
     """The posts in a blog
     <type>_<api_field_name>
     https://www.tumblr.com/docs/en/api/v2"""
@@ -110,25 +110,6 @@ class posts(Base):
 # /SQLAlchemy table setup
 
 
-
-
-def generate_insert_query(table_name,value_names):
-    """Generate a SQL insert statement so all the statements can be made in one place
-    NEVER LET THIS TOUCH OUTSIDE DATA!
-    'INSERT INTO <TABLE_NAME> (<VALUE_NAME_1>, <VALUE_NAME_2>,...) %s, %s, ...);'
-    """
-    assert len(value_names) > 0
-    value_names_with_backticks = []
-    for value in value_names:
-        assert(type(value) is type(""))
-        value_names_with_backticks.append("`"+value+"`")
-    query = (
-    "INSERT INTO `"+table_name+"` (%s) VALUES (" % (", ".join(value_names_with_backticks),)# Values from dict
-    +"%s, "*(len(value_names_with_backticks)-1)#values to insert
-    +"%s);"
-    )
-    #logging.debug(repr(query))
-    return query
 
 
 def add_post_to_db(connection,post_dict,info_dict):
@@ -268,34 +249,6 @@ def find_blog_posts(connection,blog_username):
 
 
 
-def lookup_field(connection,table,field,value):
-    """Return a list of all rows matching the given table/field/value group
-    If no rows match, return None
-    ONLY set field through code, NEVER give field from outside data"""
-    logging.warning("THIS IS HILARIOUSLY VULNERABLE TO INJECTION ATTACKS!")# I do not know why this isn't working, so fuck it i'll just use strings
-    #logging.debug("checking media for field: "+repr(field)+" and value: "+repr(value))
-    cursor =  connection.cursor()# Grab a cursor
-    check_query = "SELECT * FROM `"+table+"` WHERE "+field+" = '"+value+"';"# Lookup query THIS IS BAD AND SHOULD NOT BE KEPT!
-    logging.debug("lookup_field check_query:"+repr(check_query))
-    cursor.execute(check_query)
-    # Store rows found in a list
-    check_row_counter = 0
-    rows = []
-    for row in cursor:
-        check_row_counter += 1
-        #logging.debug("row: "+repr(row))
-        rows.append(row)
-    logging.debug("lookup_field rows: "+repr(rows))
-    cursor.close()
-    # Return rows if any are found
-    if len(rows) > 0:
-        return rows
-    else:
-        return None
-
-
-
-
 def check_if_link_in_db(connection,media_url):
     """Lookup a URL in the media DB.
     Return True if any matches found; otherwise return False."""
@@ -314,162 +267,6 @@ def check_if_link_in_db(connection,media_url):
     logging.debug("media_already_saved: "+repr(media_already_saved))
     cursor.close()
     return media_already_saved
-
-
-def check_if_audio_in_db(connection,soundcloud_id=None,sha512base64_hash=None):
-    logging.debug("check_if_audio_in_db;soundcloud_id:"+repr(soundcloud_id))
-    # Lookup video ID
-    if soundcloud_id:
-        soundcloud_rows = lookup_field(connection,"media","soundcloud_id",soundcloud_id)
-        logging.debug("soundcloud_rows"+repr(soundcloud_rows))
-        if soundcloud_rows:
-            return soundcloud_rows[4]
-    return None
-
-
-def check_if_video_in_db(connection,media_url=None,youtube_id=None,sha512base64_hash=None,post_id=None):
-    """Lookup videos in db return filepath to existing media if it exists, otherwise return None"""
-    logging.debug("check_if_video_in_db"+repr(locals()))
-    logging.warning("CODE VIDEO DB STUFF")# TODO FIXME
-    cursor =  connection.cursor()
-    # Lookup each field in the DB
-    # Lookup hash
-    if sha512base64_hash:
-        hash_query = "SELECT * FROM `media` WHERE sha512base64_hash = '%s';"
-        logging.debug("hash_query: "+repr(hash_query))
-        cursor.execute(hash_query, (sha512base64_hash))
-        preexisting_filepath = None
-        for check_row in cursor:
-            check_row_counter += 1
-            logging.debug("check_row: "+repr(check_row))
-            preexisting_filepath = "FIXME"
-        if preexisting_filepath:
-            return preexisting_filepath
-    # Lookup video ID
-    if youtube_id:
-        youtube_id_query = "SELECT * FROM `media` WHERE youtube_video_id = '%s';"
-        logging.debug(youtube_id_query)
-        cursor.execute(youtube_id_query, (youtube_id))
-        preexisting_filepath = None
-        for check_row in cursor:
-            check_row_counter += 1
-            logging.debug("check_row: "+repr(check_row))
-            preexisting_filepath = "FIXME"
-        if preexisting_filepath:
-            return preexisting_filepath
-    # Lookup media URL
-    if media_url:
-        media_url_query = "SELECT * FROM `media` WHERE media_url = '%s';"
-        logging.debug(media_url_query)
-        cursor.execute(media_url_query, (media_url))
-        preexisting_filepath = None
-        for check_row in cursor:
-            check_row_counter += 1
-            logging.debug("check_row: "+repr(check_row))
-            preexisting_filepath = "FIXME"
-        if preexisting_filepath:
-            return preexisting_filepath
-    # If no field matches, return False
-    logging.debug("No field matches, video not in DB")
-    return None
-
-
-def add_media_to_db(connection,
-    media_url,
-    sha512base64_hash,
-    media_filename,
-    time_of_retreival,
-    extractor_used,
-    youtube_yt_dl_info_json=None,
-    tumblrvideo_yt_dl_info_json=None,
-    youtube_video_id=None):
-    """Insert media information for a URL into the DB"""
-
-    cursor =  connection.cursor()
-    logging.debug("media_filename: "+repr(media_filename))
-    # Check for existing records for the file hash
-    check_query = "SELECT * FROM `media` WHERE sha512base64_hash = '%s';"
-    logging.debug(check_query)
-    cursor.execute(check_query, (sha512base64_hash))
-    check_row_counter = 0
-    for check_row in cursor:
-        check_row_counter += 1
-        logging.debug("check_row: "+repr(check_row))
-    media_already_saved = False# Was there a hash collission
-    # Generate new row for the DB
-    row_to_insert = {}
-    row_to_insert["date_added"] = time_of_retreival
-    row_to_insert["media_url"] = media_url
-    row_to_insert["sha512base64_hash"] = sha512base64_hash
-    row_to_insert["filename"] = media_filename
-    row_to_insert["extractor_used"] = extractor_used
-    # Image
-    # Tumblr photos
-
-    # Video
-    # Tumblr video
-    row_to_insert["tumblrvideo_yt_dl_info_json"] = tumblrvideo_yt_dl_info_json
-    # Youtube video
-    row_to_insert["youtube_yt_dl_info_json"] = youtube_yt_dl_info_json
-    row_to_insert["youtube_video_id"] = youtube_video_id
-
-    # Audio
-    row_to_insert["filename"] = media_filename
-    # Tumblr Audio
-    if config.log_db_rows:
-        logging.debug("row_to_insert: "+repr(row_to_insert))
-    # Insert dict into DB
-    fields = row_to_insert.keys()
-    values = row_to_insert.values()
-    insert_query = generate_insert_query(table_name="media",value_names=fields)
-    logging.debug(repr(insert_query))
-    insert_result = cursor.execute(insert_query, values)
-    cursor.close()
-    return media_already_saved # Tell the calling function if the media was already saved from another URL
-
-
-
-def add_image_to_db(connection,media_url,sha512base64_hash,image_filename,time_of_retreival):
-    """Insert media information for a URL into the DB"""
-    cursor =  connection.cursor()
-    logging.debug("image_filename: "+repr(image_filename))
-    # Check for existing records for the file hash
-    # SELECT * FROM `Content` WHERE title = 'bombshells.mp4' ORDER BY id LIMIT 1;
-    #check_query = "SELECT * FROM `media` WHERE sha512base64_hash = %s ORDER BY primary_key LIMIT 1;"
-    # "SELECT version FROM (story_metadata) WHERE id = %s ORDER BY version LIMIT 1"
-    #check_query = "SELECT sha512base64_hash FROM (media) WHERE sha512base64_hash = %s ORDER BY primary_key LIMIT 1"
-    check_query = "SELECT * FROM `media` WHERE sha512base64_hash = '%s';"
-    #check_query = "SELECT * FROM `media` WHERE sha512base64_hash = '%s';" % sha512base64_hash # From #derpibooru
-    logging.debug(check_query)
-    cursor.execute(check_query, (sha512base64_hash))
-    check_row_counter = 0
-    for check_row in cursor:
-        check_row_counter += 1
-        logging.debug("check_row: "+repr(check_row))
-    media_already_saved = False# Was there a hash collission
-    # Insert new row for the new URL
-    row_to_insert = {}
-    row_to_insert["date_added"] = time_of_retreival
-    row_to_insert["media_url"] = media_url
-    row_to_insert["sha512base64_hash"] = sha512base64_hash
-    row_to_insert["filename"] = image_filename
-    #
-    if config.log_db_rows:
-        logging.debug("row_to_insert: "+repr(row_to_insert))
-    # Insert dict into DB
-    fields = row_to_insert.keys()
-    values = row_to_insert.values()
-    insert_query = generate_insert_query(table_name="media",value_names=fields)
-    logging.debug(repr(insert_query))
-    insert_result = cursor.execute(insert_query, values)
-    cursor.close()
-    return media_already_saved # Tell the calling function if the media was already saved from another URL
-
-
-
-
-
-
 
 
 
