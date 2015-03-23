@@ -25,8 +25,8 @@ Base = declarative_base()
 
 class Blogs(Base):
     """Class that defines the Blog meta table in the DB"""
-    __table_args__ = {'useexisting': True}
-    __tablename__ = "media"
+    #__table_args__ = {'useexisting': True}# Magic to fix some sort of import problem?
+    __tablename__ = "blogs"
     # Columns
     # Locally generated
     primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Is used only as primary key
@@ -50,7 +50,7 @@ class Blogs(Base):
 
 class Media(Base):
     """Class that defines the media table in the DB"""
-    __table_args__ = {'useexisting': True}
+    #__table_args__ = {'useexisting': True}# Magic to fix some sort of import problem?
     __tablename__ = "media"
     # Columns
     # Locally generated
@@ -70,13 +70,14 @@ class Media(Base):
     tumblraudio_artist = sqlalchemy.Column(sqlalchemy.String())
     # SoundCloud audio embeds
     soundcloud_id = sqlalchemy.Column(sqlalchemy.String())
+    soundcloud_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
 
 
 class Posts(Base):
     """The posts in a blog
     <type>_<api_field_name>
     https://www.tumblr.com/docs/en/api/v2"""
-    __table_args__ = {'useexisting': True}
+    #__table_args__ = {'useexisting': True}# Magic to fix some sort of import problem?
     __tablename__ = "posts"
     # Columns
     # Local stuff
@@ -84,6 +85,9 @@ class Posts(Base):
     version = sqlalchemy.Column(sqlalchemy.BigInteger) # The version of this post this row is associated with
     date_saved = sqlalchemy.Column(sqlalchemy.BigInteger)# The unix time the post was saved
     link_to_hash_dict = sqlalchemy.Column(sqlalchemy.String())# mapping of links in the post to hashes of associated media
+    # Who does this post belong to?
+    poster_username = sqlalchemy.Column(sqlalchemy.String())# username for a blog, as given by the API "tsitra360"
+    blog_domain = sqlalchemy.Column(sqlalchemy.String())# domain for the blog"tsitra360.tumblr.com"
     # Missing from API docs
     misc_slug = sqlalchemy.Column(sqlalchemy.String())
     misc_short_url = sqlalchemy.Column(sqlalchemy.String())
@@ -149,7 +153,8 @@ def connect_to_db():
     """Provide a DB session
     http://www.pythoncentral.io/introductory-tutorial-python-sqlalchemy/"""
     logging.debug("Opening DB connection")
-    engine = sqlalchemy.create_engine('sqlite:///sqlalchemy_example.db',echo=True)
+    # add "echo=True" to see SQL being run
+    engine = sqlalchemy.create_engine('sqlite:///please_examine2.db',echo=True)
     # Bind the engine to the metadata of the Base class so that the
     # declaratives can be accessed through a DBSession instance
     Base.metadata.bind = engine
@@ -205,6 +210,9 @@ def add_post_to_db(session,post_dict,info_dict):
     row_to_insert["date_saved"] = get_current_unix_time()
     row_to_insert["version"] = 0# FIXME
     row_to_insert["link_to_hash_dict"] = json.dumps(post_dict["link_to_hash_dict"])# Link mappings
+    # User info
+    row_to_insert["poster_username"] = info_dict["response"]["blog"]["name"]
+    row_to_insert["blog_domain"] = info_dict["response"]["blog"]["url"]
     # Things not in API docs
     row_to_insert["misc_slug"] = (post_dict["slug"] if ("slug" in post_dict.keys()) else None)# What does this do?
     row_to_insert["misc_short_url"] = (post_dict["short_url"] if ("short_url" in post_dict.keys()) else None)# shortened url?

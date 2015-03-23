@@ -193,8 +193,8 @@ def classy_play():
     # Connect to DB
     session = sql_functions.connect_to_db()
 
-    blog = tumblr_blog(session, consumer_key = config.consumer_key, blog_url = "askbuttonsmom.tumblr.com")
-    posts = blog.get_posts(max_pages=1)
+    blog = tumblr_blog(session, consumer_key = config.consumer_key, blog_url = "staff.tumblr.com")
+    posts = blog.get_posts(max_pages=2)
     #blog.print_posts()
     blog.insert_posts_into_db()
     return
