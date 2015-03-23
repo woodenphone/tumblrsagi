@@ -173,8 +173,8 @@ def check_if_hash_in_db(session,sha512base64_hash):
     hash_rows = session.execute(hash_query)
     hash_row = hash_rows.fetchone()
     if hash_row:
-        hash_row_dict = row2dict(hash_row)
-        return hash_row_dict
+        #hash_row_dict = row2dict(hash_row)
+        return hash_row
     else:
         return None
 

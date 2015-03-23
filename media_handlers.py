@@ -304,7 +304,7 @@ def handle_tumblr_videos(session,post_dict):
     new_media_row = Media(
     media_url=video_page,
     sha512base64_hash=sha512base64_hash,
-    media_filename=filename,
+    filename=filename,
     date_added=time_of_retreival,
     extractor_used="tumblr_video_embed",
     tumblrvideo_yt_dl_info_json=info_json
@@ -567,7 +567,7 @@ def handle_soundcloud_audio(session,post_dict):
     new_media_row = Media(
     media_url=soundcloud_link,
     sha512base64_hash=sha512base64_hash,
-    media_filename=filename,
+    filename=filename,
     date_added=time_of_retreival,
     extractor_used="soundcloud_audio_embed",
     youtube_yt_dl_info_json=info_json
@@ -618,7 +618,6 @@ def handle_tumblr_audio(session,post_dict):
         preexisting_filename = hash_check_row_dict["filename"]
     else:
         logging.debug("Hash is already in DB, no need to save file.")
-        existing_filename = hash_check_row_dict["filename"]
         return {"tumblr_audio":sha512base64_hash}
 
     if media_already_saved:
