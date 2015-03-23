@@ -25,8 +25,8 @@ import json
 import shutil
 import socket
 import string
-
-
+import hashlib# Needed to hash file data
+import base64 # Needed to do base32 encoding of filenames
 
 def setup_logging(log_file_path):
     # Setup logging (Before running any other code)
@@ -291,7 +291,45 @@ def uniquify(seq, idfun=None):
    return result
 
 
+def move_file(original_path,final_path):
+    """Move a file from one location to another"""
+    # Make sure output folder exists
+    output_dir = os.path.dirname(final_path)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    # Move file
+    shutil.copy2(original_path, final_path)
+    return
 
+
+def hash_file_data(file_data):
+    """Take the data from a file and hash it for deduplication
+    Return a base32 encoded hash of the data"""
+    m = hashlib.sha512()
+    m.update(file_data)
+    raw_hash = m.digest()
+    logging.debug("raw_hash: "+repr(raw_hash))
+    sha512base64_hash = base64.b64encode(raw_hash)
+    sha512base32_hash = base64.b32encode(raw_hash)
+    sha512base16_hash = base64.b16encode(raw_hash)
+    logging.debug("sha512base64_hash: "+repr(sha512base64_hash))
+    logging.debug("sha512base32_hash: "+repr(sha512base32_hash))
+    logging.debug("sha512base16_hash: "+repr(sha512base16_hash))
+    return sha512base64_hash
+
+
+
+def generate_media_file_path_hash(root_path,filename):
+    assert(len(filename) == 128)# Filenames should be of fixed length
+    folder = filename[0:4]
+    file_path = os.path.join(root_path,folder,filename)
+    return file_path
+
+def generate_media_file_path_timestamp(root_path,filename):
+    first_four_chars = filename[0:4]
+    second_two_chars = filename[4:6]
+    file_path = os.path.join(root_path,first_four_chars,second_two_chars,filename)
+    return file_path
 
 def main():
     pass

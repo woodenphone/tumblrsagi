@@ -11,79 +11,21 @@
 
 #import mysql.connector
 import sqlalchemy
-import hashlib# Needed to hash file data
-import base64 # Needed to do base32 encoding of filenames
+
+
 import subprocess# For video and some audio downloads
 import urllib# For encoding audio urls
 import re
 import logging
 from utils import *
-#import sql_functions
+from sql_functions import Media
+import sql_functions
 import config # User settings
 
 
 
 from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
-class Media(Base):
-    """Class that defines the media table in the DB"""
-    __tablename__ = "media"
-    # Columns
-    # Locally generated
-    primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    date_added = sqlalchemy.Column(sqlalchemy.Integer)
-    media_url = sqlalchemy.Column(sqlalchemy.String())
-    sha512base64_hash = sqlalchemy.Column(sqlalchemy.String(250))
-    filename = sqlalchemy.Column(sqlalchemy.String(250))
-    extractor_used = sqlalchemy.Column(sqlalchemy.String(250))
-    # Youtube
-    youtube_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
-    youtube_video_id = sqlalchemy.Column(sqlalchemy.String(250))
-    # Tubmlr video
-    tumblrvideo_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
-    # Tumblr audio
-    tumblraudio_album_art = sqlalchemy.Column(sqlalchemy.String())
-    tumblraudio_artist = sqlalchemy.Column(sqlalchemy.String())
-    # SoundCloud audio embeds
-    soundcloud_id = sqlalchemy.Column(sqlalchemy.String())
-
-
-# DB Funcs
-def check_if_hash_in_db(session,sha512base64_hash):
-    """Check if a hash is in the media DB
-    Return a dict of the first found row if it is, otherwise return None"""
-    hash_query = sqlalchemy.select([Media]).where(Media.sha512base64_hash == sha512base64_hash)
-    hash_rows = session.execute(hash_query)
-    hash_row = hash_rows.fetchone()
-    if hash_row:
-        hash_row_dict = row2dict(hash_row)
-        return hash_row_dict
-    else:
-        return None
-
-
-##def row2dict(row):
-##    """Torn a SQLAlchemy row into a dict
-##    http://stackoverflow.com/questions/1958219/convert-sqlalchemy-row-object-to-python-dict"""
-##    return {c.name: getattr(row, c.name) for c in row.__table__.columns}
-row2dict = lambda r: dict(r.items())
-
-def check_if_media_url_in_DB(session,media_url):
-    """Check if a URL is in the media DB
-    Return a dict of the first found row if it is, otherwise return None"""
-    media_url_query = sqlalchemy.select([Media]).where(Media.media_url == media_url)
-    media_url_rows = session.execute(media_url_query)
-    media_url_row = media_url_rows.fetchone()
-    if media_url_row:
-        media_url_row_dict = row2dict(media_url_row)
-        return media_url_row_dict
-    else:
-        return None
-
-
-
-
-# /DB funcs
 
 
 
@@ -128,9 +70,6 @@ def extract_post_links(post_dict):
     return links
 
 
-
-
-
 def download_image_link(session,media_url):
     """Load an image link and hash the data recieved,
     then add an entry to the DB for the URL
@@ -138,7 +77,7 @@ def download_image_link(session,media_url):
     media_already_saved = None # Init var to unknown
     logging.debug("Processing image: "+repr(media_url))
     # Check if URL is in the DB already, if so return hash.
-    url_check_row_dict = check_if_media_url_in_DB(session,media_url)
+    url_check_row_dict = sql_functions.check_if_media_url_in_DB(session,media_url)
     if url_check_row_dict:
         media_already_saved = True
         return url_check_row_dict["sha512base64_hash"]
@@ -156,7 +95,7 @@ def download_image_link(session,media_url):
     file_path = generate_media_file_path_timestamp(root_path=config.root_path,filename=image_filename)
     logging.debug("file_path: "+repr(file_path))
     # Compare hash with database and add new entry for this URL
-    hash_check_row_dict = check_if_hash_in_db(session,sha512base64_hash)
+    hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
     if hash_check_row_dict is not None:
         media_already_saved = True
         image_filename = hash_check_row_dict["filename"]
@@ -191,35 +130,6 @@ def download_image_links(session,media_urls):
         link_hash_dict[media_urls] = sha512base64_hash# {link:hash}
         continue
     return link_hash_dict# {link:hash}
-
-
-def hash_file_data(file_data):
-    """Take the data from a file and hash it for deduplication
-    Return a base32 encoded hash of the data"""
-    m = hashlib.sha512()
-    m.update(file_data)
-    raw_hash = m.digest()
-    logging.debug("raw_hash: "+repr(raw_hash))
-    sha512base64_hash = base64.b64encode(raw_hash)
-    sha512base32_hash = base64.b32encode(raw_hash)
-    sha512base16_hash = base64.b16encode(raw_hash)
-    logging.debug("sha512base64_hash: "+repr(sha512base64_hash))
-    logging.debug("sha512base32_hash: "+repr(sha512base32_hash))
-    logging.debug("sha512base16_hash: "+repr(sha512base16_hash))
-    return sha512base64_hash
-
-
-def generate_media_file_path_hash(root_path,filename):
-    assert(len(filename) == 128)# Filenames should be of fixed length
-    folder = filename[0:4]
-    file_path = os.path.join(root_path,folder,filename)
-    return file_path
-
-def generate_media_file_path_timestamp(root_path,filename):
-    first_four_chars = filename[0:4]
-    second_two_chars = filename[4:6]
-    file_path = os.path.join(root_path,first_four_chars,second_two_chars,filename)
-    return file_path
 
 
 def replace_links(link_dict,post_dict):
@@ -296,26 +206,12 @@ def handle_tumblr_photos(session,post_dict):
     photo_urls_to_save = []
     for photo_link in photo_url_list:
         # Check if URL is in the DB
-        link_already_saved = check_if_media_url_in_DB(session,photo_link)
+        link_already_saved = sql_functions.check_if_media_url_in_DB(session,photo_link)
         if link_already_saved:
             photo_urls_to_save.append(photo_link)
     # Save new photo links
     link_hash_dict = download_image_links(session,photo_urls_to_save)
     return link_hash_dict# {link:hash}
-
-
-def move_file(original_path,final_path):
-    """Move a file from one location to another"""
-    # Make sure output folder exists
-    output_dir = os.path.dirname(final_path)
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    # Move file
-    shutil.copy2(original_path, final_path)
-    return
-
-
-
 
 
 def handle_tumblr_videos(session,post_dict):
@@ -380,7 +276,7 @@ def handle_tumblr_videos(session,post_dict):
     # Decide where to put the file
 
     # Check if hash is in media DB
-    hash_check_row_dict = check_if_hash_in_db(session,sha512base64_hash)
+    hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
     if hash_check_row_dict is not None:
         media_already_saved = True
         preexisting_filename = hash_check_row_dict["filename"]
@@ -643,7 +539,7 @@ def handle_soundcloud_audio(session,post_dict):
     # Decide where to put the file
 
     # Check if hash is in media DB
-    hash_check_row_dict = check_if_hash_in_db(session,sha512base64_hash)
+    hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
     if hash_check_row_dict is not None:
         preexisting_filename = hash_check_row_dict["filename"]
     else:
@@ -700,7 +596,7 @@ def handle_tumblr_audio(session,post_dict):
     logging.debug("media_url: "+repr(media_url))
 
     # Check the DB to see if media is already saved
-    url_check_row_dict = check_if_media_url_in_DB(session,media_url)
+    url_check_row_dict = sql_functions.check_if_media_url_in_DB(session,media_url)
     if url_check_row_dict:
         media_already_saved = True
         sha512base64_hash = row_dict["sha512base64_hash"]
@@ -716,7 +612,7 @@ def handle_tumblr_audio(session,post_dict):
     logging.debug("sha512base64_hash: "+repr(sha512base64_hash))
 
     # Check if hash is in media DB
-    hash_check_row_dict = check_if_hash_in_db(session,sha512base64_hash)
+    hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
     if hash_check_row_dict is not None:
         media_already_saved = True
         preexisting_filename = hash_check_row_dict["filename"]

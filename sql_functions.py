@@ -20,12 +20,37 @@ import config # User specific settings
 Base = declarative_base()
 
 # SQLAlchemy table setup
+class Blogs(Base):
+    """Class that defines the Blog meta table in the DB"""
+    __tablename__ = "media"
+    # Columns
+    # Locally generated
+    primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Is used only as primary key
+    date_added = sqlalchemy.Column(sqlalchemy.Integer)# Unix time of date first added to table
+    date_last_saved = sqlalchemy.Column(sqlalchemy.Integer)# Unix time of date last saved
+    # From /info, documented
+    info_title = sqlalchemy.Column(sqlalchemy.String())#String	The display title of the blog	Compare name
+    info_posts = sqlalchemy.Column(sqlalchemy.String())#Number	The total number of posts to this blog
+    info_name = sqlalchemy.Column(sqlalchemy.String())#String	The short blog name that appears before tumblr.com in a standard blog hostname (and before the domain in a custom blog hostname)	Compare title
+    info_updated = sqlalchemy.Column(sqlalchemy.String())#	Number	The time of the most recent post, in seconds since the epoch
+    info_description = sqlalchemy.Column(sqlalchemy.String())#String	You guessed it! The blog's description
+    info_ask = sqlalchemy.Column(sqlalchemy.Boolean())#Boolean	Indicates whether the blog allows questions
+    info_ask_anon = sqlalchemy.Column(sqlalchemy.Boolean())#	Boolean	Indicates whether the blog allows anonymous questions	Returned only if ask is true
+    info_likes = sqlalchemy.Column(sqlalchemy.String())#Number	Number of likes for this user	Returned only if this is the user's primary blog and sharing of likes is enabled
+    # From /info, undocumented
+    info_is_nsfw = sqlalchemy.Column(sqlalchemy.Boolean())
+    info_share_likes = sqlalchemy.Column(sqlalchemy.Boolean())
+    info_url = sqlalchemy.Column(sqlalchemy.Boolean())
+    info_ask_page_title = sqlalchemy.Column(sqlalchemy.String())
+
+
 class Media(Base):
+    """Class that defines the media table in the DB"""
     __tablename__ = "media"
     # Columns
     # Locally generated
     primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    date_Added = sqlalchemy.Column(sqlalchemy.BigInteger)
+    date_added = sqlalchemy.Column(sqlalchemy.Integer)
     media_url = sqlalchemy.Column(sqlalchemy.String())
     sha512base64_hash = sqlalchemy.Column(sqlalchemy.String(250))
     filename = sqlalchemy.Column(sqlalchemy.String(250))
@@ -38,6 +63,8 @@ class Media(Base):
     # Tumblr audio
     tumblraudio_album_art = sqlalchemy.Column(sqlalchemy.String())
     tumblraudio_artist = sqlalchemy.Column(sqlalchemy.String())
+    # SoundCloud audio embeds
+    soundcloud_id = sqlalchemy.Column(sqlalchemy.String())
 
 class Posts(Base):
     """The posts in a blog
@@ -110,8 +137,64 @@ class Posts(Base):
 # /SQLAlchemy table setup
 
 
+# General
+def connect_to_db():
+    """Provide a DB session
+    http://www.pythoncentral.io/introductory-tutorial-python-sqlalchemy/"""
+    logging.debug("Opening DB connection")
+    engine = sqlalchemy.create_engine('sqlite:///sqlalchemy_example.db')
+    # Bind the engine to the metadata of the Base class so that the
+    # declaratives can be accessed through a DBSession instance
+    Base.metadata.bind = engine
+    Base.metadata.create_all(engine)
+
+    DBSession = sqlalchemy.orm.sessionmaker(bind=engine)
+    # A DBSession() instance establishes all conversations with the database
+    # and represents a "staging zone" for all the objects loaded into the
+    # database session object. Any change made against the objects in the
+    # session won't be persisted into the database until you call
+    # session.commit(). If you're not happy about the changes, you can
+    # revert all of them back to the last commit by calling
+    # session.rollback()
+    session = DBSession()
+
+    logging.debug("Session connected to DB")
+    return session
 
 
+# Media
+def check_if_hash_in_db(session,sha512base64_hash):
+    """Check if a hash is in the media DB
+    Return a dict of the first found row if it is, otherwise return None"""
+    hash_query = sqlalchemy.select([Media]).where(Media.sha512base64_hash == sha512base64_hash)
+    hash_rows = session.execute(hash_query)
+    hash_row = hash_rows.fetchone()
+    if hash_row:
+        hash_row_dict = row2dict(hash_row)
+        return hash_row_dict
+    else:
+        return None
+
+
+##def row2dict(row):
+##    """Torn a SQLAlchemy row into a dict
+##    http://stackoverflow.com/questions/1958219/convert-sqlalchemy-row-object-to-python-dict"""
+##    return {c.name: getattr(row, c.name) for c in row.__table__.columns}
+row2dict = lambda r: dict(r.items())
+
+def check_if_media_url_in_DB(session,media_url):
+    """Check if a URL is in the media DB
+    Return a dict of the first found row if it is, otherwise return None"""
+    media_url_query = sqlalchemy.select([Media]).where(Media.media_url == media_url)
+    media_url_rows = session.execute(media_url_query)
+    media_url_row = media_url_rows.fetchone()
+    if media_url_row:
+        media_url_row_dict = row2dict(media_url_row)
+        return media_url_row_dict
+    else:
+        return None
+
+# Posts
 def add_post_to_db(connection,post_dict,info_dict):
     """Insert a post into the DB"""
     cursor =  connection.cursor()
@@ -204,8 +287,11 @@ def add_post_to_db(connection,post_dict,info_dict):
     cursor.close()
     return
 
-
-
+def find_blog_posts(connection,blog_username):
+    """Lookup a blog's posts in the DB and return a list of the IDs"""
+    logging.warning("Posts lookup not implimented")# TODO FIXME
+    return []
+# Blogs metadata table
 
 def add_blog_to_db(connection,info_dict):
     """Insert blog info into the DB"""
@@ -242,31 +328,6 @@ def add_blog_to_db(connection,info_dict):
 
 
 
-def find_blog_posts(connection,blog_username):
-    """Lookup a blog's posts in the DB and return a list of the IDs"""
-    logging.warning("Posts lookup not implimented")# TODO FIXME
-    return []
-
-
-
-def check_if_link_in_db(connection,media_url):
-    """Lookup a URL in the media DB.
-    Return True if any matches found; otherwise return False."""
-    logging.debug("checking DB for media_url: "+repr(media_url))
-    cursor =  connection.cursor()
-    # Check for existing records for the file hash
-    check_query = "SELECT * FROM `media` WHERE media_url = '%s';"
-    logging.debug(check_query)
-    cursor.execute(check_query)
-    media_already_saved = False
-    check_row_counter = 0
-    for check_row in cursor:
-        check_row_counter += 1
-        logging.debug("check_row: "+repr(check_row))
-        media_already_saved = True
-    logging.debug("media_already_saved: "+repr(media_already_saved))
-    cursor.close()
-    return media_already_saved
 
 
 
