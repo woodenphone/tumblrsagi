@@ -22,12 +22,13 @@ Base = declarative_base()
 # SQLAlchemy table setup
 class Blogs(Base):
     """Class that defines the Blog meta table in the DB"""
+    __table_args__ = {'useexisting': True}
     __tablename__ = "media"
     # Columns
     # Locally generated
     primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Is used only as primary key
-    date_added = sqlalchemy.Column(sqlalchemy.Integer)# Unix time of date first added to table
-    date_last_saved = sqlalchemy.Column(sqlalchemy.Integer)# Unix time of date last saved
+    date_added = sqlalchemy.Column(sqlalchemy.BigInteger)# Unix time of date first added to table
+    date_last_saved = sqlalchemy.Column(sqlalchemy.BigInteger)# Unix time of date last saved
     # From /info, documented
     info_title = sqlalchemy.Column(sqlalchemy.String())#String	The display title of the blog	Compare name
     info_posts = sqlalchemy.Column(sqlalchemy.String())#Number	The total number of posts to this blog
@@ -46,11 +47,12 @@ class Blogs(Base):
 
 class Media(Base):
     """Class that defines the media table in the DB"""
+    __table_args__ = {'useexisting': True}
     __tablename__ = "media"
     # Columns
     # Locally generated
     primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    date_added = sqlalchemy.Column(sqlalchemy.Integer)
+    date_added = sqlalchemy.Column(sqlalchemy.BigInteger)
     media_url = sqlalchemy.Column(sqlalchemy.String())
     sha512base64_hash = sqlalchemy.Column(sqlalchemy.String(250))
     filename = sqlalchemy.Column(sqlalchemy.String(250))
@@ -70,6 +72,7 @@ class Posts(Base):
     """The posts in a blog
     <type>_<api_field_name>
     https://www.tumblr.com/docs/en/api/v2"""
+    __table_args__ = {'useexisting': True}
     __tablename__ = "posts"
     # Columns
     # Local stuff
@@ -142,7 +145,7 @@ def connect_to_db():
     """Provide a DB session
     http://www.pythoncentral.io/introductory-tutorial-python-sqlalchemy/"""
     logging.debug("Opening DB connection")
-    engine = sqlalchemy.create_engine('sqlite:///sqlalchemy_example.db')
+    engine = sqlalchemy.create_engine('sqlite:///sqlalchemy_example.db',echo=True)
     # Bind the engine to the metadata of the Base class so that the
     # declaratives can be accessed through a DBSession instance
     Base.metadata.bind = engine
@@ -195,9 +198,8 @@ def check_if_media_url_in_DB(session,media_url):
         return None
 
 # Posts
-def add_post_to_db(connection,post_dict,info_dict):
+def add_post_to_db(session,post_dict,info_dict):
     """Insert a post into the DB"""
-    cursor =  connection.cursor()
     logging.debug("post_dict: "+repr(post_dict))
     logging.debug("info_dict: "+repr(info_dict))
     # Build row to insert
@@ -281,10 +283,17 @@ def add_post_to_db(connection,post_dict,info_dict):
     # Insert dict into DB
     fields = row_to_insert.keys()
     values = row_to_insert.values()
-    query = generate_insert_query(table_name="posts",value_names=fields)
-    logging.debug(repr(query))
-    result = cursor.execute(query, values)
-    cursor.close()
+
+
+
+    post_row = Posts(**row_to_insert)
+    session.add(post_row)
+
+
+
+
+
+
     return
 
 def find_blog_posts(connection,blog_username):

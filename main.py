@@ -13,7 +13,7 @@ import pytumblr
 import sqlalchemy
 
 from utils import * # General utility functions
-#from sql_functions import *# Database interaction
+import sql_functions# Database interaction
 from media_handlers import *# Media finding, extractiong, ect
 import config # Settings and configuration
 
@@ -47,6 +47,7 @@ class tumblr_blog:
             logging.debug(repr(locals()))
             assert(False)
         self.info_dict = info_dict
+        self.info_name = info_dict["response"]["blog"]["name"]
         self.info_post_count = info_dict["response"]["blog"]["posts"]
         logging.debug("self.info_post_count: "+repr(self.info_post_count))
         return
@@ -130,7 +131,7 @@ class tumblr_blog:
 
     def crop_exisiting_posts(self,posts_list):
         posts_to_compare = posts_list
-        existing_post_ids = find_blog_posts(self.session,self.blog_username)
+        existing_post_ids = sql_functions.find_blog_posts(self.session,self.blog_username)
         new_posts = []
         c = 0
         for post in posts_to_compare:
@@ -155,7 +156,7 @@ class tumblr_blog:
             new_post_dict = save_media(self.session,post_dict)
             # Replace links with something frontend can use later
             # Insert links into the DB
-            add_post_to_db(self.session,new_post_dict,self.info_dict)
+            sql_functions.add_post_to_db(self.session,new_post_dict,self.info_dict)
             logging.debug("Inserting "+str(counter)+"th post")
         # Commit/save new data
         logging.debug("Committing new data to DB.")
@@ -165,11 +166,12 @@ class tumblr_blog:
     def insert_user_into_db(self):
         """Add blog information to blogs DB"""
         logging.debug("Adding blog info to DB")
-        add_blog_to_db(self.session,info_dict)
+        sql_functions.add_blog_to_db(self.session,info_dict)
         return
 
     def create_blog(self):
         """Create blog table and populate meta-table with blog info"""
+        # Load blog info
         # Convert blog username/URL into table name
         # Check if
         # Create blog posts table
@@ -189,7 +191,7 @@ class tumblr_blog:
 def classy_play():
     """Debug and develop classes"""
     # Connect to DB
-    session = connect_to_db()
+    session = sql_functions.connect_to_db()
 
     blog = tumblr_blog(session, consumer_key = config.consumer_key, blog_url = "askbuttonsmom.tumblr.com")
     posts = blog.get_posts(max_pages=1)

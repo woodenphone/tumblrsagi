@@ -96,7 +96,7 @@ def download_image_link(session,media_url):
     logging.debug("file_path: "+repr(file_path))
     # Compare hash with database and add new entry for this URL
     hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
-    if hash_check_row_dict is not None:
+    if hash_check_row_dict:
         media_already_saved = True
         image_filename = hash_check_row_dict["filename"]
 
@@ -229,7 +229,7 @@ def handle_tumblr_videos(session,post_dict):
     video_page_query = sqlalchemy.select([Media]).where(Media.media_url == video_page)
     video_page_rows = session.execute(video_page_query)
     video_page_row = video_page_rows.fetchone()
-    if video_page_row is not None:
+    if video_page_row:
         preexisting_filename = video_page_row["preexisting_filepath"]
         sha512base64_hash = video_page_row["sha512base64_hash"]
         return {"tumblr_video_embed":sha512base64_hash}
@@ -277,14 +277,14 @@ def handle_tumblr_videos(session,post_dict):
 
     # Check if hash is in media DB
     hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
-    if hash_check_row_dict is not None:
+    if hash_check_row_dict:
         media_already_saved = True
         preexisting_filename = hash_check_row_dict["filename"]
     else:
         preexisting_filename = None
 
     # Deal with temp file (Move or delete)
-    if preexisting_filename is not None:
+    if preexisting_filename:
         # Delete duplicate file if media is already saved
         logging.info("Deleting duplicate video file")
         logging.warning("CODE VIDEO DUPLICATE DELETE STUFF")# TODO FIXME
@@ -357,7 +357,7 @@ def handle_youtube_video(session,post_dict):
         video_page_query = sqlalchemy.select([Media]).where(Media.youtube_video_id == youtube_video_id)
         video_page_rows = session.execute(video_page_query)
         video_page_row = video_page_rows.fetchone()
-        if video_page_row is not None:
+        if video_page_row:
             logging.debug("Skipping previously saved video: "+repr(video_page_row))
         else:
             new_youtube_urls.append(youtube_url)
@@ -415,7 +415,7 @@ def handle_youtube_video(session,post_dict):
             video_page_query = sqlalchemy.select([Media]).where(Media.youtube_video_id == youtube_video_id)
             video_page_rows = session.execute(video_page_query)
             video_page_row = video_page_rows.fetchone()
-            if video_page_row is not None:
+            if video_page_row:
                 # If media already saved, delete temp file and use old entry's data
                 filename = video_page_row["media_filename"]
                 logging.debug("Skipping previously saved video: "+repr(video_page_row))
@@ -492,7 +492,7 @@ def handle_soundcloud_audio(session,post_dict):
     id_rows = session.execute(id_query)
     id_row = id_rows.fetchone()
     logging.debug("id_row"+repr(id_row))
-    if id_row is not None:
+    if id_row:
         sha512base64_hash = id_row["sha512base64_hash"]
         return {"soundcloud_audio_embed":sha512base64_hash}
 
@@ -540,12 +540,12 @@ def handle_soundcloud_audio(session,post_dict):
 
     # Check if hash is in media DB
     hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
-    if hash_check_row_dict is not None:
+    if hash_check_row_dict:
         preexisting_filename = hash_check_row_dict["filename"]
     else:
         preexisting_filename = None
 
-    if preexisting_filename is not None:
+    if preexisting_filename:
         # Delete temp file if media is already saved
         logging.info("Deleting duplicate video file")
         os.remove(media_temp_filepath)
@@ -613,12 +613,12 @@ def handle_tumblr_audio(session,post_dict):
 
     # Check if hash is in media DB
     hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
-    if hash_check_row_dict is not None:
+    if hash_check_row_dict:
         media_already_saved = True
         preexisting_filename = hash_check_row_dict["filename"]
     else:
         logging.debug("Hash is already in DB, no need to save file.")
-        existing_filename = row_dict["filename"]
+        existing_filename = hash_check_row_dict["filename"]
         return {"tumblr_audio":sha512base64_hash}
 
     if media_already_saved:
