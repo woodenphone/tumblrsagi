@@ -544,7 +544,7 @@ def handle_soundcloud_audio(session,post_dict):
         # Delete temp file if media is already saved
         logging.info("Deleting duplicate video file")
         os.remove(media_temp_filepath)
-        os.remove(yt_dl_info_dict)
+        os.remove(expected_info_path)
         filename = preexisting_filename
         final_media_filepath = generate_media_file_path_timestamp(root_path=config.root_path,filename=filename)
     else:
