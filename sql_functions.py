@@ -10,10 +10,106 @@
 #-------------------------------------------------------------------------------
 
 
-import mysql.connector
+import sqlalchemy
+from sqlalchemy.ext.declarative import declarative_base
+
 from utils import *
 
 import config # User specific settings
+
+Base = declarative_base()
+
+# SQLAlchemy table setup
+class media(Base):
+    __tablename__ = "media"
+    # Columns
+    # Locally generated
+    primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    date_Added = sqlalchemy.Column(sqlalchemy.BigInteger)
+    media_url = sqlalchemy.Column(sqlalchemy.String())
+    sha512base64_hash = sqlalchemy.Column(sqlalchemy.String(250))
+    filename = sqlalchemy.Column(sqlalchemy.String(250))
+    extractor_used = sqlalchemy.Column(sqlalchemy.String(250))
+    # Youtube
+    youtube_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
+    youtube_video_id = sqlalchemy.Column(sqlalchemy.String(250))
+    # Tubmlr video
+    tumblrvideo_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
+    # Tumblr audio
+    tumblraudio_album_art = sqlalchemy.Column(sqlalchemy.String())
+    tumblraudio_artist = sqlalchemy.Column(sqlalchemy.String())
+
+class posts(Base):
+    """The posts in a blog
+    <type>_<api_field_name>
+    https://www.tumblr.com/docs/en/api/v2"""
+    __tablename__ = "posts"
+    # Columns
+    # Local stuff
+    primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Is used only as primary key
+    version = sqlalchemy.Column(sqlalchemy.BigInteger) # The version of this post this row is associated with
+    date_saved = sqlalchemy.Column(sqlalchemy.BigInteger)# The unix time the post was saved
+    link_to_hash_dict = sqlalchemy.Column(sqlalchemy.String())# mapping of links in the post to hashes of associated media
+    # Missing from API docs
+    misc_slug = sqlalchemy.Column(sqlalchemy.String())
+    misc_short_url = sqlalchemy.Column(sqlalchemy.String())
+    # From API
+    # All Post Types
+    all_posts_blog_name = sqlalchemy.Column(sqlalchemy.String())# String	The short name used to uniquely identify a blog
+    all_posts_id = sqlalchemy.Column(sqlalchemy.BigInteger)# Number	The post's unique ID
+    all_posts_post_url = sqlalchemy.Column(sqlalchemy.String())# String	The location of the post
+    all_posts_type = sqlalchemy.Column(sqlalchemy.String())#String	The type of post	See the type request parameter
+    all_posts_timestamp = sqlalchemy.Column(sqlalchemy.String())#	Number	The time of the post, in seconds since the epoch
+    all_posts_date = sqlalchemy.Column(sqlalchemy.String())#	String	The GMT date and time of the post, as a string
+    all_posts_format = sqlalchemy.Column(sqlalchemy.String())#String	The post format: html or markdown
+    all_posts_reblog_key = sqlalchemy.Column(sqlalchemy.String())#	String	The key used to reblog this post	See the /post/reblog method
+    all_posts_tags = sqlalchemy.Column(sqlalchemy.String())#Array (string)	Tags applied to the post
+    all_posts_bookmarklet = sqlalchemy.Column(sqlalchemy.Boolean())#	Boolean	Indicates whether the post was created via the Tumblr bookmarklet	Exists only if true
+    all_posts_mobile = sqlalchemy.Column(sqlalchemy.Boolean())#Boolean	Indicates whether the post was created via mobile/email publishing	Exists only if true
+    all_posts_source_url = sqlalchemy.Column(sqlalchemy.String())#String	The URL for the source of the content (for quotes, reblogs, etc.)	Exists only if there's a content source
+    all_posts_source_title = sqlalchemy.Column(sqlalchemy.String())#String	The title of the source site	Exists only if there's a content source
+    all_posts_liked = sqlalchemy.Column(sqlalchemy.Boolean())#Boolean	Indicates if a user has already liked a post or not	Exists only if the request is fully authenticated with OAuth.
+    all_posts_state = sqlalchemy.Column(sqlalchemy.String())# String	Indicates the current state of the post	States are published, queued, draft and private
+    # Text Posts
+    text_title = sqlalchemy.Column(sqlalchemy.String())#String	The optional title of the post
+    text_body = sqlalchemy.Column(sqlalchemy.String())#String	The full post body
+    # Photo posts
+    photo_photos = sqlalchemy.Column(sqlalchemy.String())# Array	Photo objects with properties:
+    photo_caption = sqlalchemy.Column(sqlalchemy.String())#	String	The user-supplied caption
+    photo_width = sqlalchemy.Column(sqlalchemy.BigInteger)#	Number	The width of the photo or photoset
+    photo_height = sqlalchemy.Column(sqlalchemy.BigInteger)#	Number	The height of the photo or photoset
+    # Quote Posts
+    quote_text = sqlalchemy.Column(sqlalchemy.String())# 	String	The text of the quote (can be modified by the user when posting)
+    quote_source = sqlalchemy.Column(sqlalchemy.String())# 	String	Full HTML for the source of the quote
+    # Link Posts
+    link_title = sqlalchemy.Column(sqlalchemy.String())#	String	The title of the page the link points to
+    link_url = sqlalchemy.Column(sqlalchemy.String())#	String	The link
+    link_description = sqlalchemy.Column(sqlalchemy.String())#	String	A user-supplied description
+    # Chat Posts
+    chat_title = sqlalchemy.Column(sqlalchemy.String())
+    chat_body = sqlalchemy.Column(sqlalchemy.String())
+    chat_dialogue = sqlalchemy.Column(sqlalchemy.String())
+    # Audio Posts
+    audio_caption = sqlalchemy.Column(sqlalchemy.String())
+    audio_player = sqlalchemy.Column(sqlalchemy.String())
+    audio_plays = sqlalchemy.Column(sqlalchemy.BigInteger)
+    audio_album_art = sqlalchemy.Column(sqlalchemy.String())
+    audio_artist = sqlalchemy.Column(sqlalchemy.String())
+    audio_album = sqlalchemy.Column(sqlalchemy.String())
+    audio_track_name = sqlalchemy.Column(sqlalchemy.String())
+    audio_track_number = sqlalchemy.Column(sqlalchemy.BigInteger)
+    audio_year = sqlalchemy.Column(sqlalchemy.BigInteger)
+    # Video Posts
+    video_caption = sqlalchemy.Column(sqlalchemy.String())
+    video_player = sqlalchemy.Column(sqlalchemy.String())
+    # Answer Posts
+    answer_asking_name = sqlalchemy.Column(sqlalchemy.String())
+    answer_asking_url = sqlalchemy.Column(sqlalchemy.String())
+    answer_question = sqlalchemy.Column(sqlalchemy.String())
+    answer_answer = sqlalchemy.Column(sqlalchemy.String())
+# /SQLAlchemy table setup
+
+
 
 
 def generate_insert_query(table_name,value_names):
