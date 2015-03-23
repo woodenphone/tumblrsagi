@@ -177,7 +177,6 @@ def check_if_hash_in_db(session,sha512base64_hash):
     hash_rows = session.execute(hash_query)
     hash_row = hash_rows.fetchone()
     if hash_row:
-        #hash_row_dict = row2dict(hash_row)
         return hash_row
     else:
         return None
@@ -190,8 +189,7 @@ def check_if_media_url_in_DB(session,media_url):
     media_url_rows = session.execute(media_url_query)
     media_url_row = media_url_rows.fetchone()
     if media_url_row:
-        media_url_row_dict = row2dict(media_url_row)
-        return media_url_row_dict
+        return media_url_row
     else:
         return None
 

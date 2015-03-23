@@ -225,7 +225,7 @@ def handle_tumblr_videos(session,post_dict):
     video_page_rows = session.execute(video_page_query)
     video_page_row = video_page_rows.fetchone()
     if video_page_row:
-        preexisting_filename = video_page_row["preexisting_filepath"]
+        preexisting_filename = video_page_row["filename"]
         sha512base64_hash = video_page_row["sha512base64_hash"]
         return {"tumblr_video_embed":sha512base64_hash}
 
@@ -711,22 +711,7 @@ def save_media(session,post_dict):
 
 def debug():
     """Code for debugging during programming goes here so everything is logged to file"""
-    logging.debug("Opening DB connection")
-    engine = sqlalchemy.create_engine('sqlite:///sqlalchemy_example.db')
-    # Bind the engine to the metadata of the Base class so that the
-    # declaratives can be accessed through a DBSession instance
-    Base.metadata.bind = engine
-    Base.metadata.create_all(engine)
-
-    DBSession = sqlalchemy.orm.sessionmaker(bind=engine)
-    # A DBSession() instance establishes all conversations with the database
-    # and represents a "staging zone" for all the objects loaded into the
-    # database session object. Any change made against the objects in the
-    # session won't be persisted into the database until you call
-    # session.commit(). If you're not happy about the changes, you can
-    # revert all of them back to the last commit by calling
-    # session.rollback()
-    session = DBSession()
+    session = sql_functions.connect_to_db()
 
     # Debug video DB check
     #sql_functions.check_if_video_in_db(connection,media_url="https://www.youtube.com/embed/lGIEmH3BoyA",youtube_id=None,sha512base64_hash=None,post_id=None)
