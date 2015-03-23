@@ -10,22 +10,22 @@
 #-------------------------------------------------------------------------------
 
 import pytumblr
-
+import sqlalchemy
 
 from utils import * # General utility functions
-from sql_functions import *# Database interaction
+#from sql_functions import *# Database interaction
 from media_handlers import *# Media finding, extractiong, ect
 import config # Settings and configuration
 
 
 
 class tumblr_blog:
-    def __init__(self,connection,consumer_key,blog_url=None,blog_username=None):
+    def __init__(self,session,consumer_key,blog_url=None,blog_username=None):
         # Store args for later and initialise variables
         self.consumer_key = consumer_key
         self.blog_url = blog_url
         self.blog_username = blog_username
-        self.connection = connection
+        self.session = session
         self.posts_list = []# List of post dicts
         self.info_post_count = None # Number of posts the /info API says the blog has
         self.posts_post_count = None # Number of posts the /posts API says the blog has
@@ -130,7 +130,7 @@ class tumblr_blog:
 
     def crop_exisiting_posts(self,posts_list):
         posts_to_compare = posts_list
-        existing_post_ids = find_blog_posts(self.connection,self.blog_username)
+        existing_post_ids = find_blog_posts(self.session,self.blog_username)
         new_posts = []
         c = 0
         for post in posts_to_compare:
@@ -152,21 +152,22 @@ class tumblr_blog:
             # Extract links from the post
             #all_post_links = extract_post_links(post_dict)
             # For each media link, check against DB and if applicable download it
-            new_post_dict = save_media(self.connection,post_dict)
+            new_post_dict = save_media(self.session,post_dict)
             # Replace links with something frontend can use later
             # Insert links into the DB
-            add_post_to_db(self.connection,new_post_dict,self.info_dict)
+            add_post_to_db(self.session,new_post_dict,self.info_dict)
             logging.debug("Inserting "+str(counter)+"th post")
         # Commit/save new data
         logging.debug("Committing new data to DB.")
-        self.connection.commit()
+        self.session.commit()
         return
 
     def insert_user_into_db(self):
         """Add blog information to blogs DB"""
         logging.debug("Adding blog info to DB")
-        add_blog_to_db(connection,info_dict)
+        add_blog_to_db(self.session,info_dict)
         return
+
     def create_blog(self):
         """Create blog table and populate meta-table with blog info"""
         # Convert blog username/URL into table name
@@ -174,11 +175,7 @@ class tumblr_blog:
         # Create blog posts table
         # Add entry to blogs table
         # Commit changes
-
-
-    def process_posts_for_media(self):
-        # TODO FIXME
-        handle_media(connection,post_dict)
+        return
 
     def print_posts(self):
         """Output posts to log file for debugging"""
@@ -191,25 +188,142 @@ class tumblr_blog:
 
 def classy_play():
     """Debug and develop classes"""
-    logging.debug("Opening DB connection")
-    connection = mysql.connector.connect(**config.sql_login)
+    # Connect to DB
+    session = connect_to_db()
 
-    blog = tumblr_blog(connection, consumer_key = config.consumer_key, blog_url = "askbuttonsmom.tumblr.com")
+    blog = tumblr_blog(session, consumer_key = config.consumer_key, blog_url = "askbuttonsmom.tumblr.com")
     posts = blog.get_posts(max_pages=1)
     #blog.print_posts()
     blog.insert_posts_into_db()
-    logging.debug("Closing DB connection")
-    connection.close()
+    return
 
 
 
+# DB funcs
+def connect_to_db():
+    """Provide a DB session
+    http://www.pythoncentral.io/introductory-tutorial-python-sqlalchemy/"""
+    logging.debug("Opening DB connection")
+    engine = sqlalchemy.create_engine('sqlite:///sqlalchemy_example.db')
+    # Bind the engine to the metadata of the Base class so that the
+    # declaratives can be accessed through a DBSession instance
+    Base.metadata.bind = engine
+    Base.metadata.create_all(engine)
+
+    DBSession = sqlalchemy.orm.sessionmaker(bind=engine)
+    # A DBSession() instance establishes all conversations with the database
+    # and represents a "staging zone" for all the objects loaded into the
+    # database session object. Any change made against the objects in the
+    # session won't be persisted into the database until you call
+    # session.commit(). If you're not happy about the changes, you can
+    # revert all of them back to the last commit by calling
+    # session.rollback()
+    session = DBSession()
+
+    logging.debug("Session connected to DB")
+    return session
+
+
+def find_blog_posts(connection,blog_username):
+    """Lookup a blog's posts in the DB and return a list of the IDs"""
+    logging.warning("Posts lookup not implimented")# TODO FIXME
+    return []
 
 
 
+def add_post_to_db(connection,post_dict,info_dict):
+    """Insert a post into the DB"""
+    cursor =  connection.cursor()
+    logging.debug("post_dict: "+repr(post_dict))
+    logging.debug("info_dict: "+repr(info_dict))
+    # Build row to insert
+    row_to_insert = {} # TODO, Waiting on ATC for DB design # actually fuck waiting he can clean this up later
+    # Local stuff
+    row_to_insert["date_saved"] = get_current_unix_time()
+    row_to_insert["version"] = 0# FIXME
+    row_to_insert["link_to_hash_dict"] = json.dumps(post_dict["link_to_hash_dict"])# Link mappings
+    # Things not in API docs
+    row_to_insert["misc_slug"] = (post_dict["slug"] if ("slug" in post_dict.keys()) else None)# What does this do?
+    row_to_insert["misc_short_url"] = (post_dict["short_url"] if ("short_url" in post_dict.keys()) else None)# shortened url?
+    # All posts
+    row_to_insert["all_posts_blog_name"] = post_dict["blog_name"]
+    row_to_insert["all_posts_id"] =  post_dict["id"]
+    row_to_insert["all_posts_post_url"] = post_dict["post_url"]
+    row_to_insert["all_posts_type"] = post_dict["type"]
+    row_to_insert["all_posts_timestamp"] = post_dict["timestamp"]
+    row_to_insert["all_posts_date"] = post_dict["date"]
+    row_to_insert["all_posts_format"] = post_dict["format"]
+    row_to_insert["all_posts_reblog_key"] = post_dict["reblog_key"]
+    row_to_insert["all_posts_tags"] = json.dumps(post_dict["tags"])# FIXME! Disabled for coding (JSON?)
+    row_to_insert["all_posts_bookmarklet"] = (post_dict["bookmarklet"] if ("bookmarklet" in post_dict.keys()) else None)# Optional in api
+    row_to_insert["all_posts_mobile"] = (post_dict["mobile"] if ("mobile" in post_dict.keys()) else None)# Optional in api
+    row_to_insert["all_posts_source_url"] = (post_dict["source_url"] if ("source_url" in post_dict.keys()) else None)# Optional in api
+    row_to_insert["all_posts_source_title"] = (post_dict["source_title"] if ("source_title" in post_dict.keys()) else None)# Optional in api
+    row_to_insert["all_posts_liked"] = (post_dict["liked"] if ("liked" in post_dict.keys()) else None)# Can be absent based on expreience
+    row_to_insert["all_posts_state"] = post_dict["state"]
+    #row_to_insert["all_posts_total_posts"] = post_dict["total_posts"]# Move to blogs table?
+    # Text posts
+    if post_dict["type"] == "text":
+        row_to_insert["text_title"] = post_dict["title"]
+        row_to_insert["text_body"] = post_dict["body"]
+    # Photo posts
+    elif post_dict["type"] == "photo":
+        row_to_insert["photo_photos"] = None#post_dict[""]
+        row_to_insert["photo_caption"] = None#post_dict["caption"]
+        row_to_insert["photo_width"] = None#post_dict["width"]
+        row_to_insert["photo_height"] = None#post_dict["height"]
+    # Quote posts
+    elif post_dict["type"] == "quote":
+        row_to_insert["quote_text"] = post_dict["text"]
+        row_to_insert["quote_source"] = post_dict["source"]
+    # Link posts
+    elif post_dict["type"] == "link":
+        row_to_insert["link_title"] = post_dict["title"]
+        row_to_insert["link_url"] = post_dict["url"]
+        row_to_insert["link_description"] = post_dict["description"]
+    # Chat posts
+    elif post_dict["type"] == "chat":
+        row_to_insert["chat_title"] = post_dict["title"]
+        row_to_insert["chat_body"] = post_dict["body"]
+        row_to_insert["chat_dialogue"] = post_dict["dialogue"]
+    # Audio Posts
+    elif post_dict["type"] == "audio":
+        row_to_insert["audio_caption"] = (post_dict["caption"] if ("caption" in post_dict.keys()) else None)
+        row_to_insert["audio_player"] = (post_dict["player"] if ("player" in post_dict.keys()) else None)
+        row_to_insert["audio_plays"] = (post_dict["plays"] if ("plays" in post_dict.keys()) else None)
+        row_to_insert["audio_album_art"] = (post_dict["album_art"] if ("album_art" in post_dict.keys()) else None)
+        row_to_insert["audio_artist"] = (post_dict["artist"] if ("artist" in post_dict.keys()) else None)
+        row_to_insert["audio_album"] = (post_dict["album"] if ("album" in post_dict.keys()) else None)
+        row_to_insert["audio_track_name"] = (post_dict["track_name"] if ("track_name" in post_dict.keys()) else None)
+        row_to_insert["audio_track_number"] = (post_dict["track_number"] if ("track_number" in post_dict.keys()) else None)
+        row_to_insert["audio_year"] = (post_dict["year"] if ("year" in post_dict.keys()) else None)
+    # Video Posts
+    elif post_dict["type"] == "video":
+        row_to_insert["video_caption"] = post_dict["caption"]
+        row_to_insert["video_player"] = "FIXME"#post_dict["player"]
+    # Answer Posts
+    elif post_dict["type"] == "answer":
+        row_to_insert["answer_asking_name"] = post_dict["asking_name"]
+        row_to_insert["answer_asking_url"] = post_dict["asking_url"]
+        row_to_insert["answer_question"] = post_dict["question"]
+        row_to_insert["answer_answer"] = post_dict["answer"]
+    else:
+        logging.error("Unknown post type!")
+        logging.error(repr(locals()))
+        assert(False)
+    #
+    if config.log_db_rows:
+        logging.debug("row_to_insert: "+repr(row_to_insert))
+    # Insert dict into DB
+    fields = row_to_insert.keys()
+    values = row_to_insert.values()
+    query = generate_insert_query(table_name="posts",value_names=fields)
+    logging.debug(repr(query))
+    result = cursor.execute(query, values)
+    cursor.close()
+    return
 
-
-
-
+# /DB funcs
 
 
 # Functional

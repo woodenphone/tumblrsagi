@@ -240,7 +240,7 @@ def replace_links(link_dict,post_dict):
     return post_dict
 
 
-def handle_image_links(connection,all_post_links):
+def handle_image_links(session,all_post_links):
     """Check and save images linked to by a post
     return link_hash_dict = {}# {link:hash}"""
     logging.debug("all_post_links"+repr(all_post_links))
@@ -259,15 +259,15 @@ def handle_image_links(connection,all_post_links):
             if extention in before_first_q_mark:
                 image_links.append(link)
     # Save image links
-    link_hash_dict = download_image_links(connection,image_links)
+    link_hash_dict = download_image_links(session,image_links)
     return link_hash_dict# {link:hash}
 
 
-def handle_thumbnail(connection,post_dict):
+def handle_thumbnail(session,post_dict):
     if "thumbnail_url" in post_dict.keys():
         logging.debug("Saving thumbnail")
         thumbnail_link = [post_dict["thumbnail_url"]]
-        link_hash_dict = download_image_links(connection,thumbnail_link)
+        link_hash_dict = download_image_links(session,thumbnail_link)
     return link_hash_dict# {link:hash}
 
 
