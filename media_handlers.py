@@ -24,11 +24,6 @@ import config # User settings
 
 
 
-from sqlalchemy.ext.declarative import declarative_base
-Base = declarative_base()
-
-
-
 def find_links_src(html):
     """Given string containing '<img src="http://media.tumblr.com/tumblr_m7g6koAnx81r3kwau.jpg"/>'
     return ['http://media.tumblr.com/tumblr_m7g6koAnx81r3kwau.jpg']

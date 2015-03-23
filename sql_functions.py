@@ -10,16 +10,19 @@
 #-------------------------------------------------------------------------------
 
 
-import sqlalchemy
-from sqlalchemy.ext.declarative import declarative_base
+import sqlalchemy# Database  library
+from sqlalchemy.ext.declarative import declarative_base# Magic for ORM
 
 from utils import *
 
 import config # User specific settings
 
-Base = declarative_base()
+
+
 
 # SQLAlchemy table setup
+Base = declarative_base()
+
 class Blogs(Base):
     """Class that defines the Blog meta table in the DB"""
     __table_args__ = {'useexisting': True}
@@ -67,6 +70,7 @@ class Media(Base):
     tumblraudio_artist = sqlalchemy.Column(sqlalchemy.String())
     # SoundCloud audio embeds
     soundcloud_id = sqlalchemy.Column(sqlalchemy.String())
+
 
 class Posts(Base):
     """The posts in a blog
@@ -179,12 +183,6 @@ def check_if_hash_in_db(session,sha512base64_hash):
         return None
 
 
-##def row2dict(row):
-##    """Torn a SQLAlchemy row into a dict
-##    http://stackoverflow.com/questions/1958219/convert-sqlalchemy-row-object-to-python-dict"""
-##    return {c.name: getattr(row, c.name) for c in row.__table__.columns}
-row2dict = lambda r: dict(r.items())
-
 def check_if_media_url_in_DB(session,media_url):
     """Check if a URL is in the media DB
     Return a dict of the first found row if it is, otherwise return None"""
@@ -196,6 +194,7 @@ def check_if_media_url_in_DB(session,media_url):
         return media_url_row_dict
     else:
         return None
+
 
 # Posts
 def add_post_to_db(session,post_dict,info_dict):
@@ -280,28 +279,19 @@ def add_post_to_db(session,post_dict,info_dict):
     #
     if config.log_db_rows:
         logging.debug("row_to_insert: "+repr(row_to_insert))
-    # Insert dict into DB
-    fields = row_to_insert.keys()
-    values = row_to_insert.values()
-
-
 
     post_row = Posts(**row_to_insert)
     session.add(post_row)
-
-
-
-
-
-
     return
+
 
 def find_blog_posts(connection,blog_username):
     """Lookup a blog's posts in the DB and return a list of the IDs"""
     logging.warning("Posts lookup not implimented")# TODO FIXME
     return []
-# Blogs metadata table
 
+
+# Blogs metadata table
 def add_blog_to_db(connection,info_dict):
     """Insert blog info into the DB"""
     cursor =  connection.cursor()
@@ -334,11 +324,6 @@ def add_blog_to_db(connection,info_dict):
     result = cursor.execute(query, values)
     cursor.close()
     return
-
-
-
-
-
 
 
 def main():
