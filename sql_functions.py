@@ -65,6 +65,9 @@ class Media(Base):
     youtube_video_id = sqlalchemy.Column(sqlalchemy.String(250))
     # Tubmlr video
     tumblrvideo_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
+    # Vine Video embeds
+    vine_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
+    vine_video_id = sqlalchemy.Column(sqlalchemy.String(250))# https://vine.co/v/hjWIUFOYD31/embed/simple -> hjWIUFOYD31
     # Tumblr audio
     tumblraudio_album_art = sqlalchemy.Column(sqlalchemy.String())
     tumblraudio_artist = sqlalchemy.Column(sqlalchemy.String())
