@@ -39,8 +39,13 @@ class tumblr_blog:
         """Load data from API /info"""
         info_url = "http://api.tumblr.com/v2/blog/"+self.blog_url+"/info?api_key="+self.consumer_key
         info_json = get(info_url)
+        if not info_json:
+            logging.error("Cannot load info page! (Maybe blog URL is wrong?)")
+            logging.error("locals(): "+repr(locals()))
+            assert(False)# We should stop if this happens, without /info data later code will probably malfunction
         info_dict = json.loads(info_json)
         logging.debug("info_dict"+repr(info_dict))
+        assert(type(info_dict) is type({}))
         # Check response is valid
         if info_dict["meta"]["status"] != 200:
             logging.error("Bad response, cannot load info.")
@@ -193,7 +198,7 @@ def classy_play():
     # Connect to DB
     session = sql_functions.connect_to_db()
 
-    blog = tumblr_blog(session, consumer_key = config.consumer_key, blog_url = "staff.tumblr.com")
+    blog = tumblr_blog(session, consumer_key = config.consumer_key, blog_url = "kevinsanonsfw.tumblr.com")
     posts = blog.get_posts(max_pages=2)
     #blog.print_posts()
     blog.insert_posts_into_db()
