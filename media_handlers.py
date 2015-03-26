@@ -410,9 +410,7 @@ def handle_youtube_video(session,post_dict):
             # Decide where to put the file
 
             # Check if hash is in media DB
-            video_page_query = sqlalchemy.select([Media]).where(Media.youtube_video_id == youtube_video_id)
-            video_page_rows = session.execute(video_page_query)
-            video_page_row = video_page_rows.fetchone()
+            video_page_row = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
             if video_page_row:
                 # If media already saved, delete temp file and use old entry's data
                 filename = video_page_row["media_filename"]
@@ -455,6 +453,7 @@ def handle_vine_videos(session,post_dict):
     """Handle downloading of vine videos
     https://github.com/rg3/youtube-dl/blob/master/docs/supportedsites.md"""
     logging.debug("post_dict"+repr(post_dict))
+    post_id = str(post_dict["id"])
     # Extract video links from post dict
     video_items = post_dict["player"]
     vine_urls = []
@@ -465,7 +464,7 @@ def handle_vine_videos(session,post_dict):
         if embed_code:
             # Process links so YT-DL can understand them
             logging.debug("embed_code: "+repr(embed_code))
-            embed_url_regex ="""src=["']([^?"']+)\?"""
+            embed_url_regex ="""src=["']([^?"']+)"""
             embed_url_search = re.search(embed_url_regex, embed_code, re.IGNORECASE|re.DOTALL)
             if embed_url_search:
                 embed_url = embed_url_search.group(1)
@@ -475,17 +474,109 @@ def handle_vine_videos(session,post_dict):
     # Deduplicate links
     vine_urls = uniquify(vine_urls)
     logging.debug("vine_urls: "+repr(vine_urls))
-    # Check if video link is already saved
-    # https://vine.co/v/hjWIUFOYD31/embed/simple -> hjWIUFOYD31
+    download_urls = []
+    # Skip IDs that have already been done
+    for vine_url in vine_urls:
+        # Extract video ID
+        # https://vine.co/v/hjWIUFOYD31/embed/simple -> hjWIUFOYD31
+        id_regex ="""vine.co/v/([a-zA-Z0-9]+)/?"""
+        id_search = re.search(id_regex, vine_url, re.IGNORECASE|re.DOTALL)
+        if id_search:
+            # Look up ID in media DB
+            video_id = id_search.group(1)
+            logging.debug("video_id: "+repr(video_id))
+            video_page_query = sqlalchemy.select([Media]).where(Media.media_url == vine_url)
+            video_page_rows = session.execute(video_page_query)
+            video_page_row = video_page_rows.fetchone()
+            if video_page_row:
+                logging.debug("Skipping previously saved video: "+repr(video_page_row))
+                continue
+        download_urls.append(vine_url)
+        continue
+    logging.debug("download_urls: "+repr(download_urls))
+    # Send video URLs to YT-DL
+    if len(download_urls) > 0:
+        # Download each new video
+        for download_url in download_urls:
+            logging.debug("download_url: "+repr(download_url))
+            # Form command to run
+            # Define arguments. see this url for help
+            # https://github.com/rg3/youtube-dl
+            program_path = os.path.join("youtube-dl","youtube-dl.exe")
+            assert(os.path.exists(program_path))
+            ignore_errors = "-i"
+            safe_filenames = "--restrict-filenames"
+            output_arg = "-o"
+            info_json_arg = "--write-info-json"
+            description_arg ="--write-description"
+            output_dir = os.path.join(config.root_path,"temp")
+            output_template = os.path.join(output_dir, post_id+".%(ext)s")
+            # "youtube-dl.exe -i --restrict-filenames -o --write-info-json --write-description"
+            command = [program_path, ignore_errors, safe_filenames, info_json_arg, description_arg, output_arg, output_template, download_url]
+            logging.debug("command: "+repr(command))
+            # Call youtube-dl
+            command_result = subprocess.call(command)
+            logging.debug("command_result: "+repr(command_result))
+            time_of_retreival = get_current_unix_time()
+            # Verify download worked
+            # Read info JSON file
+            expected_info_path = os.path.join(output_dir, post_id+".info.json")
+            info_exists = os.path.exists(expected_info_path)
+            if not info_exists:
+                logging.error("Info file not found!")
+                logging.error(repr(locals()))
+            info_json = read_file(expected_info_path)
+            yt_dl_info_dict = json.loads(info_json)
+            logging.debug("yt_dl_info_dict: "+repr(yt_dl_info_dict))
+            # Grab file path
+            media_temp_filepath = yt_dl_info_dict["_filename"]
+            media_temp_filename = os.path.basename(media_temp_filepath)
+            logging.debug("media_temp_filepath: "+repr(media_temp_filepath))
+            # Check that video file given in info JSON exists
+            assert(os.path.exists(media_temp_filepath))
+            # Generate hash for media file
+            file_data = read_file(media_temp_filepath)
+            sha512base64_hash = hash_file_data(file_data)
+            # Decide where to put the file
 
-    # Send them to YT-DL
-    # Generate hash for the video file
-    # Check if hash is in the DB
-    # Move/delete video file as appropriate
-    # Add new entry to DB
-    # Return dict of hashes
-    logging.critical("Vine is unimplimented!")
-    assert(False)# Stop for coding/debugging
+            # Check if hash is in media DB
+            video_page_row = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
+            if video_page_row:
+                # If media already saved, delete temp file and use old entry's data
+                filename = video_page_row["filename"]
+                logging.debug("Skipping previously saved video: "+repr(video_page_row))
+                # Delete duplicate file if media is already saved
+                logging.info("Deleting duplicate video file")
+                logging.warning("CODE VIDEO DUPLICATE DELETE STUFF")# TODO FIXME
+                continue
+            else:
+                # If media not in DB, move temp file to permanent location
+                # Move file to media DL location
+                logging.info("Moving video to final location")
+                # Generate output filepath
+                file_ext = media_temp_filename.split(".")[-1]
+                filename = str(time_of_retreival)+"."+file_ext
+                final_media_filepath = generate_media_file_path_timestamp(root_path=config.root_path,filename=filename)
+                # Move file to final location
+                move_file(media_temp_filepath,final_media_filepath)
+                assert(os.path.exists(final_media_filepath))
+
+            # Add video to DB
+            new_media_row = Media(
+            media_url=download_url,
+            sha512base64_hash=sha512base64_hash,
+            filename=filename,
+            date_added=time_of_retreival,
+            extractor_used="vine_embed",
+            vine_yt_dl_info_json=info_json,
+            )
+            session.add(new_media_row)
+            continue
+
+        logging.debug("Finished downloading youtube embeds")
+        return {"vine_embed":sha512base64_hash}
+    else:
+        return {}
 
 
 def handle_video_posts(session,post_dict):
