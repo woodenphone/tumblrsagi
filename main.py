@@ -31,7 +31,13 @@ class tumblr_blog:
         self.posts_post_count = None # Number of posts the /posts API says the blog has
         # Load blog info from API
         self.load_info()
+        # Convert blog username/URL into safer name
+        self.sanitized_blog_url = self.blog_url# TODO FIXME!
+        self.sanitized_username = self.blog_username# TODO FIXME!
+        # Make sure user is in blogs DB
+        sql_functions.insert_user_into_db(self.session,self.info_dict,self.sanitized_username,self.sanitized_blog_url)
         return
+
     def clean_blog_url(self,raw_blog_url):
         return raw_blog_url
 
@@ -161,27 +167,14 @@ class tumblr_blog:
             new_post_dict = save_media(self.session,post_dict)
             # Replace links with something frontend can use later
             # Insert links into the DB
-            sql_functions.add_post_to_db(self.session,new_post_dict,self.info_dict)
+            sql_functions.add_post_to_db(self.session,new_post_dict,
+            self.info_dict,self.sanitized_blog_url,self.sanitized_username)
             logging.debug("Inserting "+str(counter)+"th post")
+        # Change date last saved in DB
+
         # Commit/save new data
         logging.debug("Committing new data to DB.")
         self.session.commit()
-        return
-
-    def insert_user_into_db(self):
-        """Add blog information to blogs DB"""
-        logging.debug("Adding blog info to DB")
-        sql_functions.add_blog_to_db(self.session,info_dict)
-        return
-
-    def create_blog(self):
-        """Create blog table and populate meta-table with blog info"""
-        # Load blog info
-        # Convert blog username/URL into table name
-        # Check if
-        # Create blog posts table
-        # Add entry to blogs table
-        # Commit changes
         return
 
     def print_posts(self):
@@ -198,7 +191,7 @@ def classy_play():
     # Connect to DB
     session = sql_functions.connect_to_db()
 
-    blog = tumblr_blog(session, consumer_key = config.consumer_key, blog_url = "kevinsanonsfw.tumblr.com")
+    blog = tumblr_blog(session, consumer_key = config.consumer_key, blog_url = "staff.tumblr.com")
     posts = blog.get_posts(max_pages=2)
     #blog.print_posts()
     blog.insert_posts_into_db()

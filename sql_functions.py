@@ -32,6 +32,9 @@ class Blogs(Base):
     primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Is used only as primary key
     date_added = sqlalchemy.Column(sqlalchemy.BigInteger)# Unix time of date first added to table
     date_last_saved = sqlalchemy.Column(sqlalchemy.BigInteger)# Unix time of date last saved
+    # Posts table values
+    poster_username = sqlalchemy.Column(sqlalchemy.String())# username for a blog, as given by the API "tsitra360"
+    blog_domain = sqlalchemy.Column(sqlalchemy.String())# domain for the blog"tsitra360.tumblr.com"
     # From /info, documented
     info_title = sqlalchemy.Column(sqlalchemy.String())#String	The display title of the blog	Compare name
     info_posts = sqlalchemy.Column(sqlalchemy.String())#Number	The total number of posts to this blog
@@ -203,7 +206,7 @@ def check_if_media_url_in_DB(session,media_url):
 
 
 # Posts
-def add_post_to_db(session,post_dict,info_dict):
+def add_post_to_db(session,post_dict,info_dict,blog_url,username):
     """Insert a post into the DB"""
     logging.debug("post_dict: "+repr(post_dict))
     logging.debug("info_dict: "+repr(info_dict))
@@ -214,8 +217,8 @@ def add_post_to_db(session,post_dict,info_dict):
     row_to_insert["version"] = 0# FIXME
     row_to_insert["link_to_hash_dict"] = json.dumps(post_dict["link_to_hash_dict"])# Link mappings
     # User info
-    row_to_insert["poster_username"] = info_dict["response"]["blog"]["name"]
-    row_to_insert["blog_domain"] = info_dict["response"]["blog"]["url"]
+    row_to_insert["poster_username"] = username
+    row_to_insert["blog_domain"] = blog_url
     # Things not in API docs
     row_to_insert["misc_slug"] = (post_dict["slug"] if ("slug" in post_dict.keys()) else None)# What does this do?
     row_to_insert["misc_short_url"] = (post_dict["short_url"] if ("short_url" in post_dict.keys()) else None)# shortened url?
@@ -301,38 +304,120 @@ def find_blog_posts(connection,blog_username):
 
 
 # Blogs metadata table
-def add_blog_to_db(connection,info_dict):
-    """Insert blog info into the DB"""
-    cursor =  connection.cursor()
-    logging.debug("info_dict: "+repr(info_dict))
-    row_to_insert = {} # TODO, Waiting on ATC for DB design # actually fuck waiting he can clean this up later
-    # Local stuff
-    row_to_insert["date_last_saved"] = get_current_unix_time()
-    # from /info, documented
-    row_to_insert["info_title"] = info_dict["title"]
-    row_to_insert["info_posts"] = info_dict["posts"]
-    row_to_insert["info_name"] = info_dict["name"]
-    row_to_insert["info_updated"] = info_dict["updated"]
-    row_to_insert["info_description"] = info_dict["description"]
-    row_to_insert["info_ask"] = info_dict["ask"]
-    row_to_insert["info_ask_anon"] = info_dict["ask_anon"]
-    row_to_insert["info_likes"] = info_dict["likes"]
-    # from /info, undocumented
-    row_to_insert["info_is_nsfw"] = (info_dict["is_nsfw"] if ("is_nsfw" in info_dict.keys()) else None)# Undocumented
-    row_to_insert["info_share_likes"] = (info_dict["share_likes"] if ("share_likes" in info_dict.keys()) else None)# Undocumented
-    row_to_insert["info_url"] = (info_dict["url"] if ("url" in info_dict.keys()) else None)# Undocumented
-    row_to_insert["info_ask_page_title"] = (info_dict["ask_page_title"] if ("ask_page_title" in info_dict.keys()) else None)# Undocumented
-    #
-    if config.log_db_rows:
-        logging.debug("row_to_insert: "+repr(row_to_insert))
-    # Insert dict into DB
-    fields = row_to_insert.keys()
-    values = row_to_insert.values()
-    query = generate_insert_query(table_name="posts",value_names=fields)
-    logging.debug(repr(query))
-    result = cursor.execute(query, values)
-    cursor.close()
-    return
+def insert_user_into_db(session,info_dict,sanitized_username,sanitized_blog_url):
+        """Add blog information to blogs DB"""
+        logging.debug("Adding blog metadata to DB")
+
+        # Check if blog is already in blogs table
+        create_entry = False# Should we create a new entry?
+        # Check username
+        username_query = sqlalchemy.select([Blogs]).where(Blogs.poster_username == sanitized_username)
+        username_rows = session.execute(username_query)
+        username_row = username_rows.fetchone()
+        if username_row:
+            logging.debug("username_row: "+repr(username_row))
+        else:
+            create_entry = True
+        # Check URL
+        url_query = sqlalchemy.select([Blogs]).where(Blogs.blog_domain == sanitized_blog_url)
+        url_rows = session.execute(url_query)
+        url_row = url_rows.fetchone()
+        if url_row:
+            logging.debug("url_row: "+repr(url_row))
+        else:
+            create_entry = True
+        logging.debug("Creating user entry")
+        if create_entry:
+            # Collect values to insert
+            # Locally generated
+            date_added = get_current_unix_time()# Creating this blog's entry now so it's now
+            info_title = info_dict["response"]["blog"]["posts"]
+            # Deal with optional values
+            # From /info, documented
+            try:
+                info_posts = info_dict["response"]["blog"]["posts"]
+                assert(type(info_posts) == type(123))# Should always be an integer
+            except KeyError:
+                info_posts = None
+            try:
+                info_name = info_dict["response"]["blog"]["name"]
+                assert( (type(info_name) == type("") ) or ( type(info_name) == type(u"")) )# Should always be a string
+            except KeyError:
+                info_name = None
+            try:
+                info_updated = info_dict["response"]["blog"]["updated"]
+                assert(type(info_posts) == type(123))# Should always be an integer
+            except KeyError:
+                info_updated = None
+            try:
+                info_description = info_dict["response"]["blog"]["description"]
+                assert( (type(info_description) == type("") ) or ( type(info_description) == type(u"")) )# Should always be a string
+            except KeyError:
+                info_description = None
+            try:
+                info_ask = info_dict["response"]["blog"]["ask"]
+                assert(type(info_ask) == bool )# Should always be a boolean
+            except KeyError:
+                info_ask = None
+            try:
+                info_ask_anon = info_dict["response"]["blog"]["ask_anon"]
+                assert(type(info_ask) == bool )# Should always be a boolean
+            except KeyError:
+                info_ask_anon = None
+            try:
+                info_likes = info_dict["response"]["blog"]["likes"]
+                assert(type(info_likes) == type(123))# Should always be an integer
+            except KeyError:
+                info_likes = None
+            # From /info, undocumented
+            try:
+                info_is_nsfw = info_dict["response"]["blog"]["is_nsfw"]
+                assert(type(info_is_nsfw) == bool )# Should always be a boolean
+            except KeyError:
+                info_is_nsfw = None
+            try:
+                info_share_likes = info_dict["response"]["blog"]["share_likes"]
+                assert(type(info_share_likes) == bool )# Should always be a boolean
+            except KeyError:
+                info_share_likes = None
+            try:
+                info_url = info_dict["response"]["blog"]["url"]
+                assert( (type(info_url) == type("") ) or ( type(info_url) == type(u"")) )# Should always be a string
+            except KeyError:
+                info_url = None
+            try:
+                info_ask_page_title = info_dict["response"]["blog"]["ask_page_title"]
+                assert( (type(info_ask_page_title) == type("") ) or ( type(info_ask_page_title) == type(u"")) )# Should always be a string
+            except KeyError:
+                info_ask_page_title = None
+            # Add entry to blogs table
+            new_blog_row = Blogs(
+            # Locally generated
+            date_added=date_added,
+            poster_username = sanitized_username,
+            blog_domain = sanitized_blog_url,
+            # From /info, documented
+            info_title=info_title,
+            info_posts=info_posts,
+            info_name=info_name,
+            info_updated=info_updated,
+            info_description=info_description,
+            info_ask=info_ask,
+            info_ask_anon=info_ask_anon,
+            info_likes=info_likes,
+            # From /info, undocumented
+            info_is_nsfw=info_is_nsfw,
+            info_share_likes=info_share_likes,
+            info_url=info_url,
+            info_ask_page_title=info_ask_page_title,
+            )
+            session.add(new_blog_row)
+            session.commit()
+            # Commit changes
+            logging.debug("Finished adding blog metadata to DB")
+        else:
+            logging.debug("No need to add user to blogs table")
+        return
 
 
 def main():
