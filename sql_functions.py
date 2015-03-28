@@ -160,7 +160,7 @@ def connect_to_db():
     http://www.pythoncentral.io/introductory-tutorial-python-sqlalchemy/"""
     logging.debug("Opening DB connection")
     # add "echo=True" to see SQL being run
-    engine = sqlalchemy.create_engine('sqlite:///please_examine2.db',echo=True)
+    engine = sqlalchemy.create_engine('sqlite:///please_examine3.db',echo=True)
     # Bind the engine to the metadata of the Base class so that the
     # declaratives can be accessed through a DBSession instance
     Base.metadata.bind = engine
@@ -346,7 +346,7 @@ def insert_user_into_db(session,info_dict,sanitized_username,sanitized_blog_url)
                 info_name = None
             try:
                 info_updated = info_dict["response"]["blog"]["updated"]
-                assert(type(info_posts) == type(123))# Should always be an integer
+                assert(type(info_updated) == type(123))# Should always be an integer
             except KeyError:
                 info_updated = None
             try:
@@ -361,7 +361,7 @@ def insert_user_into_db(session,info_dict,sanitized_username,sanitized_blog_url)
                 info_ask = None
             try:
                 info_ask_anon = info_dict["response"]["blog"]["ask_anon"]
-                assert(type(info_ask) == bool )# Should always be a boolean
+                assert(type(info_ask_anon) == bool )# Should always be a boolean
             except KeyError:
                 info_ask_anon = None
             try:
@@ -390,6 +390,7 @@ def insert_user_into_db(session,info_dict,sanitized_username,sanitized_blog_url)
                 assert( (type(info_ask_page_title) == type("") ) or ( type(info_ask_page_title) == type(u"")) )# Should always be a string
             except KeyError:
                 info_ask_page_title = None
+            logging.debug("stoppoint")
             # Add entry to blogs table
             new_blog_row = Blogs(
             # Locally generated
@@ -418,6 +419,17 @@ def insert_user_into_db(session,info_dict,sanitized_username,sanitized_blog_url)
         else:
             logging.debug("No need to add user to blogs table")
         return
+
+def update_last_saved(session,info_dict,sanitized_blog_url):
+    """Set the date last saved to now"""
+    logging.debug("Updating date last saved for: "+repr(sanitized_blog_url))
+    date_last_saved = get_current_unix_time()
+    statement = sqlalchemy.update(Blogs).\
+        where(Blogs.c.blog_domain == sanitized_blog_url).\
+        values(date_last_saved = date_last_saved)
+
+
+    session.execute(statement)
 
 
 def main():

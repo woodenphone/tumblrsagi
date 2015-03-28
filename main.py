@@ -36,6 +36,10 @@ class tumblr_blog:
         self.sanitized_username = self.blog_username# TODO FIXME!
         # Make sure user is in blogs DB
         sql_functions.insert_user_into_db(self.session,self.info_dict,self.sanitized_username,self.sanitized_blog_url)
+        # DEBUG
+        sql_functions.update_last_saved(self.session,self.info_dict,self.sanitized_blog_url)# REMOVEME FIXME DEBUG
+        self.session.commit()
+        # /DEBUG
         return
 
     def clean_blog_url(self,raw_blog_url):
@@ -171,7 +175,8 @@ class tumblr_blog:
             self.info_dict,self.sanitized_blog_url,self.sanitized_username)
             logging.debug("Inserting "+str(counter)+"th post")
         # Change date last saved in DB
-
+        logging.warning("DATE LAST SAVED NOT YET IMPLIMENTED!")# TODO FIXME!
+        sql_functions.update_last_saved(self.session,self.info_dict,self.sanitized_blog_url)
         # Commit/save new data
         logging.debug("Committing new data to DB.")
         self.session.commit()

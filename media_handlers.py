@@ -413,7 +413,7 @@ def handle_youtube_video(session,post_dict):
             video_page_row = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
             if video_page_row:
                 # If media already saved, delete temp file and use old entry's data
-                filename = video_page_row["media_filename"]
+                filename = video_page_row["filename"]
                 logging.debug("Skipping previously saved video: "+repr(video_page_row))
                 # Delete duplicate file if media is already saved
                 logging.info("Deleting duplicate video file")
