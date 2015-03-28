@@ -189,6 +189,7 @@ def handle_tumblr_photos(session,post_dict):
         # Grab original size url
         logging.debug("photo_dict: "+repr(photo_dict))
         original_size_url = photo_dict["original_size"]["url"]
+        logging.debug("original_size_url: "+repr(original_size_url))
         photo_url_list.append(original_size_url)
         if config.save_all_photo_sizes:
             # Grab alt size urls
@@ -197,15 +198,8 @@ def handle_tumblr_photos(session,post_dict):
                 alt_size_url = alt_size_dict["url"]
                 photo_url_list.append(alt_size_url)
     logging.debug("photo_url_list: "+repr(photo_url_list))
-    # Check the photo links against the DB to see if they have already been saved
-    photo_urls_to_save = []
-    for photo_link in photo_url_list:
-        # Check if URL is in the DB
-        link_already_saved = sql_functions.check_if_media_url_in_DB(session,photo_link)
-        if link_already_saved:
-            photo_urls_to_save.append(photo_link)
     # Save new photo links
-    link_hash_dict = download_image_links(session,photo_urls_to_save)
+    link_hash_dict = download_image_links(session,photo_url_list)
     return link_hash_dict# {link:hash}
 
 
@@ -815,7 +809,7 @@ def save_media(session,post_dict):
     logging.debug("new_links: "+repr(new_links))
     # Save image links (Remote) ex. http://foo.com/image.jpg
     if config.save_images:
-        image_link_dict={}# = handle_image_links(session,new_links)# {link:hash}
+        image_link_dict={}# = handle_image_links(session,new_links)# {link:hash}# TODO FIXME
     else:
         image_link_dict = {}
     # Save photos sections (Tumblr)
@@ -826,11 +820,15 @@ def save_media(session,post_dict):
     # Save videos, both tumblr and youtube (Tumblr & Youtube)
     if config.save_videos:
         video_embed_dict = handle_video_posts(session,post_dict)
+    else:
+        video_embed_dict = {}
     # Saved linked videos
     # TODO FIXME
     # Save audio
     if config.save_audio:
         audio_embed_dict = handle_audio_posts(session,post_dict)
+    else:
+        audio_embed_dict = {}
     # Join mapping dicts # {link:hash}
     link_to_hash_dict = merge_dicts(
     preexisting_link_dict,

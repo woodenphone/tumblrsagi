@@ -33,12 +33,12 @@ class tumblr_blog:
         self.load_info()
         # Convert blog username/URL into safer name
         self.sanitized_blog_url = self.blog_url# TODO FIXME!
-        self.sanitized_username = self.blog_username# TODO FIXME!
+        self.sanitized_username = self.info_blog_username# TODO FIXME!
         # Make sure user is in blogs DB
-        sql_functions.insert_user_into_db(self.session,self.info_dict,self.sanitized_username,self.sanitized_blog_url)
+        #sql_functions.insert_user_into_db(self.session,self.info_dict,self.sanitized_username,self.sanitized_blog_url)
         # DEBUG
-        sql_functions.update_last_saved(self.session,self.info_dict,self.sanitized_blog_url)# REMOVEME FIXME DEBUG
-        self.session.commit()
+        #sql_functions.update_last_saved(self.session,self.info_dict,self.sanitized_blog_url)# REMOVEME FIXME DEBUG
+        #self.session.commit()
         # /DEBUG
         return
 
@@ -64,6 +64,7 @@ class tumblr_blog:
         self.info_dict = info_dict
         self.info_name = info_dict["response"]["blog"]["name"]
         self.info_post_count = info_dict["response"]["blog"]["posts"]
+        self.info_blog_username = info_dict["response"]["blog"]["name"]
         logging.debug("self.info_post_count: "+repr(self.info_post_count))
         return
 
@@ -146,7 +147,7 @@ class tumblr_blog:
 
     def crop_exisiting_posts(self,posts_list):
         posts_to_compare = posts_list
-        existing_post_ids = sql_functions.find_blog_posts(self.session,self.blog_username)
+        existing_post_ids = sql_functions.find_blog_posts(self.session,self.sanitized_username)
         new_posts = []
         c = 0
         for post in posts_to_compare:
@@ -176,7 +177,7 @@ class tumblr_blog:
             logging.debug("Inserting "+str(counter)+"th post")
         # Change date last saved in DB
         logging.warning("DATE LAST SAVED NOT YET IMPLIMENTED!")# TODO FIXME!
-        sql_functions.update_last_saved(self.session,self.info_dict,self.sanitized_blog_url)
+        #sql_functions.update_last_saved(self.session,self.info_dict,self.sanitized_blog_url)
         # Commit/save new data
         logging.debug("Committing new data to DB.")
         self.session.commit()
@@ -196,8 +197,8 @@ def classy_play():
     # Connect to DB
     session = sql_functions.connect_to_db()
 
-    blog = tumblr_blog(session, consumer_key = config.consumer_key, blog_url = "staff.tumblr.com")
-    posts = blog.get_posts(max_pages=2)
+    blog = tumblr_blog(session, consumer_key = config.consumer_key, blog_url = "tsitra360.tumblr.com")
+    posts = blog.get_posts(max_pages=10)
     #blog.print_posts()
     blog.insert_posts_into_db()
     return

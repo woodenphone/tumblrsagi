@@ -297,7 +297,7 @@ def add_post_to_db(session,post_dict,info_dict,blog_url,username):
     return
 
 
-def find_blog_posts(connection,blog_username):
+def find_blog_posts(connection,sanitized_username):
     """Lookup a blog's posts in the DB and return a list of the IDs"""
     logging.warning("Posts lookup not implimented")# TODO FIXME
     return []
@@ -390,7 +390,6 @@ def insert_user_into_db(session,info_dict,sanitized_username,sanitized_blog_url)
                 assert( (type(info_ask_page_title) == type("") ) or ( type(info_ask_page_title) == type(u"")) )# Should always be a string
             except KeyError:
                 info_ask_page_title = None
-            logging.debug("stoppoint")
             # Add entry to blogs table
             new_blog_row = Blogs(
             # Locally generated
