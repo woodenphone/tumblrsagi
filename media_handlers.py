@@ -9,60 +9,23 @@
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
 
-#import mysql.connector
+# Libraries
 import sqlalchemy
-
-
 import subprocess# For video and some audio downloads
 import urllib# For encoding audio urls
 import re
 import logging
+# This project
 from utils import *
 from sql_functions import Media
 import sql_functions
 import config # User settings
+# Media handler modules
+import audio_handlers
+import video_handlers
+import link_handlers
 
 
-
-def find_links_src(html):
-    """Given string containing '<img src="http://media.tumblr.com/tumblr_m7g6koAnx81r3kwau.jpg"/>'
-    return ['http://media.tumblr.com/tumblr_m7g6koAnx81r3kwau.jpg']
-    """
-    embed_regex = """<\w+?\s+?src=["']([^>]+)["']/>"""
-    links = re.findall(embed_regex,html, re.DOTALL)
-    #logging.debug("src embed links: "+repr(links))
-    return links
-
-
-def find_url_links(html):
-    """Find URLS in a string of text"""
-    # Should return list of strings
-    # Copied from:
-    # http://stackoverflow.com/questions/520031/whats-the-cleanest-way-to-extract-urls-from-a-string-using-python
-    # old regex http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+
-    url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+~]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
-    links = re.findall(url_regex,html, re.DOTALL)
-    assert(type(links) is type([]))# Should be list
-    return links
-
-
-def extract_post_links(post_dict):
-    """Run all applicable extractors for a post"""
-    links = []
-    # Collect links in the post text
-    # Mangle dicts and lists into strings
-    flat_post_dict = flatten(post_dict)
-    for field in flat_post_dict:
-        #logging.debug("field: "+repr(field))
-        # Text fields
-        if ( (type(field) == type("")) or (type(field) == type(u"")) ):
-            html = field
-            #logging.debug("html: "+repr(html))
-            links += find_links_src(field)
-            links += find_url_links(field)
-    #elif ( (type(field) == type({})) or (type(field) == type([])) ):
-    #logging.debug("all links found in post: "+repr(links))
-    return links
 
 
 def download_image_link(session,media_url):
@@ -145,27 +108,7 @@ def replace_links(link_dict,post_dict):
     return post_dict
 
 
-def handle_image_links(session,all_post_links):
-    """Check and save images linked to by a post
-    return link_hash_dict = {}# {link:hash}"""
-    logging.debug("all_post_links"+repr(all_post_links))
-    # Find all links in post dict
-    # Select whick links are image links
-    link_extentions = [
-    "jpg","jpeg",
-    "gif",
-    "png",
-    ]
-    image_links = []
-    for link in all_post_links:
-        after_last_dot = link.split(".")[-1]
-        before_first_q_mark = after_last_dot.split("?")[0]
-        for extention in link_extentions:
-            if extention in before_first_q_mark:
-                image_links.append(link)
-    # Save image links
-    link_hash_dict = download_image_links(session,image_links)
-    return link_hash_dict# {link:hash}
+
 
 
 def handle_thumbnail(session,post_dict):
@@ -203,587 +146,10 @@ def handle_tumblr_photos(session,post_dict):
     return link_hash_dict# {link:hash}
 
 
-def handle_tumblr_videos(session,post_dict):
-    """Download tumblr-hosted videos from video posts
-    https://github.com/rg3/youtube-dl/blob/master/docs/supportedsites.md
-    https://github.com/rg3/youtube-dl/"""
-    logging.debug("Processing tumblr video")
-    video_page = post_dict["post_url"]
-    logging.debug("post_dict"+repr(post_dict))
-    post_id = str(post_dict["id"])
-    logging.debug("video_page: "+repr(video_page))
-    logging.debug("post_id: "+repr(post_id))
-    # Check if video is already saved
-
-    video_page_query = sqlalchemy.select([Media]).where(Media.media_url == video_page)
-    video_page_rows = session.execute(video_page_query)
-    video_page_row = video_page_rows.fetchone()
-    if video_page_row:
-        preexisting_filename = video_page_row["filename"]
-        sha512base64_hash = video_page_row["sha512base64_hash"]
-        return {"tumblr_video_embed":sha512base64_hash}
-
-    # Load video
-    # Form command to run
-    # Define arguments. see this url for help
-    # https://github.com/rg3/youtube-dl
-    program_path = os.path.join("youtube-dl","youtube-dl.exe")
-    assert(os.path.exists(program_path))
-    ignore_errors = "-i"
-    safe_filenames = "--restrict-filenames"
-    output_arg = "-o"
-    info_json_arg = "--write-info-json"
-    description_arg ="--write-description"
-    output_dir = os.path.join(config.root_path,"temp")
-    output_template = os.path.join(output_dir, post_id+".%(ext)s")
-    # "youtube-dl.exe -i --restrict-filenames -o --write-info-json --write-description"
-    command = [program_path, ignore_errors, safe_filenames, info_json_arg, description_arg, output_arg, output_template, video_page]
-    logging.debug("command: "+repr(command))
-    # Call youtube-dl
-    command_result = subprocess.call(command)
-    logging.debug("command_result: "+repr(command_result))
-    # Fail if bad exit code
-    if command_result != 0:
-        logging.error("Command did not return correct exit code! (Normal exit is 0)")
-        return {}
-    time_of_retreival = get_current_unix_time()
-    # Verify download worked
-    # Read info JSON file
-    expected_info_path = os.path.join(output_dir, post_id+".info.json")
-    info_json = read_file(expected_info_path)
-    yt_dl_info_dict = json.loads(info_json)
-    logging.debug("yt_dl_info_dict: "+repr(yt_dl_info_dict))
-    # Grab file path
-    media_temp_filepath = yt_dl_info_dict["_filename"]
-    media_temp_filename = os.path.basename(media_temp_filepath)
-    logging.debug("media_temp_filepath: "+repr(media_temp_filepath))
-    # Check that video file given in info JSON exists
-    assert(os.path.exists(media_temp_filepath))
-    # Generate hash for media file
-    file_data = read_file(media_temp_filepath)
-    sha512base64_hash = hash_file_data(file_data)
-    # Decide where to put the file
-
-    # Check if hash is in media DB
-    hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
-    if hash_check_row_dict:
-        media_already_saved = True
-        preexisting_filename = hash_check_row_dict["filename"]
-    else:
-        preexisting_filename = None
-
-    # Deal with temp file (Move or delete)
-    if preexisting_filename:
-        # Delete duplicate file if media is already saved
-        logging.info("Deleting duplicate video file")
-        logging.warning("CODE VIDEO DUPLICATE DELETE STUFF")# TODO FIXME
-        final_media_filepath = preexisting_filename
-    else:
-        # Move file to media DL location
-        logging.info("Moving video to final location")
-        # Generate output filepath
-        file_ext = media_temp_filename.split(".")[-1]
-        filename = str(time_of_retreival)+file_ext
-        final_media_filepath = generate_media_file_path_timestamp(root_path=config.root_path,filename=filename)
-        # Move file to final location
-        move_file(media_temp_filepath,final_media_filepath)
-        assert(os.path.exists(final_media_filepath))
-
-    # Add video to DB
-    new_media_row = Media(
-    media_url=video_page,
-    sha512base64_hash=sha512base64_hash,
-    filename=filename,
-    date_added=time_of_retreival,
-    extractor_used="tumblr_video_embed",
-    tumblrvideo_yt_dl_info_json=info_json
-    )
-    session.add(new_media_row)
-    return {"tumblr_video_embed":sha512base64_hash}
 
 
-def crop_youube_id(url):
-    video_id_regex ="""youtube.com/(?:embed/)?(?:watch\?v=)?([a-zA-Z0-9]+)"""
-    video_id_search = re.search(video_id_regex, url, re.IGNORECASE|re.DOTALL)
-    if video_id_search:
-        video_id = video_id_search.group(1)
-        logging.debug("Extracted id: "+repr(video_id)+" from url: "+repr(url))
-        return video_id
-    else:
-        return
 
 
-def handle_youtube_video(session,post_dict):
-    """Download youtube videos from video posts
-    https://github.com/rg3/youtube-dl/blob/master/docs/supportedsites.md
-    https://github.com/rg3/youtube-dl/"""
-    logging.debug("Processing youtube video")
-    logging.debug("post_dict"+repr(post_dict))
-    assert(post_dict["type"] == u"video")# Ensure calling code isn't broken
-    assert(post_dict["video_type"] == u"youtube")# Ensure calling code isn't broken
-    video_page = post_dict["post_url"]
-    post_id = str(post_dict["id"])
-    logging.debug("video_page: "+repr(video_page))
-    logging.debug("post_id: "+repr(post_id))
-    # Extract youtube links from video field
-    # ex. https://www.youtube.com/embed/lGIEmH3BoyA
-    video_items = post_dict["player"]
-    youtube_urls = []
-    for video_item in video_items:
-        # Get a youtube URL
-        embed_code = video_item["embed_code"]
-        # Skip if no embed code to process (Known to happen) "u'player': [{u'embed_code': False, u'width': 250},"
-        if embed_code:
-            logging.debug("embed_code: "+repr(embed_code))
-            embed_url_regex ="""src=["']([^?"']+)\?"""
-            embed_url_search = re.search(embed_url_regex, embed_code, re.IGNORECASE|re.DOTALL)
-            if embed_url_search:
-                embed_url = embed_url_search.group(1)
-                youtube_urls.append(embed_url)
-        continue
-    # Check if videos are already saved
-    new_youtube_urls = []
-    for youtube_url in youtube_urls:
-        youtube_video_id = crop_youube_id(youtube_url)
-        # Look up ID in DB
-        video_page_query = sqlalchemy.select([Media]).where(Media.youtube_video_id == youtube_video_id)
-        video_page_rows = session.execute(video_page_query)
-        video_page_row = video_page_rows.fetchone()
-        if video_page_row:
-            logging.debug("Skipping previously saved video: "+repr(video_page_row))
-        else:
-            new_youtube_urls.append(youtube_url)
-        continue
-
-    # Prevent duplicates from the same post
-    new_youtube_urls = uniquify(new_youtube_urls)
-
-    # Download videos if there are any
-    if len(new_youtube_urls) > 0:
-        # Download each new video
-        for new_youtube_url in new_youtube_urls:
-            logging.debug("new_youtube_url: "+repr(new_youtube_url))
-            # Form command to run
-            # Define arguments. see this url for help
-            # https://github.com/rg3/youtube-dl
-            program_path = os.path.join("youtube-dl","youtube-dl.exe")
-            assert(os.path.exists(program_path))
-            ignore_errors = "-i"
-            safe_filenames = "--restrict-filenames"
-            output_arg = "-o"
-            info_json_arg = "--write-info-json"
-            description_arg ="--write-description"
-            output_dir = os.path.join(config.root_path,"temp")
-            output_template = os.path.join(output_dir, post_id+".%(ext)s")
-            # "youtube-dl.exe -i --restrict-filenames -o --write-info-json --write-description"
-            command = [program_path, ignore_errors, safe_filenames, info_json_arg, description_arg, output_arg, output_template, new_youtube_url]
-            logging.debug("command: "+repr(command))
-            # Call youtube-dl
-            command_result = subprocess.call(command)
-            logging.debug("command_result: "+repr(command_result))
-            time_of_retreival = get_current_unix_time()
-            # Verify download worked
-            # Read info JSON file
-            expected_info_path = os.path.join(output_dir, post_id+".info.json")
-            info_exists = os.path.exists(expected_info_path)
-            if not info_exists:
-                logging.error("Info file not found!")
-                logging.error(repr(locals()))
-            info_json = read_file(expected_info_path)
-            yt_dl_info_dict = json.loads(info_json)
-            logging.debug("yt_dl_info_dict: "+repr(yt_dl_info_dict))
-            # Grab file path
-            media_temp_filepath = yt_dl_info_dict["_filename"]
-            media_temp_filename = os.path.basename(media_temp_filepath)
-            logging.debug("media_temp_filepath: "+repr(media_temp_filepath))
-            # Check that video file given in info JSON exists
-            assert(os.path.exists(media_temp_filepath))
-            # Generate hash for media file
-            file_data = read_file(media_temp_filepath)
-            sha512base64_hash = hash_file_data(file_data)
-            # Decide where to put the file
-
-            # Check if hash is in media DB
-            video_page_row = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
-            if video_page_row:
-                # If media already saved, delete temp file and use old entry's data
-                filename = video_page_row["filename"]
-                logging.debug("Skipping previously saved video: "+repr(video_page_row))
-                # Delete duplicate file if media is already saved
-                logging.info("Deleting duplicate video file")
-                logging.warning("CODE VIDEO DUPLICATE DELETE STUFF")# TODO FIXME
-                continue
-            else:
-                # If media not in DB, move temp file to permanent location
-                # Move file to media DL location
-                logging.info("Moving video to final location")
-                # Generate output filepath
-                file_ext = media_temp_filename.split(".")[-1]
-                filename = str(time_of_retreival)+"."+file_ext
-                final_media_filepath = generate_media_file_path_timestamp(root_path=config.root_path,filename=filename)
-                # Move file to final location
-                move_file(media_temp_filepath,final_media_filepath)
-                assert(os.path.exists(final_media_filepath))
-
-            # Add video to DB
-            new_media_row = Media(
-            media_url=new_youtube_url,
-            sha512base64_hash=sha512base64_hash,
-            filename=filename,
-            date_added=time_of_retreival,
-            extractor_used="youtube_embed",
-            youtube_yt_dl_info_json=info_json
-            )
-            session.add(new_media_row)
-            continue
-
-        logging.debug("Finished downloading youtube embeds")
-        return {"youtube_embed":sha512base64_hash}
-    else:
-        return {}
-
-
-def handle_vine_videos(session,post_dict):
-    """Handle downloading of vine videos
-    https://github.com/rg3/youtube-dl/blob/master/docs/supportedsites.md"""
-    logging.debug("post_dict"+repr(post_dict))
-    post_id = str(post_dict["id"])
-    # Extract video links from post dict
-    video_items = post_dict["player"]
-    vine_urls = []
-    for video_item in video_items:
-        embed_code = video_item["embed_code"]
-        # u'<iframe class="vine-embed" src="https://vine.co/v/hjWIUFOYD31/embed/simple"width="500" height="500" frameborder="0"></iframe><script async src="//platform.vine.co/static/scripts/embed.js" charset="utf-8"></script>'
-        # https://vine.co/v/hjWIUFOYD31
-        if embed_code:
-            # Process links so YT-DL can understand them
-            logging.debug("embed_code: "+repr(embed_code))
-            embed_url_regex ="""src=["']([^?"']+)"""
-            embed_url_search = re.search(embed_url_regex, embed_code, re.IGNORECASE|re.DOTALL)
-            if embed_url_search:
-                embed_url = embed_url_search.group(1)
-                vine_urls.append(embed_url)
-        continue
-
-    # Deduplicate links
-    vine_urls = uniquify(vine_urls)
-    logging.debug("vine_urls: "+repr(vine_urls))
-    download_urls = []
-    # Skip IDs that have already been done
-    for vine_url in vine_urls:
-        # Extract video ID
-        # https://vine.co/v/hjWIUFOYD31/embed/simple -> hjWIUFOYD31
-        id_regex ="""vine.co/v/([a-zA-Z0-9]+)/?"""
-        id_search = re.search(id_regex, vine_url, re.IGNORECASE|re.DOTALL)
-        if id_search:
-            # Look up ID in media DB
-            video_id = id_search.group(1)
-            logging.debug("video_id: "+repr(video_id))
-            video_page_query = sqlalchemy.select([Media]).where(Media.media_url == vine_url)
-            video_page_rows = session.execute(video_page_query)
-            video_page_row = video_page_rows.fetchone()
-            if video_page_row:
-                logging.debug("Skipping previously saved video: "+repr(video_page_row))
-                continue
-        download_urls.append(vine_url)
-        continue
-    logging.debug("download_urls: "+repr(download_urls))
-    # Send video URLs to YT-DL
-    if len(download_urls) > 0:
-        # Download each new video
-        for download_url in download_urls:
-            logging.debug("download_url: "+repr(download_url))
-            # Form command to run
-            # Define arguments. see this url for help
-            # https://github.com/rg3/youtube-dl
-            program_path = os.path.join("youtube-dl","youtube-dl.exe")
-            assert(os.path.exists(program_path))
-            ignore_errors = "-i"
-            safe_filenames = "--restrict-filenames"
-            output_arg = "-o"
-            info_json_arg = "--write-info-json"
-            description_arg ="--write-description"
-            output_dir = os.path.join(config.root_path,"temp")
-            output_template = os.path.join(output_dir, post_id+".%(ext)s")
-            # "youtube-dl.exe -i --restrict-filenames -o --write-info-json --write-description"
-            command = [program_path, ignore_errors, safe_filenames, info_json_arg, description_arg, output_arg, output_template, download_url]
-            logging.debug("command: "+repr(command))
-            # Call youtube-dl
-            command_result = subprocess.call(command)
-            logging.debug("command_result: "+repr(command_result))
-            time_of_retreival = get_current_unix_time()
-            # Verify download worked
-            # Read info JSON file
-            expected_info_path = os.path.join(output_dir, post_id+".info.json")
-            info_exists = os.path.exists(expected_info_path)
-            if not info_exists:
-                logging.error("Info file not found!")
-                logging.error(repr(locals()))
-            info_json = read_file(expected_info_path)
-            yt_dl_info_dict = json.loads(info_json)
-            logging.debug("yt_dl_info_dict: "+repr(yt_dl_info_dict))
-            # Grab file path
-            media_temp_filepath = yt_dl_info_dict["_filename"]
-            media_temp_filename = os.path.basename(media_temp_filepath)
-            logging.debug("media_temp_filepath: "+repr(media_temp_filepath))
-            # Check that video file given in info JSON exists
-            assert(os.path.exists(media_temp_filepath))
-            # Generate hash for media file
-            file_data = read_file(media_temp_filepath)
-            sha512base64_hash = hash_file_data(file_data)
-            # Decide where to put the file
-
-            # Check if hash is in media DB
-            video_page_row = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
-            if video_page_row:
-                # If media already saved, delete temp file and use old entry's data
-                filename = video_page_row["filename"]
-                logging.debug("Skipping previously saved video: "+repr(video_page_row))
-                # Delete duplicate file if media is already saved
-                logging.info("Deleting duplicate video file")
-                logging.warning("CODE VIDEO DUPLICATE DELETE STUFF")# TODO FIXME
-                continue
-            else:
-                # If media not in DB, move temp file to permanent location
-                # Move file to media DL location
-                logging.info("Moving video to final location")
-                # Generate output filepath
-                file_ext = media_temp_filename.split(".")[-1]
-                filename = str(time_of_retreival)+"."+file_ext
-                final_media_filepath = generate_media_file_path_timestamp(root_path=config.root_path,filename=filename)
-                # Move file to final location
-                move_file(media_temp_filepath,final_media_filepath)
-                assert(os.path.exists(final_media_filepath))
-
-            # Add video to DB
-            new_media_row = Media(
-            media_url=download_url,
-            sha512base64_hash=sha512base64_hash,
-            filename=filename,
-            date_added=time_of_retreival,
-            extractor_used="vine_embed",
-            vine_yt_dl_info_json=info_json,
-            )
-            session.add(new_media_row)
-            continue
-
-        logging.debug("Finished downloading youtube embeds")
-        return {"vine_embed":sha512base64_hash}
-    else:
-        return {}
-
-
-def handle_video_posts(session,post_dict):
-    """Decide which video functions to run"""
-    # Check if post is a video post
-    if post_dict["type"] != u"video":
-        return {}
-    logging.debug("Post is video")
-    # Youtube
-    if post_dict["video_type"] == u"youtube":
-        logging.debug("Post is youtube")
-        return handle_youtube_video(session,post_dict)
-    # Tumblr
-    elif post_dict["video_type"] == u"tumblr":
-        logging.debug("Post is tumblr video")
-        return handle_tumblr_videos(session,post_dict)
-    # Vine
-    elif post_dict["video_type"] == u"vine":
-        logging.debug("Post is vine video")
-        return handle_vine_videos(session,post_dict)
-    else:
-        logging.error("Unknown video type!")
-        logging.error("locals(): "+repr(locals()))
-        assert(False)
-    return {}
-
-
-def handle_soundcloud_audio(session,post_dict):
-    """Save soundcloud audio ect from a post
-    Use youtube-dl to save audio
-    https://github.com/rg3/youtube-dl/blob/master/docs/supportedsites.md
-    https://github.com/rg3/youtube-dl/"""
-    # Send album art image link off to be checked
-    logging.debug("post_dict: "+repr(post_dict))
-    post_id = str(post_dict["id"])
-    # Grab "track id"?
-    # u'https://api.soundcloud.com/tracks/192213990/stream?client_id=3cQaPshpEeLqMsNFAUw1Q' to '192213990'
-    soundcloud_link = post_dict["audio_url"]
-    track_id = re.search("""api\.soundcloud\.com/tracks/(\d+)/stream""", soundcloud_link, re.IGNORECASE|re.DOTALL).group(1)
-    soundcloud_id = track_id
-
-    # Check if audio has been saved, and return if it has
-    id_query = sqlalchemy.select([Media]).where(Media.soundcloud_id == soundcloud_id)
-    id_rows = session.execute(id_query)
-    id_row = id_rows.fetchone()
-    logging.debug("id_row: "+repr(id_row))
-    if id_row:
-        logging.debug("Soundcloud audio with this ID has already been saved, skipping")
-        sha512base64_hash = id_row["sha512base64_hash"]
-        return {"soundcloud_audio_embed":sha512base64_hash}
-
-    # Grab url to send to youtube-dl
-    soundcloud_url = post_dict["audio_url"]
-    logging.debug("soundcloud_url: "+repr(soundcloud_url))
-    # Form command to run
-    # Define arguments. see this url for help
-    # https://github.com/rg3/youtube-dl
-    program_path = os.path.join("youtube-dl","youtube-dl.exe")
-    assert(os.path.exists(program_path))
-    ignore_errors = "-i"
-    safe_filenames = "--restrict-filenames"
-    output_arg = "-o"
-    info_json_arg = "--write-info-json"
-    description_arg ="--write-description"
-    output_dir = os.path.join(config.root_path,"temp")
-    output_template = os.path.join(output_dir, post_id+".%(ext)s")
-    command = [program_path, ignore_errors, safe_filenames, info_json_arg, description_arg, output_arg, output_template, soundcloud_url]
-    logging.debug("command: "+repr(command))
-    # Call youtube-dl
-    command_result = subprocess.call(command)
-    logging.debug("command_result: "+repr(command_result))
-    time_of_retreival = get_current_unix_time()
-    # Verify download worked
-    # Read info JSON file
-    expected_info_path = os.path.join(output_dir, post_id+".info.json")
-    info_exists = os.path.exists(expected_info_path)
-    if not info_exists:
-        logging.error("Info file not found!")
-        logging.error(repr(locals()))
-    info_json = read_file(expected_info_path)
-    yt_dl_info_dict = json.loads(info_json)
-    logging.debug("yt_dl_info_dict: "+repr(yt_dl_info_dict))
-    # Grab file path
-    media_temp_filepath = yt_dl_info_dict["_filename"]
-    media_temp_filename = os.path.basename(media_temp_filepath)
-    logging.debug("media_temp_filepath: "+repr(media_temp_filepath))
-    # Check that video file given in info JSON exists
-    assert(os.path.exists(media_temp_filepath))
-    # Generate hash for media file
-    file_data = read_file(media_temp_filepath)
-    sha512base64_hash = hash_file_data(file_data)
-    # Decide where to put the file
-
-    # Check if hash is in media DB
-    hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
-    if hash_check_row_dict:
-        preexisting_filename = hash_check_row_dict["filename"]
-    else:
-        preexisting_filename = None
-
-    if preexisting_filename:
-        # Delete temp file if media is already saved
-        logging.info("Deleting duplicate video file")
-        os.remove(media_temp_filepath)
-        os.remove(expected_info_path)
-        filename = preexisting_filename
-        final_media_filepath = generate_media_file_path_timestamp(root_path=config.root_path,filename=filename)
-    else:
-        # Move file to media DL location
-        logging.info("Moving video to final location")
-        # Generate output filepath
-        file_ext = media_temp_filename.split(".")[-1]
-        filename = str(time_of_retreival)+"."+file_ext
-        final_media_filepath = generate_media_file_path_timestamp(root_path=config.root_path,filename=filename)
-        # Move file to final location
-        move_file(media_temp_filepath,final_media_filepath)
-    assert(os.path.exists(final_media_filepath))
-
-    # Add video to DB
-    new_media_row = Media(
-    media_url=soundcloud_link,
-    sha512base64_hash=sha512base64_hash,
-    filename=filename,
-    date_added=time_of_retreival,
-    extractor_used="soundcloud_audio_embed",
-    soundcloud_yt_dl_info_json=info_json,
-    soundcloud_id = soundcloud_id
-    )
-    session.add(new_media_row)
-
-    logging.debug("Finished downloading soundcloud embed")
-    return {"soundcloud_audio_embed":sha512base64_hash}
-
-
-def handle_tumblr_audio(session,post_dict):
-    """Download tumblr-hosted audio from audio posts
-    see this link for a reference implimentation
-    https://github.com/atesh/XKit
-    https://github.com/atesh/XKit/blob/master/Extensions/audio_downloader.js"""
-    assert(post_dict["audio_type"] == u"tumblr")
-    logging.debug("post_dict: "+repr(post_dict))
-    # Generate a link to the audio file
-    api_media_url = post_dict["audio_url"]
-    # This is basically check if url starts with this string
-    if "https://www.tumblr.com/audio_file/" in api_media_url:
-        # and here it sets the de-facto URL for downloading
-        media_url = "http://a.tumblr.com/" + urllib.quote(api_media_url.split("/")[-1]) + "o1.mp3"
-    else:
-        media_url = api_media_url
-    logging.debug("media_url: "+repr(media_url))
-
-    # Check the DB to see if media is already saved
-    url_check_row_dict = sql_functions.check_if_media_url_in_DB(session,media_url)
-    if url_check_row_dict:
-        media_already_saved = True
-        sha512base64_hash = row_dict["sha512base64_hash"]
-        existing_filename = row_dict["filename"]
-        logging.debug("URL is already in DB, no need to save file.")
-        return {"tumblr_audio":sha512base64_hash}
-
-    # Load the media file
-    file_data = get(media_url)
-    time_of_retreival = get_current_unix_time()
-    # Check if file is saved already using file hash
-    sha512base64_hash = hash_file_data(file_data)
-    logging.debug("sha512base64_hash: "+repr(sha512base64_hash))
-
-    # Check if hash is in media DB
-    hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
-    if hash_check_row_dict:
-        media_already_saved = True
-        preexisting_filename = hash_check_row_dict["filename"]
-    else:
-        logging.debug("Hash is already in DB, no need to save file.")
-        return {"tumblr_audio":sha512base64_hash}
-
-    if media_already_saved:
-        # Use filename from DB
-        audio_filename = existing_filename
-    else:
-        # Generate filename
-        audio_filename = str(time_of_retreival)+".mp3"
-        logging.debug("audio_filename: "+repr(audio_filename))
-        file_path = generate_media_file_path_timestamp(root_path=config.root_path,filename=audio_filename)
-        # Save media to disk
-        save_file(filenamein=file_path,data=file_data,force_save=False)
-
-    # Add new row to DB
-    new_media_row = Media(
-    media_url = media_url,
-    sha512base64_hash = sha512base64_hash,
-    media_filename = audio_filename,
-    date_added = time_of_retreival,
-    extractor_used = "tumblr_audio"
-    )
-    session.add(new_media_row)
-
-    return {"tumblr_audio":sha512base64_hash}
-
-
-def handle_audio_posts(session,post_dict):
-    """Download audio from audio posts"""
-    # Determing if post is tumblr audio
-    if post_dict["type"] != u"audio":
-        return {}
-    # Tumblr hosted audio
-    if post_dict["audio_type"] == u"tumblr":
-        logging.debug("Post is tumblr audio")
-        return handle_tumblr_audio(session,post_dict)
-    if post_dict["audio_type"] == u"soundcloud":
-        logging.debug("Post is tumblr audio")
-        return handle_soundcloud_audio(session,post_dict)
-    return {}
 
 
 def save_media(session,post_dict):
@@ -792,7 +158,7 @@ def save_media(session,post_dict):
     #logging.debug("post_dict"+repr(post_dict))
     logging.debug('post_dict["type"] '+repr(post_dict["type"] ))
     # Get list of links
-    all_post_links = extract_post_links(post_dict)
+    all_post_links = link_handlers.extract_post_links(post_dict)
     logging.debug("all_post_links"+repr(all_post_links))
     # Remove links already in DB
     logging.warning("Preexisting link check is disabled.")
@@ -819,14 +185,14 @@ def save_media(session,post_dict):
         tumblr_photos_link_dict = {}
     # Save videos, both tumblr and youtube (Tumblr & Youtube)
     if config.save_videos:
-        video_embed_dict = handle_video_posts(session,post_dict)
+        video_embed_dict = video_handlers.handle_video_posts(session,post_dict)
     else:
         video_embed_dict = {}
     # Saved linked videos
     # TODO FIXME
     # Save audio
     if config.save_audio:
-        audio_embed_dict = handle_audio_posts(session,post_dict)
+        audio_embed_dict = audio_handlers.handle_audio_posts(session,post_dict)
     else:
         audio_embed_dict = {}
     # Join mapping dicts # {link:hash}
@@ -863,7 +229,7 @@ def debug():
     # Debug audio
     logging.debug("Debug audio")
     soundcloud_post_dict = {u'reblog_key': u'S6VWj0Cb', u'reblog': {u'comment': u'', u'tree_html': u'<p><a class="tumblr_blog" href="http://waltzforluma.tumblr.com/post/111622677961/or-your-computer-could-overheat-while-youre">waltzforluma</a>:</p><blockquote><p>Or, your computer could overheat while you\u2019re listening to \u201cDeath Rag\u201d from Future Vision, and burst into flames!</p></blockquote>', u'trail': [{u'blog': {u'theme': {u'title_font_weight': u'regular', u'header_full_height': 262, u'title_color': u'#444444', u'header_bounds': u'0,623,262,157', u'background_color': u'#FAFAFA', u'link_color': u'#529ECC', u'header_image_focused': u'http://static.tumblr.com/a50dd34705b42b1479c2535a15461b00/oevxq7m/ZrTn5ivly/tumblr_static_tumblr_static_57wsbbc6rz0g0gk4ww8k884wk_focused_v3.png', u'show_description': True, u'header_full_width': 898, u'avatar_shape': u'circle', u'header_focus_width': 466, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'header_image_scaled': u'http://static.tumblr.com/a50dd34705b42b1479c2535a15461b00/oevxq7m/g9cn5ivlx/tumblr_static_57wsbbc6rz0g0gk4ww8k884wk_2048_v2.png', u'show_avatar': True, u'header_focus_height': 262, u'title_font': u'Garamond Classic FS', u'header_image': u'http://static.tumblr.com/a50dd34705b42b1479c2535a15461b00/oevxq7m/g9cn5ivlx/tumblr_static_57wsbbc6rz0g0gk4ww8k884wk.png'}, u'name': u'waltzforluma'}, u'comment': u'<p>Or, your computer could overheat while you\u2019re listening to \u201cDeath Rag\u201d from Future Vision, and burst into flames!</p>', u'post': {u'id': u'111622677961'}}]}, u'player': u'<iframe src="https://w.soundcloud.com/player/?url=https%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F192213990&amp;visual=true&amp;liking=false&amp;sharing=false&amp;auto_play=false&amp;show_comments=false&amp;continuous_play=false&amp;origin=tumblr" frameborder="0" allowtransparency="true" class="soundcloud_audio_player" width="500" height="500"></iframe>', u'id': 113020390888L, u'post_url': u'http://doscoon.tumblr.com/post/113020390888/waltzforluma-or-your-computer-could-overheat', u'source_title': u'waltzforluma', u'format': u'html', u'highlighted': [], u'state': u'published', u'track_name': u'Steven Universe - Death Rag', u'short_url': u'http://tmblr.co/ZlYOqv1fGYate', u'type': u'audio', u'tags': [], u'timestamp': 1425776404, u'note_count': 1014, u'source_url': u'http://waltzforluma.tumblr.com/post/111622677961/or-your-computer-could-overheat-while-youre', u'date': u'2015-03-08 01:00:04 GMT', u'plays': 38933, u'slug': u'waltzforluma-or-your-computer-could-overheat', u'album_art': u'http://38.media.tumblr.com/tumblr_nk3re1A1Cf1qzqb72_1424489834_cover.jpg', u'blog_name': u'doscoon', u'is_external': True, u'audio_url': u'https://api.soundcloud.com/tracks/192213990/stream?client_id=3cQaPshpEeLqMsNFAUw1Q', u'caption': u'<p><a class="tumblr_blog" href="http://waltzforluma.tumblr.com/post/111622677961/or-your-computer-could-overheat-while-youre">waltzforluma</a>:</p><blockquote><p>Or, your computer could overheat while you\u2019re listening to \u201cDeath Rag\u201d from Future Vision, and burst into flames!</p></blockquote>', u'audio_type': u'soundcloud', u'audio_source_url': u'https://soundcloud.com/aivisura/steven-universe-death-rag', u'embed': u'<iframe src="https://w.soundcloud.com/player/?url=https%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F192213990&amp;visual=true&amp;liking=false&amp;sharing=false&amp;auto_play=false&amp;show_comments=false&amp;continuous_play=false&amp;origin=tumblr" frameborder="0" allowtransparency="true" class="soundcloud_audio_player" width="500" height="500"></iframe>'}
-    #handle_soundcloud_audio(session,soundcloud_post_dict)
+    #audio_handlers.handle_soundcloud_audio(session,soundcloud_post_dict)
 
     # Debug video
     logging.debug("Debug video")
@@ -871,10 +237,10 @@ def debug():
     youtube_video_post_dict = {u'reblog_key': u'HfjckfH7', u'short_url': u'http://tmblr.co/ZUGffq1cfuHuJ', u'thumbnail_width': 480, u'player': [{u'width': 250, u'embed_code': u'<iframe width="250" height="140" id="youtube_iframe" src="https://www.youtube.com/embed/lGIEmH3BoyA?feature=oembed&amp;enablejsapi=1&amp;origin=http://safe.txmblr.com&amp;wmode=opaque" frameborder="0" allowfullscreen></iframe>'}, {u'width': 400, u'embed_code': u'<iframe width="400" height="225" id="youtube_iframe" src="https://www.youtube.com/embed/lGIEmH3BoyA?feature=oembed&amp;enablejsapi=1&amp;origin=http://safe.txmblr.com&amp;wmode=opaque" frameborder="0" allowfullscreen></iframe>'}, {u'width': 500, u'embed_code': u'<iframe width="500" height="281" id="youtube_iframe" src="https://www.youtube.com/embed/lGIEmH3BoyA?feature=oembed&amp;enablejsapi=1&amp;origin=http://safe.txmblr.com&amp;wmode=opaque" frameborder="0" allowfullscreen></iframe>'}], u'id': 110224285203L, u'post_url': u'http://askbuttonsmom.tumblr.com/post/110224285203/throwback-can-you-believe-its-been-almost-2yrs', u'tags': [u"button's mom", u'hardcopy', u'song', u'shadyvox'], u'highlighted': [], u'state': u'published', u'html5_capable': True, u'type': u'video', u'format': u'html', u'timestamp': 1423197599, u'note_count': 145, u'video_type': u'youtube', u'date': u'2015-02-06 04:39:59 GMT', u'thumbnail_height': 360, u'permalink_url': u'https://www.youtube.com/watch?v=lGIEmH3BoyA', u'slug': u'throwback-can-you-believe-its-been-almost-2yrs', u'blog_name': u'askbuttonsmom', u'caption': u'<p>Throwback! Can you believe it&#8217;s been almost 2yrs since this came out? Mommy&#8217;s getting old&#8230;</p>', u'thumbnail_url': u'https://i.ytimg.com/vi/lGIEmH3BoyA/hqdefault.jpg'}
     youtube_dict_two = {u'highlighted': [], u'reblog_key': u'qO3JnfS7', u'player': [{u'width': 250, u'embed_code': False}, {u'width': 400, u'embed_code': False}, {u'width': 500, u'embed_code': False}], u'format': u'html', u'timestamp': 1390412461, u'note_count': 4282, u'tags': [], u'video_type': u'youtube', u'id': 74184911379L, u'post_url': u'http://askbuttonsmom.tumblr.com/post/74184911379/ask-thecrusaders-bar-buddies-dont-worry', u'caption': u'<p><a class="tumblr_blog" href="http://ask-thecrusaders.tumblr.com/post/74162414750/bar-buddies-dont-worry-neon-you-will-have-your">ask-thecrusaders</a>:</p>\n<blockquote>\n<p><strong>"Bar Buddies"</strong><br/><br/>Dont\u2019 worry Neon, you will have your music video soon enough.</p>\n</blockquote>\n<p>Honestly, that Neon Lights is a TERRIBLE influence!! No son of mine will grow up to be a drunken drug-shooting bass dropping hipster! :C</p>', u'state': u'published', u'html5_capable': False, u'reblog': {u'comment': u'<p>Honestly, that Neon Lights is a TERRIBLE influence!! No son of mine will grow up to be a drunken drug-shooting bass dropping hipster! :C</p>', u'tree_html': u'<p><a class="tumblr_blog" href="http://ask-thecrusaders.tumblr.com/post/74162414750/bar-buddies-dont-worry-neon-you-will-have-your">ask-thecrusaders</a>:</p><blockquote>\n<p><strong>"Bar Buddies"</strong><br/><br/>Dont\u2019 worry Neon, you will have your music video soon enough.</p>\n</blockquote>', u'trail': [{u'blog': {u'theme': {u'title_font_weight': u'bold', u'title_color': u'#444444', u'header_bounds': 0, u'title_font': u'Helvetica Neue', u'link_color': u'#529ECC', u'header_image_focused': u'http://assets.tumblr.com/images/default_header/optica_pattern_04.png?_v=7c4e5e82cf797042596e2e64af1c383f', u'show_description': True, u'show_header_image': True, u'header_stretch': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_image_scaled': u'http://assets.tumblr.com/images/default_header/optica_pattern_04.png?_v=7c4e5e82cf797042596e2e64af1c383f', u'avatar_shape': u'circle', u'show_avatar': True, u'background_color': u'#F6F6F6', u'header_image': u'http://assets.tumblr.com/images/default_header/optica_pattern_04.png?_v=7c4e5e82cf797042596e2e64af1c383f'}, u'name': u'ask-thecrusaders'}, u'comment': u'<p><strong>"Bar Buddies"</strong><br><br>Dont\u2019 worry Neon, you will have your music video soon enough.</p>', u'post': {u'id': u'74162414750'}}]}, u'short_url': u'http://tmblr.co/ZUGffq155m_eJ', u'date': u'2014-01-22 17:41:01 GMT', u'type': u'video', u'slug': u'ask-thecrusaders-bar-buddies-dont-worry', u'blog_name': u'askbuttonsmom'}
     vine_dict = {u'reblog_key': u'A5DhHt28', u'reblog': {u'comment': u'<p>Have a nice weekend, Tumblr.&nbsp;</p>', u'tree_html': u'', u'trail': []}, u'placement_id': u'{"i":"mF4avY6GyshXjaQmfk0v","v":4,"t":1427193020,"c":{"p":"113540981790","b":"staff"},"d":{"v":{"e":"hjWIUFOYD31"}},"h":"3291f1aa07"}', u'thumbnail_width': 480, u'player': [{u'width': 250, u'embed_code': u'<iframe class="vine-embed" src="https://vine.co/v/hjWIUFOYD31/embed/simple"width="250" height="250" frameborder="0"></iframe><script async src="//platform.vine.co/static/scripts/embed.js" charset="utf-8"></script>'}, {u'width': 400, u'embed_code': u'<iframe class="vine-embed" src="https://vine.co/v/hjWIUFOYD31/embed/simple"width="400" height="400" frameborder="0"></iframe><script async src="//platform.vine.co/static/scripts/embed.js" charset="utf-8"></script>'}, {u'width': 500, u'embed_code': u'<iframe class="vine-embed" src="https://vine.co/v/hjWIUFOYD31/embed/simple"width="500" height="500" frameborder="0"></iframe><script async src="//platform.vine.co/static/scripts/embed.js" charset="utf-8"></script>'}], u'id': 113540981790L, u'post_url': u'http://staff.tumblr.com/post/113540981790/have-a-nice-weekend-tumblr', u'source_title': u'weloveshortvideos.com', u'tags': [], u'highlighted': [], u'state': u'published', u'short_url': u'http://tmblr.co/ZE5Fby1flaUGU', u'html5_capable': True, u'type': u'video', u'format': u'html', u'timestamp': 1426282797, u'note_count': 48309, u'video_type': u'vine', u'source_url': u'http://weloveshortvideos.com', u'date': u'2015-03-13 21:39:57 GMT', u'thumbnail_height': 480, u'permalink_url': u'https://vine.co/v/hjWIUFOYD31', u'slug': u'have-a-nice-weekend-tumblr', u'blog_name': u'staff', u'caption': u'<p>Have a nice weekend, Tumblr.\xa0</p>', u'thumbnail_url': u'http://v.cdn.vine.co/r/thumbs/FE4C8DC8781008139866036658176_1c16044fdd3.3.4.mp4_l_pAXVyCckNVnk2OzdadqNB_6bq4mYoBHpBFRIF8Hi3OdOW1vmjP1TR075G1ZegT.jpg?versionId=abawWSw4Y_QFv2TKPWz6j8N5y7.6LOGq'}
-    #handle_tumblr_videos(session,tumblr_video_post_dict)
-    #handle_youtube_video(session,youtube_video_post_dict)
-    #handle_youtube_video(session,youtube_dict_two)
-    handle_video_posts(session,vine_dict)
+    #video_handlers.handle_tumblr_videos(session,tumblr_video_post_dict)
+    #video_handlers.handle_youtube_video(session,youtube_video_post_dict)
+    #video_handlers.handle_youtube_video(session,youtube_dict_two)
+    video_handlers.handle_video_posts(session,vine_dict)
 
 
     logging.debug("Closing DB session")

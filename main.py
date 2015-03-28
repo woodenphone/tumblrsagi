@@ -165,6 +165,7 @@ class tumblr_blog:
         counter = 0
         for post_dict in new_posts_list:
             counter += 1
+            logging.debug("Processing "+str(counter)+"th post")
             # Handle links for the post
             # Extract links from the post
             #all_post_links = extract_post_links(post_dict)
@@ -174,7 +175,9 @@ class tumblr_blog:
             # Insert links into the DB
             sql_functions.add_post_to_db(self.session,new_post_dict,
             self.info_dict,self.sanitized_blog_url,self.sanitized_username)
-            logging.debug("Inserting "+str(counter)+"th post")
+
+            self.session.commit()
+        logging.info("Finished processing posts")
         # Change date last saved in DB
         logging.warning("DATE LAST SAVED NOT YET IMPLIMENTED!")# TODO FIXME!
         #sql_functions.update_last_saved(self.session,self.info_dict,self.sanitized_blog_url)
@@ -198,7 +201,7 @@ def classy_play():
     session = sql_functions.connect_to_db()
 
     blog = tumblr_blog(session, consumer_key = config.consumer_key, blog_url = "tsitra360.tumblr.com")
-    posts = blog.get_posts(max_pages=10)
+    posts = blog.get_posts(max_pages=5)
     #blog.print_posts()
     blog.insert_posts_into_db()
     return
