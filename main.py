@@ -72,7 +72,7 @@ class tumblr_blog:
         page_counter = -1 # -1 so we start at 0
         prev_page_posts_list = ["prev page"]# Dummy value
         this_page_posts_list = ["this page"]# Dummy value
-        while page_counter <= 100:# TOO SMALL, INCREASE LATER
+        while page_counter <= 100000:# 100,000 pages should be enough for anyone - R.M. Stallman
             page_counter += 1
             if max_pages is not None:
                 if page_counter > max_pages:
