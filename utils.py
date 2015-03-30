@@ -363,13 +363,13 @@ def import_blog_list(list_file_path="tumblr_todo_list.txt"):
     logging.info("import_blog_list() list_file_path: "+repr(list_file_path))
     # Make sure list file folder exists
     list_file_folder =  os.path.dirname(list_file_path)
-    if list_file_folder is not None:
+    if list_file_folder:
         if not os.path.exists(list_file_folder):
             os.makedirs(list_file_folder)
     # Create new empty list file if no list file exists
     if not os.path.exists(list_file_path):
         logging.info("import_blog_list() Blog list file not found, creating it.")
-        new_file = open(list_file_path)
+        new_file = open(list_file_path, "w")
         new_file.write('# Add one URL per line, comments start with a #, nothing but username on a line that isnt a comment\n\n')
         new_file.close()
         return []

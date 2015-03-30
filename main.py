@@ -164,18 +164,19 @@ class tumblr_blog:
         # Skip processing any posts that have previously been saved
         new_posts_list = self.crop_exisiting_posts(raw_posts_list)
         counter = 0
-        for post_dict in new_posts_list:
+        for raw_post_dict in new_posts_list:
             counter += 1
             logging.debug("Processing "+str(counter)+"th post")
             # Handle links for the post
             # Extract links from the post
-            #all_post_links = extract_post_links(post_dict)
             # For each media link, check against DB and if applicable download it
-            new_post_dict = save_media(self.session,post_dict)
+            processed_post_dict = save_media(self.session,raw_post_dict)
             # Replace links with something frontend can use later
             # Insert links into the DB
-            sql_functions.add_post_to_db(self.session,new_post_dict,
-            self.info_dict,self.sanitized_blog_url,self.sanitized_username)
+            sql_functions.add_post_to_db(self.session,
+            raw_post_dict, processed_post_dict,
+            self.info_dict, self.sanitized_blog_url,
+            self.sanitized_username)
 
             self.session.commit()
         logging.info("Finished processing posts")
@@ -203,10 +204,30 @@ class tumblr_blog:
 
 
 
+def save_blog(blog_url,max_pages=None):
+    """Save one tumblr blog"""
+    logging.info("Saving blog: "+repr(blog_url))
+    # Connect to DB
+    session = sql_functions.connect_to_db()
+    # Instantiate blog, collect blog metadata
+    blog = tumblr_blog(session, consumer_key = config.consumer_key, blog_url=blog_url)
+    # Collect posts for the blog
+    posts = blog.get_posts(max_pages)
+    # Save media for posts and insert them into the DB
+    blog.insert_posts_into_db()
+    logging.info("Finished saving blog: "+repr(blog_url))
+    return
 
 
 
-
+def save_blogs(list_file_path="tumblr_todo_list.txt",max_pages=None):
+    """Save tumblr blogs from a list"""
+    logging.info("Saving list of blogs: "+repr(list_file_path))
+    blog_url_list = import_blog_list(list_file_path)
+    for blog_url in blog_url_list:
+        save_blog(blog_url,max_pages)
+    logging.info("Finished downloading blogs list")
+    return
 
 
 
@@ -229,7 +250,8 @@ def main():
     try:
         setup_logging(log_file_path=os.path.join("debug","tumblr-api-dumper-log.txt"))
         # Program
-        classy_play()
+        #classy_play()
+        save_blogs(list_file_path="tumblr_todo_list.txt",max_pages=None)
         # /Program
         logging.info("Finished, exiting.")
         return

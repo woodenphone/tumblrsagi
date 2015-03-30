@@ -6,3 +6,4 @@ config.py
 *.pyc
 youtube-dl/
 *.db
+tumblr_todo_list.txt

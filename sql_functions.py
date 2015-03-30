@@ -94,6 +94,9 @@ class Posts(Base):
     # Who does this post belong to?
     poster_username = sqlalchemy.Column(sqlalchemy.String())# username for a blog, as given by the API "tsitra360"
     blog_domain = sqlalchemy.Column(sqlalchemy.String())# domain for the blog"tsitra360.tumblr.com"
+    # Full post API data
+    raw_post_json = sqlalchemy.Column(sqlalchemy.String())# The post's section of the API, reencoded into JSON
+    processed_post_json = sqlalchemy.Column(sqlalchemy.String())# The post's section of the API, reencoded into JSON, after we've fucked with it
     # Missing from API docs
     misc_slug = sqlalchemy.Column(sqlalchemy.String())
     misc_short_url = sqlalchemy.Column(sqlalchemy.String())
@@ -160,7 +163,7 @@ def connect_to_db():
     http://www.pythoncentral.io/introductory-tutorial-python-sqlalchemy/"""
     logging.debug("Opening DB connection")
     # add "echo=True" to see SQL being run
-    engine = sqlalchemy.create_engine('sqlite:///please_examine3.db',echo=config.echo_sql)
+    engine = sqlalchemy.create_engine('sqlite:///please_examine4.db',echo=config.echo_sql)
     # Bind the engine to the metadata of the Base class so that the
     # declaratives can be accessed through a DBSession instance
     Base.metadata.bind = engine
@@ -206,81 +209,84 @@ def check_if_media_url_in_DB(session,media_url):
 
 
 # Posts
-def add_post_to_db(session,post_dict,info_dict,blog_url,username):
+def add_post_to_db(session,raw_post_dict,processed_post_dict,info_dict,blog_url,username):
     """Insert a post into the DB"""
-    logging.debug("post_dict: "+repr(post_dict))
+    logging.debug("processed_post_dict: "+repr(processed_post_dict))
     logging.debug("info_dict: "+repr(info_dict))
     # Build row to insert
     row_to_insert = {}
     # Local stuff
     row_to_insert["date_saved"] = get_current_unix_time()
     row_to_insert["version"] = 0# FIXME
-    row_to_insert["link_to_hash_dict"] = json.dumps(post_dict["link_to_hash_dict"])# Link mappings
+    row_to_insert["link_to_hash_dict"] = json.dumps(processed_post_dict["link_to_hash_dict"])# Link mappings
     # User info
     row_to_insert["poster_username"] = username
     row_to_insert["blog_domain"] = blog_url
+    # Full post reencoded into JSON
+    row_to_insert["raw_post_json"] = json.dumps(raw_post_dict)
+    row_to_insert["processed_post_json"] = json.dumps(processed_post_dict)
     # Things not in API docs
-    row_to_insert["misc_slug"] = (post_dict["slug"] if ("slug" in post_dict.keys()) else None)# What does this do?
-    row_to_insert["misc_short_url"] = (post_dict["short_url"] if ("short_url" in post_dict.keys()) else None)# shortened url?
+    row_to_insert["misc_slug"] = (processed_post_dict["slug"] if ("slug" in processed_post_dict.keys()) else None)# What does this do?
+    row_to_insert["misc_short_url"] = (processed_post_dict["short_url"] if ("short_url" in processed_post_dict.keys()) else None)# shortened url?
     # All posts
-    row_to_insert["all_posts_blog_name"] = post_dict["blog_name"]
-    row_to_insert["all_posts_id"] =  post_dict["id"]
-    row_to_insert["all_posts_post_url"] = post_dict["post_url"]
-    row_to_insert["all_posts_type"] = post_dict["type"]
-    row_to_insert["all_posts_timestamp"] = post_dict["timestamp"]
-    row_to_insert["all_posts_date"] = post_dict["date"]
-    row_to_insert["all_posts_format"] = post_dict["format"]
-    row_to_insert["all_posts_reblog_key"] = post_dict["reblog_key"]
-    row_to_insert["all_posts_tags"] = json.dumps(post_dict["tags"])# FIXME! Disabled for coding (JSON?)
-    row_to_insert["all_posts_bookmarklet"] = (post_dict["bookmarklet"] if ("bookmarklet" in post_dict.keys()) else None)# Optional in api
-    row_to_insert["all_posts_mobile"] = (post_dict["mobile"] if ("mobile" in post_dict.keys()) else None)# Optional in api
-    row_to_insert["all_posts_source_url"] = (post_dict["source_url"] if ("source_url" in post_dict.keys()) else None)# Optional in api
-    row_to_insert["all_posts_source_title"] = (post_dict["source_title"] if ("source_title" in post_dict.keys()) else None)# Optional in api
-    row_to_insert["all_posts_liked"] = (post_dict["liked"] if ("liked" in post_dict.keys()) else None)# Can be absent based on expreience
-    row_to_insert["all_posts_state"] = post_dict["state"]
-    #row_to_insert["all_posts_total_posts"] = post_dict["total_posts"]# Move to blogs table?
+    row_to_insert["all_posts_blog_name"] = processed_post_dict["blog_name"]
+    row_to_insert["all_posts_id"] =  processed_post_dict["id"]
+    row_to_insert["all_posts_post_url"] = processed_post_dict["post_url"]
+    row_to_insert["all_posts_type"] = processed_post_dict["type"]
+    row_to_insert["all_posts_timestamp"] = processed_post_dict["timestamp"]
+    row_to_insert["all_posts_date"] = processed_post_dict["date"]
+    row_to_insert["all_posts_format"] = processed_post_dict["format"]
+    row_to_insert["all_posts_reblog_key"] = processed_post_dict["reblog_key"]
+    row_to_insert["all_posts_tags"] = json.dumps(processed_post_dict["tags"])# FIXME! Disabled for coding (JSON?)
+    row_to_insert["all_posts_bookmarklet"] = (processed_post_dict["bookmarklet"] if ("bookmarklet" in processed_post_dict.keys()) else None)# Optional in api
+    row_to_insert["all_posts_mobile"] = (processed_post_dict["mobile"] if ("mobile" in processed_post_dict.keys()) else None)# Optional in api
+    row_to_insert["all_posts_source_url"] = (processed_post_dict["source_url"] if ("source_url" in processed_post_dict.keys()) else None)# Optional in api
+    row_to_insert["all_posts_source_title"] = (processed_post_dict["source_title"] if ("source_title" in processed_post_dict.keys()) else None)# Optional in api
+    row_to_insert["all_posts_liked"] = (processed_post_dict["liked"] if ("liked" in processed_post_dict.keys()) else None)# Can be absent based on expreience
+    row_to_insert["all_posts_state"] = processed_post_dict["state"]
+    #row_to_insert["all_posts_total_posts"] = processed_post_dict["total_posts"]# Move to blogs table?
     # Text posts
-    if post_dict["type"] == "text":
-        row_to_insert["text_title"] = post_dict["title"]
-        row_to_insert["text_body"] = post_dict["body"]
+    if processed_post_dict["type"] == "text":
+        row_to_insert["text_title"] = processed_post_dict["title"]
+        row_to_insert["text_body"] = processed_post_dict["body"]
     # Photo posts
-    elif post_dict["type"] == "photo":
-        row_to_insert["photo_photos"] = json.dumps(post_dict["photos"])
+    elif processed_post_dict["type"] == "photo":
+        row_to_insert["photo_photos"] = json.dumps(processed_post_dict["photos"])
     # Quote posts
-    elif post_dict["type"] == "quote":
-        row_to_insert["quote_text"] = post_dict["text"]
-        row_to_insert["quote_source"] = post_dict["source"]
+    elif processed_post_dict["type"] == "quote":
+        row_to_insert["quote_text"] = processed_post_dict["text"]
+        row_to_insert["quote_source"] = processed_post_dict["source"]
     # Link posts
-    elif post_dict["type"] == "link":
-        row_to_insert["link_title"] = post_dict["title"]
-        row_to_insert["link_url"] = post_dict["url"]
-        row_to_insert["link_description"] = post_dict["description"]
+    elif processed_post_dict["type"] == "link":
+        row_to_insert["link_title"] = processed_post_dict["title"]
+        row_to_insert["link_url"] = processed_post_dict["url"]
+        row_to_insert["link_description"] = processed_post_dict["description"]
     # Chat posts
-    elif post_dict["type"] == "chat":
-        row_to_insert["chat_title"] = post_dict["title"]
-        row_to_insert["chat_body"] = post_dict["body"]
-        row_to_insert["chat_dialogue"] = post_dict["dialogue"]
+    elif processed_post_dict["type"] == "chat":
+        row_to_insert["chat_title"] = processed_post_dict["title"]
+        row_to_insert["chat_body"] = processed_post_dict["body"]
+        row_to_insert["chat_dialogue"] = processed_post_dict["dialogue"]
     # Audio Posts
-    elif post_dict["type"] == "audio":
-        row_to_insert["audio_caption"] = (post_dict["caption"] if ("caption" in post_dict.keys()) else None)
-        row_to_insert["audio_player"] = (post_dict["player"] if ("player" in post_dict.keys()) else None)
-        row_to_insert["audio_plays"] = (post_dict["plays"] if ("plays" in post_dict.keys()) else None)
-        row_to_insert["audio_album_art"] = (post_dict["album_art"] if ("album_art" in post_dict.keys()) else None)
-        row_to_insert["audio_artist"] = (post_dict["artist"] if ("artist" in post_dict.keys()) else None)
-        row_to_insert["audio_album"] = (post_dict["album"] if ("album" in post_dict.keys()) else None)
-        row_to_insert["audio_track_name"] = (post_dict["track_name"] if ("track_name" in post_dict.keys()) else None)
-        row_to_insert["audio_track_number"] = (post_dict["track_number"] if ("track_number" in post_dict.keys()) else None)
-        row_to_insert["audio_year"] = (post_dict["year"] if ("year" in post_dict.keys()) else None)
+    elif processed_post_dict["type"] == "audio":
+        row_to_insert["audio_caption"] = (processed_post_dict["caption"] if ("caption" in processed_post_dict.keys()) else None)
+        row_to_insert["audio_player"] = (processed_post_dict["player"] if ("player" in processed_post_dict.keys()) else None)
+        row_to_insert["audio_plays"] = (processed_post_dict["plays"] if ("plays" in processed_post_dict.keys()) else None)
+        row_to_insert["audio_album_art"] = (processed_post_dict["album_art"] if ("album_art" in processed_post_dict.keys()) else None)
+        row_to_insert["audio_artist"] = (processed_post_dict["artist"] if ("artist" in processed_post_dict.keys()) else None)
+        row_to_insert["audio_album"] = (processed_post_dict["album"] if ("album" in processed_post_dict.keys()) else None)
+        row_to_insert["audio_track_name"] = (processed_post_dict["track_name"] if ("track_name" in processed_post_dict.keys()) else None)
+        row_to_insert["audio_track_number"] = (processed_post_dict["track_number"] if ("track_number" in processed_post_dict.keys()) else None)
+        row_to_insert["audio_year"] = (processed_post_dict["year"] if ("year" in processed_post_dict.keys()) else None)
     # Video Posts
-    elif post_dict["type"] == "video":
-        row_to_insert["video_caption"] = post_dict["caption"]
-        row_to_insert["video_player"] = "FIXME"#post_dict["player"]
+    elif processed_post_dict["type"] == "video":
+        row_to_insert["video_caption"] = processed_post_dict["caption"]
+        row_to_insert["video_player"] = "FIXME"#processed_post_dict["player"]
     # Answer Posts
-    elif post_dict["type"] == "answer":
-        row_to_insert["answer_asking_name"] = post_dict["asking_name"]
-        row_to_insert["answer_asking_url"] = post_dict["asking_url"]
-        row_to_insert["answer_question"] = post_dict["question"]
-        row_to_insert["answer_answer"] = post_dict["answer"]
+    elif processed_post_dict["type"] == "answer":
+        row_to_insert["answer_asking_name"] = processed_post_dict["asking_name"]
+        row_to_insert["answer_asking_url"] = processed_post_dict["asking_url"]
+        row_to_insert["answer_question"] = processed_post_dict["question"]
+        row_to_insert["answer_answer"] = processed_post_dict["answer"]
     else:
         logging.error("Unknown post type!")
         logging.error(repr(locals()))
