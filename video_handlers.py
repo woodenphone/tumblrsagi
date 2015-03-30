@@ -45,7 +45,7 @@ def handle_tumblr_videos(session,post_dict):
     # Form command to run
     # Define arguments. see this url for help
     # https://github.com/rg3/youtube-dl
-    program_path = os.path.join("youtube-dl","youtube-dl.exe")
+    program_path = config.youtube_dl_path
     assert(os.path.exists(program_path))
     ignore_errors = "-i"
     safe_filenames = "--restrict-filenames"
@@ -184,7 +184,7 @@ def handle_youtube_video(session,post_dict):
             # Form command to run
             # Define arguments. see this url for help
             # https://github.com/rg3/youtube-dl
-            program_path = os.path.join("youtube-dl","youtube-dl.exe")
+            program_path = config.youtube_dl_path
             assert(os.path.exists(program_path))
             ignore_errors = "-i"
             safe_filenames = "--restrict-filenames"
@@ -316,7 +316,7 @@ def handle_vine_videos(session,post_dict):
             # Form command to run
             # Define arguments. see this url for help
             # https://github.com/rg3/youtube-dl
-            program_path = os.path.join("youtube-dl","youtube-dl.exe")
+            program_path = config.youtube_dl_path
             assert(os.path.exists(program_path))
             ignore_errors = "-i"
             safe_filenames = "--restrict-filenames"

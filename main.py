@@ -9,7 +9,6 @@
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
 
-import pytumblr
 import sqlalchemy
 
 from utils import * # General utility functions
