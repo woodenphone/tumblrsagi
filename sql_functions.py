@@ -211,8 +211,8 @@ def check_if_media_url_in_DB(session,media_url):
 # Posts
 def add_post_to_db(session,raw_post_dict,processed_post_dict,info_dict,blog_url,username):
     """Insert a post into the DB"""
-    logging.debug("processed_post_dict: "+repr(processed_post_dict))
-    logging.debug("info_dict: "+repr(info_dict))
+    #logging.debug("processed_post_dict: "+repr(processed_post_dict))
+    #logging.debug("info_dict: "+repr(info_dict))
     # Build row to insert
     row_to_insert = {}
     # Local stuff
@@ -265,7 +265,7 @@ def add_post_to_db(session,raw_post_dict,processed_post_dict,info_dict,blog_url,
     elif processed_post_dict["type"] == "chat":
         row_to_insert["chat_title"] = processed_post_dict["title"]
         row_to_insert["chat_body"] = processed_post_dict["body"]
-        row_to_insert["chat_dialogue"] = processed_post_dict["dialogue"]
+        row_to_insert["chat_dialogue"] = json.dumps(processed_post_dict["dialogue"])
     # Audio Posts
     elif processed_post_dict["type"] == "audio":
         row_to_insert["audio_caption"] = (processed_post_dict["caption"] if ("caption" in processed_post_dict.keys()) else None)

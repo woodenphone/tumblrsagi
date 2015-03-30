@@ -31,7 +31,7 @@ def find_links_src(html):
     """
     embed_regex = """src=["']([^'"]+)["']/>"""
     links = re.findall(embed_regex,html, re.DOTALL)
-    logging.debug("find_links_src() links: "+repr(links))
+    #logging.debug("find_links_src() links: "+repr(links))
     return links
 
 
@@ -43,7 +43,7 @@ def find_url_links(html):
     # old regex http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+
     url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+~]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
     links = re.findall(url_regex,html, re.DOTALL)
-    logging.debug("find_url_links() links: "+repr(links))
+    #logging.debug("find_url_links() links: "+repr(links))
     assert(type(links) is type([]))# Should be list
     return links
 
@@ -89,10 +89,10 @@ def extract_post_links(post_dict):
         if post_dict["source_url"]:
             fields_string += (post_dict["source_url"]+u"\n\n")
     # Search for links in string
-    logging.debug("extract_post_links() fields_string: "+repr(fields_string))
+    #logging.debug("extract_post_links() fields_string: "+repr(fields_string))
     links += find_links_src(fields_string)
     links += find_url_links(fields_string)
-    logging.debug("extract_post_links() links: "+repr(links))
+    #logging.debug("extract_post_links() links: "+repr(links))
     return links
 
 
@@ -116,13 +116,10 @@ def handle_image_links(session,all_post_links):
         for extention in link_extentions:
             if extention in before_first_q_mark:
                 image_links.append(link)
-    logging.debug("handle_image_links() image_links: "+repr(image_links))
+    #logging.debug("handle_image_links() image_links: "+repr(image_links))
     # Save image links
     link_hash_dict = download_image_links(session,image_links)
     return link_hash_dict# {link:hash}
-
-
-
 
 
 def handle_links(session,post_dict):# TODO FIXME

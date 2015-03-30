@@ -98,7 +98,7 @@ def save_media(session,post_dict):
     return post dict with links replaced by pointers to saved file in the database"""
     #logging.info("Saving post media")
     #logging.debug("post_dict"+repr(post_dict))
-    logging.debug('post_dict["type"] '+repr(post_dict["type"] ))
+    #logging.debug('post_dict["type"] '+repr(post_dict["type"] ))
 
     # Save anything not provided directly through the tumblr API (Remote) ex. http://foo.com/image.jpg
     # I.E. Links (<a href = "http://example.com/image.png">blah</a>)
@@ -132,7 +132,7 @@ def save_media(session,post_dict):
     logging.debug("link_to_hash_dict: "+repr(link_to_hash_dict))
     new_post_dict = replace_links(link_to_hash_dict,post_dict)
     new_post_dict["link_to_hash_dict"] = link_to_hash_dict
-    logging.debug("new_post_dict: "+repr(new_post_dict))
+    #logging.debug("new_post_dict: "+repr(new_post_dict))
     return new_post_dict
 
 
