@@ -100,7 +100,7 @@ class tumblr_blog:
                 logging.info("Blog thinks it has "+repr(self.posts_post_count)+" posts.")
             # Add posts
             this_page_posts_list = page_dict["response"]["posts"]
-            logging.debug("this_page_posts_list: "+repr(this_page_posts_list))
+            #logging.debug("this_page_posts_list: "+repr(this_page_posts_list))
             logging.debug("posts on this page: "+repr(len(this_page_posts_list)))
 
             # Exit conditions
@@ -197,12 +197,6 @@ class tumblr_blog:
 
 
 
-
-
-
-
-
-
 def save_blog(blog_url,max_pages=None):
     """Save one tumblr blog"""
     logging.info("Saving blog: "+repr(blog_url))
@@ -226,22 +220,6 @@ def save_blogs(list_file_path="tumblr_todo_list.txt",max_pages=None):
     for blog_url in blog_url_list:
         save_blog(blog_url,max_pages)
     logging.info("Finished downloading blogs list")
-    return
-
-
-
-
-
-
-def classy_play():
-    """Debug and develop classes"""
-    # Connect to DB
-    session = sql_functions.connect_to_db()
-
-    blog = tumblr_blog(session, consumer_key = config.consumer_key, blog_url = "jessicaanner.tumblr.com")
-    posts = blog.get_posts(max_pages=10)
-    #blog.print_posts()
-    blog.insert_posts_into_db()
     return
 
 
