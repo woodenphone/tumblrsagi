@@ -211,7 +211,7 @@ def add_post_to_db(session,post_dict,info_dict,blog_url,username):
     logging.debug("post_dict: "+repr(post_dict))
     logging.debug("info_dict: "+repr(info_dict))
     # Build row to insert
-    row_to_insert = {} # TODO, Waiting on ATC for DB design # actually fuck waiting he can clean this up later
+    row_to_insert = {}
     # Local stuff
     row_to_insert["date_saved"] = get_current_unix_time()
     row_to_insert["version"] = 0# FIXME
@@ -291,6 +291,7 @@ def add_post_to_db(session,post_dict,info_dict,blog_url,username):
 
     post_row = Posts(**row_to_insert)
     session.add(post_row)
+    session.commit()
     return
 
 
@@ -446,7 +447,7 @@ def debug():
 
 def main():
     try:
-        setup_logging(log_file_path=os.path.join("debug","tumblr-api-dumper-log.txt"))
+        setup_logging(log_file_path=os.path.join("debug","sql-functions-log.txt"))
         debug()
         logging.info("Finished, exiting.")
         pass

@@ -199,41 +199,7 @@ class tumblr_blog:
 
 
 
-def clean_blog_url(raw_url):
-    """Given a blog name or URL, mangle it into something the tumblr API will probably like"""
-    # Example urls that need handling:
-    # http://jessicaanner.tumblr.com/post/113520547711/animated-versions-here-main-view-webm-gif
-    # http://havesomemoore.tumblr.com/
-    # http://pwnypony.com/
-    #
 
-    return ""# TODO FIXME
-
-def import_blog_list(list_file_path=""):
-    logging.info("import_blog_list() list_file_path: "+repr(list_file_path))
-    # Make sure list file folder exists
-    list_file_folder =  os.path.dirname(list_file_path)
-    if list_file_folder is not None:
-        if not os.path.exists(list_file_folder):
-            os.makedirs(list_file_folder)
-    # Create new empty list file if no list file exists
-    if not os.path.exists(list_file_path):
-        logging.info("import_blog_list() Blog list file not found, creating it.")
-        new_file = open(list_file_path)
-        new_file.write('# Add one URL per line, comments start with a #, nothing but username on a line that isnt a comment\n\n')
-        new_file.close()
-        return []
-    # Read each line from the list file and process it
-    blog_urls = []
-    list_file = open(list_file_path, "rU")
-    for line in list_file:
-        # Strip empty and comment lines
-        if line[0] in ["#", "\r", "\n"]:
-            continue
-        else:
-            blog_urls.append(clean_blog_url(line))
-    logging.info("import_blog_list() blog_urls: "+repr(blog_urls))
-    return blog_urls
 
 
 

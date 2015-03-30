@@ -61,7 +61,6 @@ def download_image_link(session,media_url):
     if hash_check_row_dict:
         media_already_saved = True
         image_filename = hash_check_row_dict["filename"]
-
     # Add new row
     new_media_row = Media(
     media_url=media_url,
@@ -71,7 +70,7 @@ def download_image_link(session,media_url):
     extractor_used="image_link",
     )
     session.add(new_media_row)
-
+    session.commit()
     # If hash was already in DB, don't bother saving file
     if media_already_saved:
         logging.debug("Hash already in DB, no need to save file to disk")

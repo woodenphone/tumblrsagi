@@ -34,7 +34,6 @@ def handle_tumblr_videos(session,post_dict):
     logging.debug("video_page: "+repr(video_page))
     logging.debug("post_id: "+repr(post_id))
     # Check if video is already saved
-
     video_page_query = sqlalchemy.select([Media]).where(Media.media_url == video_page)
     video_page_rows = session.execute(video_page_query)
     video_page_row = video_page_rows.fetchone()
@@ -42,7 +41,6 @@ def handle_tumblr_videos(session,post_dict):
         preexisting_filename = video_page_row["filename"]
         sha512base64_hash = video_page_row["sha512base64_hash"]
         return {"tumblr_video_embed":sha512base64_hash}
-
     # Load video
     # Form command to run
     # Define arguments. see this url for help
@@ -83,7 +81,6 @@ def handle_tumblr_videos(session,post_dict):
     file_data = read_file(media_temp_filepath)
     sha512base64_hash = hash_file_data(file_data)
     # Decide where to put the file
-
     # Check if hash is in media DB
     hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
     if hash_check_row_dict:
@@ -91,12 +88,12 @@ def handle_tumblr_videos(session,post_dict):
         preexisting_filename = hash_check_row_dict["filename"]
     else:
         preexisting_filename = None
-
     # Deal with temp file (Move or delete)
     if preexisting_filename:
         # Delete duplicate file if media is already saved
-        logging.info("Deleting duplicate video file")
-        logging.warning("CODE VIDEO DUPLICATE DELETE STUFF")# TODO FIXME
+        logging.info("Deleting duplicate video file: "+repr(media_temp_filepath))
+        os.remove(media_temp_filepath)
+        os.remove(expected_info_path)
         final_media_filepath = preexisting_filename
     else:
         # Move file to media DL location
@@ -119,6 +116,7 @@ def handle_tumblr_videos(session,post_dict):
     tumblrvideo_yt_dl_info_json=info_json
     )
     session.add(new_media_row)
+    session.commit()
     return {"tumblr_video_embed":sha512base64_hash}
 
 
@@ -230,8 +228,9 @@ def handle_youtube_video(session,post_dict):
                 filename = video_page_row["filename"]
                 logging.debug("Skipping previously saved video: "+repr(video_page_row))
                 # Delete duplicate file if media is already saved
-                logging.info("Deleting duplicate video file")
-                logging.warning("CODE VIDEO DUPLICATE DELETE STUFF")# TODO FIXME
+                logging.info("Deleting duplicate video file: "+repr(media_temp_filepath))
+                os.remove(media_temp_filepath)
+                os.remove(expected_info_path)
                 continue
             else:
                 # If media not in DB, move temp file to permanent location
@@ -255,6 +254,7 @@ def handle_youtube_video(session,post_dict):
             youtube_yt_dl_info_json=info_json
             )
             session.add(new_media_row)
+            session.commit()
             continue
 
         logging.debug("Finished downloading youtube embeds")
@@ -360,8 +360,9 @@ def handle_vine_videos(session,post_dict):
                 filename = video_page_row["filename"]
                 logging.debug("Skipping previously saved video: "+repr(video_page_row))
                 # Delete duplicate file if media is already saved
-                logging.info("Deleting duplicate video file")
-                logging.warning("CODE VIDEO DUPLICATE DELETE STUFF")# TODO FIXME
+                logging.info("Deleting duplicate video file: "+repr(media_temp_filepath))
+                os.remove(media_temp_filepath)
+                os.remove(expected_info_path)
                 continue
             else:
                 # If media not in DB, move temp file to permanent location
@@ -385,6 +386,7 @@ def handle_vine_videos(session,post_dict):
             vine_yt_dl_info_json=info_json,
             )
             session.add(new_media_row)
+            session.commit()
             continue
 
         logging.debug("Finished downloading youtube embeds")

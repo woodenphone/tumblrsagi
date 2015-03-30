@@ -101,7 +101,7 @@ def handle_soundcloud_audio(session,post_dict):
 
     if preexisting_filename:
         # Delete temp file if media is already saved
-        logging.info("Deleting duplicate video file")
+        logging.info("Deleting duplicate audio file")
         os.remove(media_temp_filepath)
         os.remove(expected_info_path)
         filename = preexisting_filename
@@ -128,7 +128,7 @@ def handle_soundcloud_audio(session,post_dict):
     soundcloud_id = soundcloud_id
     )
     session.add(new_media_row)
-
+    session.commit()
     logging.debug("Finished downloading soundcloud embed")
     return {"soundcloud_audio_embed":sha512base64_hash}
 
@@ -149,7 +149,6 @@ def handle_tumblr_audio(session,post_dict):
     else:
         media_url = api_media_url
     logging.debug("media_url: "+repr(media_url))
-
     # Check the DB to see if media is already saved
     url_check_row_dict = sql_functions.check_if_media_url_in_DB(session,media_url)
     if url_check_row_dict:
@@ -158,14 +157,12 @@ def handle_tumblr_audio(session,post_dict):
         existing_filename = row_dict["filename"]
         logging.debug("URL is already in DB, no need to save file.")
         return {"tumblr_audio":sha512base64_hash}
-
     # Load the media file
     file_data = get(media_url)
     time_of_retreival = get_current_unix_time()
     # Check if file is saved already using file hash
     sha512base64_hash = hash_file_data(file_data)
     logging.debug("sha512base64_hash: "+repr(sha512base64_hash))
-
     # Check if hash is in media DB
     hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
     if hash_check_row_dict:
@@ -174,7 +171,6 @@ def handle_tumblr_audio(session,post_dict):
     else:
         logging.debug("Hash is already in DB, no need to save file.")
         return {"tumblr_audio":sha512base64_hash}
-
     if media_already_saved:
         # Use filename from DB
         audio_filename = existing_filename
@@ -185,7 +181,6 @@ def handle_tumblr_audio(session,post_dict):
         file_path = generate_media_file_path_timestamp(root_path=config.root_path,filename=audio_filename)
         # Save media to disk
         save_file(filenamein=file_path,data=file_data,force_save=False)
-
     # Add new row to DB
     new_media_row = Media(
     media_url = media_url,
@@ -195,7 +190,7 @@ def handle_tumblr_audio(session,post_dict):
     extractor_used = "tumblr_audio"
     )
     session.add(new_media_row)
-
+    session.commit()
     return {"tumblr_audio":sha512base64_hash}
 
 

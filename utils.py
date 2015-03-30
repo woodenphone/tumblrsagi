@@ -214,8 +214,9 @@ def getwithinfo(url):
         except Exception, err:
             # We have to do this because socket.py just uses "raise"
             logging.debug("getwithinfo() caught an exception")
-            logging.debug("getwithinfo() err:"+repr(err))
-            logging.debug("getwithinfo() err:"+str(err))
+            logging.debug("getwithinfo() repr(err):"+repr(err))
+            logging.debug("getwithinfo() str(err):"+str(err))
+            logging.debug("getwithinfo() type(err):"+repr(type(err)))
             logging.exception(err)
             continue
     logging.critical("Too many repeated fails, exiting.")
@@ -325,18 +326,66 @@ def hash_file_data(file_data):
     return sha512base64_hash
 
 
-
 def generate_media_file_path_hash(root_path,filename):
     assert(len(filename) == 128)# Filenames should be of fixed length
     folder = filename[0:4]
     file_path = os.path.join(root_path,folder,filename)
     return file_path
 
+
 def generate_media_file_path_timestamp(root_path,filename):
     first_four_chars = filename[0:4]
     second_two_chars = filename[4:6]
     file_path = os.path.join(root_path,first_four_chars,second_two_chars,filename)
     return file_path
+
+
+def clean_blog_url(raw_url):
+    """Given a blog name or URL, mangle it into something the tumblr API will probably like"""
+    # Example urls that need handling:
+    # http://jessicaanner.tumblr.com/post/113520547711/animated-versions-here-main-view-webm-gif
+    # http://havesomemoore.tumblr.com/
+    # http://pwnypony.com/
+    # (?:https?://)([^#/'"]+)
+    blog_url_regex = """<li><a\s+?href="([^"]+)"><span\s+?class="icon\s+?icon-20\s+?icon-arrowDown"></span>\s+?Download</a></li>"""
+    blog_url_search = re.search(blog_url_regex, html, re.IGNORECASE)
+    if blog_url_search:
+        blog_url = blog_url_search.group(1)
+        return blog_url
+    else:
+        logging.error("Can't parse list item! Skipping it.")
+        logging.error("clean_blog_url()"+" "+"raw_url"+": "+repr(raw_url))
+        return ""
+
+def import_blog_list(list_file_path="tumblr_todo_list.txt"):
+    """Import (open and parse) list file of blogs to save
+    return a list of api-friendly blog url strings"""
+    logging.info("import_blog_list() list_file_path: "+repr(list_file_path))
+    # Make sure list file folder exists
+    list_file_folder =  os.path.dirname(list_file_path)
+    if list_file_folder is not None:
+        if not os.path.exists(list_file_folder):
+            os.makedirs(list_file_folder)
+    # Create new empty list file if no list file exists
+    if not os.path.exists(list_file_path):
+        logging.info("import_blog_list() Blog list file not found, creating it.")
+        new_file = open(list_file_path)
+        new_file.write('# Add one URL per line, comments start with a #, nothing but username on a line that isnt a comment\n\n')
+        new_file.close()
+        return []
+    # Read each line from the list file and process it
+    blog_urls = []
+    list_file = open(list_file_path, "rU")
+    for line in list_file:
+        # Strip empty and comment lines
+        if line[0] in ["#", "\r", "\n"]:
+            continue
+        else:
+            blog_urls.append(clean_blog_url(line))
+    logging.info("import_blog_list() blog_urls: "+repr(blog_urls))
+    return blog_urls
+
+
 
 def main():
     pass
