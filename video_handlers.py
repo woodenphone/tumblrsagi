@@ -395,6 +395,132 @@ def handle_vine_videos(session,post_dict):
         return {}
 
 
+def handle_vimeo_videos(session,post_dict):
+    """Handle downloading of vimeo videos
+    https://github.com/rg3/youtube-dl/blob/master/docs/supportedsites.md"""
+    logging.warning("FIX VIMEO CODE")# TODO FIXME
+    logging.debug("post_dict"+repr(post_dict))
+    post_id = str(post_dict["id"])
+    # Extract video links from post dict
+    video_items = post_dict["player"]
+    vimeo_urls = []
+    for video_item in video_items:
+        embed_code = video_item["embed_code"]
+        # u'<iframe src="https://player.vimeo.com/video/118912193?title=0&byline=0&portrait=0" width="250" height="156" frameborder="0" title="Hyperfast Preview - Mai (Patreon Process Videos)" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>'
+        # https://player.vimeo.com/video/118912193?
+        if embed_code:
+            # Process links so YT-DL can understand them
+            logging.debug("embed_code: "+repr(embed_code))
+            embed_url_regex ="""src=["']([^?"']+)"""
+            embed_url_search = re.search(embed_url_regex, embed_code, re.IGNORECASE|re.DOTALL)
+            if embed_url_search:
+                embed_url = embed_url_search.group(1)
+                vimeo_urls.append(embed_url)
+        continue
+
+    # Deduplicate links
+    vimeo_urls = uniquify(vimeo_urls)
+    logging.debug("vimeo_urls: "+repr(vimeo_urls))
+    download_urls = []
+    # Skip IDs that have already been done
+    for vimeo_url in vimeo_urls:
+        video_page_query = sqlalchemy.select([Media]).where(Media.media_url == vimeo_url)
+        video_page_rows = session.execute(video_page_query)
+        video_page_row = video_page_rows.fetchone()
+        if video_page_row:
+            logging.debug("Skipping previously saved video: "+repr(video_page_row))
+            continue
+        download_urls.append(vimeo_url)
+        continue
+    logging.debug("download_urls: "+repr(download_urls))
+    # Send video URLs to YT-DL
+    if len(download_urls) > 0:
+        # Download each new video
+        for download_url in download_urls:
+            logging.debug("download_url: "+repr(download_url))
+            # Form command to run
+            # Define arguments. see this url for help
+            # https://github.com/rg3/youtube-dl
+            program_path = config.youtube_dl_path
+            assert(os.path.exists(program_path))
+            ignore_errors = "-i"
+            safe_filenames = "--restrict-filenames"
+            output_arg = "-o"
+            info_json_arg = "--write-info-json"
+            description_arg ="--write-description"
+            output_dir = os.path.join(config.root_path,"temp")
+            output_template = os.path.join(output_dir, post_id+".%(ext)s")
+            # "youtube-dl.exe -i --restrict-filenames -o --write-info-json --write-description"
+            command = [program_path, ignore_errors, safe_filenames, info_json_arg, description_arg, output_arg, output_template, download_url]
+            logging.debug("command: "+repr(command))
+            # Call youtube-dl
+            command_result = subprocess.call(command)
+            logging.debug("command_result: "+repr(command_result))
+            time_of_retreival = get_current_unix_time()
+            # Verify download worked
+            # Read info JSON file
+            expected_info_path = os.path.join(output_dir, post_id+".info.json")
+            info_exists = os.path.exists(expected_info_path)
+            if not info_exists:
+                logging.error("Info file not found!")
+                logging.error(repr(locals()))
+            info_json = read_file(expected_info_path)
+            yt_dl_info_dict = json.loads(info_json)
+            logging.debug("yt_dl_info_dict: "+repr(yt_dl_info_dict))
+            # Grab file path
+            media_temp_filepath = yt_dl_info_dict["_filename"]
+            media_temp_filename = os.path.basename(media_temp_filepath)
+            logging.debug("media_temp_filepath: "+repr(media_temp_filepath))
+            # Check that video file given in info JSON exists
+            assert(os.path.exists(media_temp_filepath))
+            # Generate hash for media file
+            file_data = read_file(media_temp_filepath)
+            sha512base64_hash = hash_file_data(file_data)
+            # Decide where to put the file
+
+            # Check if hash is in media DB
+            video_page_row = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
+            if video_page_row:
+                # If media already saved, delete temp file and use old entry's data
+                filename = video_page_row["filename"]
+                logging.debug("Skipping previously saved video: "+repr(video_page_row))
+                # Delete duplicate file if media is already saved
+                logging.info("Deleting duplicate video file: "+repr(media_temp_filepath))
+                os.remove(media_temp_filepath)
+                os.remove(expected_info_path)
+                continue
+            else:
+                # If media not in DB, move temp file to permanent location
+                # Move file to media DL location
+                logging.info("Moving video to final location")
+                # Generate output filepath
+                file_ext = media_temp_filename.split(".")[-1]
+                filename = str(time_of_retreival)+"."+file_ext
+                final_media_filepath = generate_media_file_path_timestamp(root_path=config.root_path,filename=filename)
+                # Move file to final location
+                move_file(media_temp_filepath,final_media_filepath)
+                assert(os.path.exists(final_media_filepath))
+
+            # Add video to DB
+            new_media_row = Media(
+            media_url=download_url,
+            sha512base64_hash=sha512base64_hash,
+            filename=filename,
+            date_added=time_of_retreival,
+            extractor_used="vimeo_embed",
+            vimeo_yt_dl_info_json=info_json,
+            )
+            session.add(new_media_row)
+            session.commit()
+            continue
+
+        logging.debug("Finished downloading vimeo embeds")
+        return {"vimeo_embed":sha512base64_hash}
+    else:
+        return {}
+
+
+
 def handle_video_posts(session,post_dict):
     """Decide which video functions to run"""
     # Check if post is a video post
@@ -413,6 +539,10 @@ def handle_video_posts(session,post_dict):
     elif post_dict["video_type"] == u"vine":
         logging.debug("Post is vine video")
         return handle_vine_videos(session,post_dict)
+    # vimeo
+    elif post_dict["video_type"] == u"vimeo":
+        logging.debug("Post is vimeo video")
+        return handle_vimeo_videos(session,post_dict)
     else:
         logging.error("Unknown video type!")
         logging.error("locals(): "+repr(locals()))

@@ -166,12 +166,11 @@ class tumblr_blog:
         for raw_post_dict in new_posts_list:
             counter += 1
             logging.debug("Processing "+str(counter)+"th post")
+            # Dump post to disk for easier debugging
+            save_file(os.path.join("debug","last_post_tried_to_insert"),repr(raw_post_dict))
             # Handle links for the post
-            # Extract links from the post
-            # For each media link, check against DB and if applicable download it
             processed_post_dict = save_media(self.session,raw_post_dict)
-            # Replace links with something frontend can use later
-            # Insert links into the DB
+            # Insert post into the DB
             sql_functions.add_post_to_db(self.session,
             raw_post_dict, processed_post_dict,
             self.info_dict, self.sanitized_blog_url,

@@ -156,7 +156,7 @@ def getwithinfo(url):
     attemptcount = 0
     max_attempts = 10
     retry_delay = 10
-    request_delay = 0
+    request_delay = 0.5#avoid hammering the site too hard
     while attemptcount < max_attempts:
         attemptcount = attemptcount + 1
         if attemptcount > 1:

@@ -63,6 +63,7 @@ class Media(Base):
     sha512base64_hash = sqlalchemy.Column(sqlalchemy.String(250))
     filename = sqlalchemy.Column(sqlalchemy.String(250))
     extractor_used = sqlalchemy.Column(sqlalchemy.String(250))
+    # Video
     # Youtube
     youtube_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
     youtube_video_id = sqlalchemy.Column(sqlalchemy.String(250))
@@ -74,9 +75,14 @@ class Media(Base):
     # Tumblr audio
     tumblraudio_album_art = sqlalchemy.Column(sqlalchemy.String())
     tumblraudio_artist = sqlalchemy.Column(sqlalchemy.String())
+    # Vimeo embeds
+    vimeo_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
+    vimeo_video_id# https://player.vimeo.com/video/11891219 > 11891219
+    # Audio
     # SoundCloud audio embeds
     soundcloud_id = sqlalchemy.Column(sqlalchemy.String())
     soundcloud_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
+
 
 
 class Posts(Base):
