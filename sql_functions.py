@@ -160,7 +160,7 @@ def connect_to_db():
     http://www.pythoncentral.io/introductory-tutorial-python-sqlalchemy/"""
     logging.debug("Opening DB connection")
     # add "echo=True" to see SQL being run
-    engine = sqlalchemy.create_engine('sqlite:///please_examine3.db',echo=True)
+    engine = sqlalchemy.create_engine('sqlite:///please_examine3.db',echo=config.echo_sql)
     # Bind the engine to the metadata of the Base class so that the
     # declaratives can be accessed through a DBSession instance
     Base.metadata.bind = engine
@@ -245,10 +245,7 @@ def add_post_to_db(session,post_dict,info_dict,blog_url,username):
         row_to_insert["text_body"] = post_dict["body"]
     # Photo posts
     elif post_dict["type"] == "photo":
-        row_to_insert["photo_photos"] = None#post_dict[""]
-        row_to_insert["photo_caption"] = None#post_dict["caption"]
-        row_to_insert["photo_width"] = None#post_dict["width"]
-        row_to_insert["photo_height"] = None#post_dict["height"]
+        row_to_insert["photo_photos"] = json.dumps(post_dict["photos"])
     # Quote posts
     elif post_dict["type"] == "quote":
         row_to_insert["quote_text"] = post_dict["text"]
@@ -297,10 +294,18 @@ def add_post_to_db(session,post_dict,info_dict,blog_url,username):
     return
 
 
-def find_blog_posts(connection,sanitized_username):
+def find_blog_posts(session,sanitized_username):
     """Lookup a blog's posts in the DB and return a list of the IDs"""
-    logging.warning("Posts lookup not implimented")# TODO FIXME
-    return []
+    logging.debug("find_blog_posts()"+"sanitized_username"+": "+repr(sanitized_username))
+    # select all posts with field "poster_username" matching our value
+    posts_query = sqlalchemy.select([Posts.all_posts_id]).where(Posts.poster_username == sanitized_username)
+    posts_rows = session.execute(posts_query)
+    post_ids = []
+    for row in posts_rows:
+        post_ids.append(row["all_posts_id"])
+        #logging.debug("find_blog_posts()"+"row"+": "+repr(row))
+    logging.debug("find_blog_posts()"+"post_ids"+": "+repr(post_ids))
+    return post_ids
 
 
 # Blogs metadata table
@@ -431,8 +436,24 @@ def update_last_saved(session,info_dict,sanitized_blog_url):
     session.execute(statement)
 
 
+
+def debug():
+    """Temp code for debug"""
+    session = connect_to_db()
+    sanitized_username = "jessicaanner"
+    find_blog_posts(session,sanitized_username)
+
+
 def main():
-    pass
+    try:
+        setup_logging(log_file_path=os.path.join("debug","tumblr-api-dumper-log.txt"))
+        debug()
+        logging.info("Finished, exiting.")
+        pass
+    except Exception, e:# Log fatal exceptions
+        logging.critical("Unhandled exception!")
+        logging.exception(e)
+    return
 
 if __name__ == '__main__':
     main()

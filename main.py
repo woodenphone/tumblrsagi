@@ -146,16 +146,17 @@ class tumblr_blog:
         return self.posts_list
 
     def crop_exisiting_posts(self,posts_list):
-        posts_to_compare = posts_list
+        logging.debug("crop_exisiting_posts()"+" "+"len(posts_list)"+": "+repr(len(posts_list)))
         existing_post_ids = sql_functions.find_blog_posts(self.session,self.sanitized_username)
         new_posts = []
         c = 0
-        for post in posts_to_compare:
+        for post in posts_list:
             c += 1
             if post["id"] in existing_post_ids:
                 continue
             else:
                 new_posts.append(post)
+        logging.debug("crop_exisiting_posts()"+" "+"len(new_posts)"+": "+repr(len(new_posts)))
         return new_posts
 
     def insert_posts_into_db(self):
@@ -195,13 +196,64 @@ class tumblr_blog:
         return
 
 
+
+
+
+def clean_blog_url(raw_url):
+    """Given a blog name or URL, mangle it into something the tumblr API will probably like"""
+    # Example urls that need handling:
+    # http://jessicaanner.tumblr.com/post/113520547711/animated-versions-here-main-view-webm-gif
+    # http://havesomemoore.tumblr.com/
+    # http://pwnypony.com/
+    #
+
+    return ""# TODO FIXME
+
+def import_blog_list(list_file_path=""):
+    logging.info("import_blog_list() list_file_path: "+repr(list_file_path))
+    # Make sure list file folder exists
+    list_file_folder =  os.path.dirname(list_file_path)
+    if list_file_folder is not None:
+        if not os.path.exists(list_file_folder):
+            os.makedirs(list_file_folder)
+    # Create new empty list file if no list file exists
+    if not os.path.exists(list_file_path):
+        logging.info("import_blog_list() Blog list file not found, creating it.")
+        new_file = open(list_file_path)
+        new_file.write('# Add one URL per line, comments start with a #, nothing but username on a line that isnt a comment\n\n')
+        new_file.close()
+        return []
+    # Read each line from the list file and process it
+    blog_urls = []
+    list_file = open(list_file_path, "rU")
+    for line in list_file:
+        # Strip empty and comment lines
+        if line[0] in ["#", "\r", "\n"]:
+            continue
+        else:
+            blog_urls.append(clean_blog_url(line))
+    logging.info("import_blog_list() blog_urls: "+repr(blog_urls))
+    return blog_urls
+
+
+
+
+
+
+
+
+
+
+
+
+
 def classy_play():
     """Debug and develop classes"""
     # Connect to DB
     session = sql_functions.connect_to_db()
 
-    blog = tumblr_blog(session, consumer_key = config.consumer_key, blog_url = "tsitra360.tumblr.com")
-    posts = blog.get_posts(max_pages=5)
+    blog = tumblr_blog(session, consumer_key = config.consumer_key, blog_url = "jessicaanner.tumblr.com")
+    posts = blog.get_posts(max_pages=10)
     #blog.print_posts()
     blog.insert_posts_into_db()
     return
@@ -211,7 +263,6 @@ def main():
     try:
         setup_logging(log_file_path=os.path.join("debug","tumblr-api-dumper-log.txt"))
         # Program
-        #load_api_raw()
         classy_play()
         # /Program
         logging.info("Finished, exiting.")

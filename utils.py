@@ -211,6 +211,13 @@ def getwithinfo(url):
             logging.debug(repr( type(err) ) )
             logging.debug(repr(err))
             continue
+        except Exception, err:
+            # We have to do this because socket.py just uses "raise"
+            logging.debug("getwithinfo() caught an exception")
+            logging.debug("getwithinfo() err:"+repr(err))
+            logging.debug("getwithinfo() err:"+str(err))
+            logging.exception(err)
+            continue
     logging.critical("Too many repeated fails, exiting.")
     sys.exit()# [19:51] <@CloverTheClever> if it does it more than 10 times, quit/throw an exception upstream
 
