@@ -144,7 +144,7 @@ def handle_links(session,post_dict):# TODO FIXME
     all_post_links = extract_post_links(post_dict)
     logging.debug("handle_links() all_post_links"+repr(all_post_links))
     # Remove any links that are tumblr posts ex."http://somescrub.tumblr.com/post/110535365780/joshy-gifs-8-bit-tits"
-    non_tumblr_links = remove_tumblr_links(link_list)
+    non_tumblr_links = remove_tumblr_links(all_post_links)
     logging.debug("handle_links() non_tumblr_links: "+repr(non_tumblr_links))
     # Remove links already in DB
     logging.warning("handle_links() Preexisting link check is disabled.")
