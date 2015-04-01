@@ -60,12 +60,12 @@ def download_image_link(session,media_url):
     hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
     if hash_check_row_dict:
         media_already_saved = True
-        image_filename = hash_check_row_dict["filename"]
+        image_filename = hash_check_row_dict["local_filename"]
     # Add new row
     new_media_row = Media(
     media_url=media_url,
     sha512base64_hash=sha512base64_hash,
-    filename=image_filename,
+    local_filename=image_filename,
     date_added=time_of_retreival,
     extractor_used="image_link",
     )

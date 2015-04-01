@@ -61,10 +61,10 @@ class Media(Base):
     date_added = sqlalchemy.Column(sqlalchemy.BigInteger)
     media_url = sqlalchemy.Column(sqlalchemy.String())
     sha512base64_hash = sqlalchemy.Column(sqlalchemy.String(250))
-    local_filename = sqlalchemy.Column(sqlalchemy.String(250))# Filename on local storage
+    local_filename = sqlalchemy.Column(sqlalchemy.String(250))# Filename on local storage, file path is deterministically generated from this
     remote_filename = sqlalchemy.Column(sqlalchemy.String())# Filename from original location (If any)
-    file_extention = sqlalchemy.Column(sqlalchemy.String(250))
-    extractor_used = sqlalchemy.Column(sqlalchemy.String(250))
+    file_extention = sqlalchemy.Column(sqlalchemy.String(250))# ex. .png, .jpeg
+    extractor_used = sqlalchemy.Column(sqlalchemy.String(250))# internal name of the extractor used
     # Video
     # Youtube
     youtube_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())

@@ -95,7 +95,7 @@ def handle_soundcloud_audio(session,post_dict):
     # Check if hash is in media DB
     hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
     if hash_check_row_dict:
-        preexisting_filename = hash_check_row_dict["filename"]
+        preexisting_filename = hash_check_row_dict["local_filename"]
     else:
         preexisting_filename = None
 
@@ -121,7 +121,7 @@ def handle_soundcloud_audio(session,post_dict):
     new_media_row = Media(
     media_url=soundcloud_link,
     sha512base64_hash=sha512base64_hash,
-    filename=filename,
+    local_filename=filename,
     date_added=time_of_retreival,
     extractor_used="soundcloud_audio_embed",
     soundcloud_yt_dl_info_json=info_json,
@@ -154,7 +154,7 @@ def handle_tumblr_audio(session,post_dict):
     if url_check_row_dict:
         media_already_saved = True
         sha512base64_hash = row_dict["sha512base64_hash"]
-        existing_filename = row_dict["filename"]
+        existing_filename = row_dict["local_filename"]
         logging.debug("URL is already in DB, no need to save file.")
         return {"tumblr_audio":sha512base64_hash}
     # Load the media file
@@ -167,7 +167,7 @@ def handle_tumblr_audio(session,post_dict):
     hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
     if hash_check_row_dict:
         media_already_saved = True
-        preexisting_filename = hash_check_row_dict["filename"]
+        preexisting_filename = hash_check_row_dict["local_filename"]
     else:
         logging.debug("Hash is already in DB, no need to save file.")
         return {"tumblr_audio":sha512base64_hash}
@@ -185,7 +185,7 @@ def handle_tumblr_audio(session,post_dict):
     new_media_row = Media(
     media_url = media_url,
     sha512base64_hash = sha512base64_hash,
-    media_filename = audio_filename,
+    local_filename = audio_filename,
     date_added = time_of_retreival,
     extractor_used = "tumblr_audio"
     )

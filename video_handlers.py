@@ -85,7 +85,7 @@ def handle_tumblr_videos(session,post_dict):
     hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
     if hash_check_row_dict:
         media_already_saved = True
-        preexisting_filename = hash_check_row_dict["filename"]
+        preexisting_filename = hash_check_row_dict["local_filename"]
     else:
         preexisting_filename = None
     # Deal with temp file (Move or delete)
@@ -110,7 +110,7 @@ def handle_tumblr_videos(session,post_dict):
     new_media_row = Media(
     media_url=video_page,
     sha512base64_hash=sha512base64_hash,
-    filename=filename,
+    local_filename=filename,
     date_added=time_of_retreival,
     extractor_used="tumblr_video_embed",
     tumblrvideo_yt_dl_info_json=info_json
@@ -225,7 +225,7 @@ def handle_youtube_video(session,post_dict):
             video_page_row = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
             if video_page_row:
                 # If media already saved, delete temp file and use old entry's data
-                filename = video_page_row["filename"]
+                filename = video_page_row["local_filename"]
                 logging.debug("Skipping previously saved video: "+repr(video_page_row))
                 # Delete duplicate file if media is already saved
                 logging.info("Deleting duplicate video file: "+repr(media_temp_filepath))
@@ -248,7 +248,7 @@ def handle_youtube_video(session,post_dict):
             new_media_row = Media(
             media_url=new_youtube_url,
             sha512base64_hash=sha512base64_hash,
-            filename=filename,
+            local_filename=filename,
             date_added=time_of_retreival,
             extractor_used="youtube_embed",
             youtube_yt_dl_info_json=info_json
@@ -357,7 +357,7 @@ def handle_vine_videos(session,post_dict):
             video_page_row = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
             if video_page_row:
                 # If media already saved, delete temp file and use old entry's data
-                filename = video_page_row["filename"]
+                filename = video_page_row["local_filename"]
                 logging.debug("Skipping previously saved video: "+repr(video_page_row))
                 # Delete duplicate file if media is already saved
                 logging.info("Deleting duplicate video file: "+repr(media_temp_filepath))
@@ -380,7 +380,7 @@ def handle_vine_videos(session,post_dict):
             new_media_row = Media(
             media_url=download_url,
             sha512base64_hash=sha512base64_hash,
-            filename=filename,
+            local_filename=filename,
             date_added=time_of_retreival,
             extractor_used="vine_embed",
             vine_yt_dl_info_json=info_json,
@@ -482,7 +482,7 @@ def handle_vimeo_videos(session,post_dict):
             video_page_row = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
             if video_page_row:
                 # If media already saved, delete temp file and use old entry's data
-                filename = video_page_row["filename"]
+                filename = video_page_row["local_filename"]
                 logging.debug("Skipping previously saved video: "+repr(video_page_row))
                 # Delete duplicate file if media is already saved
                 logging.info("Deleting duplicate video file: "+repr(media_temp_filepath))
@@ -505,7 +505,7 @@ def handle_vimeo_videos(session,post_dict):
             new_media_row = Media(
             media_url=download_url,
             sha512base64_hash=sha512base64_hash,
-            filename=filename,
+            local_filename=filename,
             date_added=time_of_retreival,
             extractor_used="vimeo_embed",
             vimeo_yt_dl_info_json=info_json,
