@@ -61,7 +61,9 @@ class Media(Base):
     date_added = sqlalchemy.Column(sqlalchemy.BigInteger)
     media_url = sqlalchemy.Column(sqlalchemy.String())
     sha512base64_hash = sqlalchemy.Column(sqlalchemy.String(250))
-    filename = sqlalchemy.Column(sqlalchemy.String(250))
+    local_filename = sqlalchemy.Column(sqlalchemy.String(250))# Filename on local storage
+    remote_filename = sqlalchemy.Column(sqlalchemy.String())# Filename from original location (If any)
+    file_extention = sqlalchemy.Column(sqlalchemy.String(250))
     extractor_used = sqlalchemy.Column(sqlalchemy.String(250))
     # Video
     # Youtube
@@ -77,7 +79,7 @@ class Media(Base):
     tumblraudio_artist = sqlalchemy.Column(sqlalchemy.String())
     # Vimeo embeds
     vimeo_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
-    vimeo_video_id# https://player.vimeo.com/video/11891219 > 11891219
+    vimeo_video_id = sqlalchemy.Column(sqlalchemy.String())# https://player.vimeo.com/video/11891219 > 11891219
     # Audio
     # SoundCloud audio embeds
     soundcloud_id = sqlalchemy.Column(sqlalchemy.String())
@@ -169,7 +171,7 @@ def connect_to_db():
     http://www.pythoncentral.io/introductory-tutorial-python-sqlalchemy/"""
     logging.debug("Opening DB connection")
     # add "echo=True" to see SQL being run
-    engine = sqlalchemy.create_engine('sqlite:///please_examine4.db',echo=config.echo_sql)
+    engine = sqlalchemy.create_engine(config.sqlalchemy_login, echo=config.echo_sql)
     # Bind the engine to the metadata of the Base class so that the
     # declaratives can be accessed through a DBSession instance
     Base.metadata.bind = engine

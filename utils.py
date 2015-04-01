@@ -62,7 +62,7 @@ def save_file(filenamein,data,force_save=False):
         try:
             if not force_save:
                 if os.path.exists(filenamein):
-                    logging.debug("file already exists! "+repr(filenamein))
+                    logging.debug("save_file()"" File already exists! "+repr(filenamein))
                     return
             sanitizedpath = filenamein# sanitizepath(filenamein)
             foldername = os.path.dirname(sanitizedpath)
@@ -79,7 +79,7 @@ def save_file(filenamein,data,force_save=False):
             continue
     logging.critical("Too many failed write attempts!")
     logging.critical(repr(locals()))
-    raise(err)
+    raise
 
 
 def read_file(path):
@@ -243,7 +243,8 @@ def delay(basetime,upperrandom=0):
 def get_current_unix_time():
     """Return the current unix time as an integer"""
     # https://timanovsky.wordpress.com/2009/04/09/get-unix-timestamp-in-java-python-erlang/
-    timestamp = int(time.time())
+    current_time = time.time()
+    timestamp = int(current_time *1000)
     return timestamp
 
 

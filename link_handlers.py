@@ -122,6 +122,19 @@ def handle_image_links(session,all_post_links):
     return link_hash_dict# {link:hash}
 
 
+def remove_tumblr_links(link_list):
+    """Remove links to posts and other known unwanted tumblr links"""
+    wanted_links = []
+    for link in link_list:
+        # Reject tumblr posts ex. "http://somescrub.tumblr.com/post/110535365780/joshy-gifs-8-bit-tits"
+        if ".tumblr.com/post/" in link:
+            continue
+        # If not rejected by any filter, keep the link
+        wanted_links.append(link)
+        continue
+    return wanted_links
+
+
 def handle_links(session,post_dict):# TODO FIXME
     """Call other functions to handle non-tumblr API defined links and pass data from them back"""
     logging.debug("Handling external links...")
@@ -130,13 +143,16 @@ def handle_links(session,post_dict):# TODO FIXME
     # Get list of links
     all_post_links = extract_post_links(post_dict)
     logging.debug("handle_links() all_post_links"+repr(all_post_links))
+    # Remove any links that are tumblr posts ex."http://somescrub.tumblr.com/post/110535365780/joshy-gifs-8-bit-tits"
+    non_tumblr_links = remove_tumblr_links(link_list)
+    logging.debug("handle_links() non_tumblr_links: "+repr(non_tumblr_links))
     # Remove links already in DB
     logging.warning("handle_links() Preexisting link check is disabled.")
     preexisting_link_dict = {}# {link:hash}# TODO FIXME
     logging.debug("handle_links() preexisting_link_dict: "+repr(preexisting_link_dict))
     new_links = []
     preexisting_links = preexisting_link_dict.keys()
-    for post_link in all_post_links:
+    for post_link in non_tumblr_links:
         if post_link in preexisting_links:
             continue
         else:
@@ -146,7 +162,7 @@ def handle_links(session,post_dict):# TODO FIXME
 
     # Saved linked images
     # TODO FIXME
-    remote_images_dict = handle_image_links(session,all_post_links)# {link:hash}
+    remote_images_dict = handle_image_links(session,new_links)# {link:hash}
 
     # Saved linked videos
     # TODO FIXME
