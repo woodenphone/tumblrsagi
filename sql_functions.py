@@ -334,7 +334,6 @@ def add_raw_post(session,raw_post_dict,processed_post_dict,info_dict,blog_url,us
     # Local stuff
     row_to_insert["date_saved"] = get_current_unix_time()
     row_to_insert["version"] = 0# FIXME
-    row_to_insert["link_to_hash_dict"] = json.dumps(processed_post_dict["link_to_hash_dict"])# Link mappings
     # User info
     row_to_insert["poster_username"] = username
     row_to_insert["blog_domain"] = blog_url
