@@ -162,6 +162,22 @@ class Posts(Base):
     answer_asking_url = sqlalchemy.Column(sqlalchemy.String())
     answer_question = sqlalchemy.Column(sqlalchemy.String())
     answer_answer = sqlalchemy.Column(sqlalchemy.String())
+
+class RawPosts(Base):
+    """The raw post dicts for a blog"""
+    __tablename__ = "raw_posts"
+    # Columns
+    # Local stuff
+    primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Is used only as primary key
+    version = sqlalchemy.Column(sqlalchemy.BigInteger) # The version of this post this row is associated with
+    date_saved = sqlalchemy.Column(sqlalchemy.BigInteger)# The unix time the post was saved
+    link_to_hash_dict = sqlalchemy.Column(sqlalchemy.String())# mapping of links in the post to hashes of associated media
+    # Who does this post belong to?
+    poster_username = sqlalchemy.Column(sqlalchemy.String())# username for a blog, as given by the API "tsitra360"
+    blog_domain = sqlalchemy.Column(sqlalchemy.String())# domain for the blog"tsitra360.tumblr.com"
+    # Full post API data
+    raw_post_json = sqlalchemy.Column(sqlalchemy.String())# The post's section of the API, reencoded into JSON
+    processed_post_json = sqlalchemy.Column(sqlalchemy.String())# The post's section of the API, reencoded into JSON, after we've fucked with it
 # /SQLAlchemy table setup
 
 
@@ -231,8 +247,10 @@ def add_post_to_db(session,raw_post_dict,processed_post_dict,info_dict,blog_url,
     row_to_insert["poster_username"] = username
     row_to_insert["blog_domain"] = blog_url
     # Full post reencoded into JSON
-    row_to_insert["raw_post_json"] = json.dumps(raw_post_dict)
-    row_to_insert["processed_post_json"] = json.dumps(processed_post_dict)
+    if config.store_full_posts:
+        add_raw_post(session,raw_post_dict,processed_post_dict,info_dict,blog_url,username)
+        row_to_insert["raw_post_json"] = json.dumps(raw_post_dict)
+        row_to_insert["processed_post_json"] = json.dumps(processed_post_dict)
     # Things not in API docs
     row_to_insert["misc_slug"] = (processed_post_dict["slug"] if ("slug" in processed_post_dict.keys()) else None)# What does this do?
     row_to_insert["misc_short_url"] = (processed_post_dict["short_url"] if ("short_url" in processed_post_dict.keys()) else None)# shortened url?
@@ -302,8 +320,29 @@ def add_post_to_db(session,raw_post_dict,processed_post_dict,info_dict,blog_url,
     #
     if config.log_db_rows:
         logging.debug("row_to_insert: "+repr(row_to_insert))
-
+    # Insert new row
     post_row = Posts(**row_to_insert)
+    session.add(post_row)
+    session.commit()
+    return
+
+
+def add_raw_post(session,raw_post_dict,processed_post_dict,info_dict,blog_url,username):
+    """Store the raw data from a post into the raw data table"""
+    # Build row to insert
+    row_to_insert = {}
+    # Local stuff
+    row_to_insert["date_saved"] = get_current_unix_time()
+    row_to_insert["version"] = 0# FIXME
+    row_to_insert["link_to_hash_dict"] = json.dumps(processed_post_dict["link_to_hash_dict"])# Link mappings
+    # User info
+    row_to_insert["poster_username"] = username
+    row_to_insert["blog_domain"] = blog_url
+    # Full post reencoded into JSON
+    row_to_insert["raw_post_json"] = json.dumps(raw_post_dict)
+    row_to_insert["processed_post_json"] = json.dumps(processed_post_dict)
+
+    post_row = RawPosts(**row_to_insert)
     session.add(post_row)
     session.commit()
     return
