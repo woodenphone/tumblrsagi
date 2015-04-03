@@ -182,6 +182,7 @@ def getwithinfo(url):
                 continue
             return reply,info
         except urllib2.HTTPError, err:
+            logging.exception(err)
             logging.debug(repr(err))
             if err.code == 404:
                 logging.debug("404 error! "+repr(url))
@@ -196,28 +197,33 @@ def getwithinfo(url):
                 save_file(os.path.join("debug","HTTPError.htm"), err.fp.read(), True)
                 continue
         except urllib2.URLError, err:
+            logging.exception(err)
             logging.debug(repr(err))
             if "unknown url type:" in err.reason:
                 return
             else:
                 continue
         except httplib.BadStatusLine, err:
+            logging.exception(err)
             logging.debug(repr(err))
             continue
         except httplib.IncompleteRead, err:
+            logging.exception(err)
             logging.debug(repr(err))
+            logging.exception(err)
             continue
         except socket.timeout, err:
+            logging.exception(err)
             logging.debug(repr( type(err) ) )
             logging.debug(repr(err))
             continue
         except Exception, err:
+            logging.exception(err)
             # We have to do this because socket.py just uses "raise"
             logging.debug("getwithinfo() caught an exception")
             logging.debug("getwithinfo() repr(err):"+repr(err))
             logging.debug("getwithinfo() str(err):"+str(err))
             logging.debug("getwithinfo() type(err):"+repr(type(err)))
-            logging.exception(err)
             continue
     logging.critical("Too many repeated fails, exiting.")
     sys.exit()# [19:51] <@CloverTheClever> if it does it more than 10 times, quit/throw an exception upstream

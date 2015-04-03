@@ -102,9 +102,6 @@ class Posts(Base):
     # Who does this post belong to?
     poster_username = sqlalchemy.Column(sqlalchemy.String())# username for a blog, as given by the API "tsitra360"
     blog_domain = sqlalchemy.Column(sqlalchemy.String())# domain for the blog"tsitra360.tumblr.com"
-    # Full post API data
-    raw_post_json = sqlalchemy.Column(sqlalchemy.String())# The post's section of the API, reencoded into JSON
-    processed_post_json = sqlalchemy.Column(sqlalchemy.String())# The post's section of the API, reencoded into JSON, after we've fucked with it
     # Missing from API docs
     misc_slug = sqlalchemy.Column(sqlalchemy.String())
     misc_short_url = sqlalchemy.Column(sqlalchemy.String())
@@ -175,6 +172,7 @@ class RawPosts(Base):
     # Who does this post belong to?
     poster_username = sqlalchemy.Column(sqlalchemy.String())# username for a blog, as given by the API "tsitra360"
     blog_domain = sqlalchemy.Column(sqlalchemy.String())# domain for the blog"tsitra360.tumblr.com"
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger)# Number	The post's unique ID
     # Full post API data
     raw_post_json = sqlalchemy.Column(sqlalchemy.String())# The post's section of the API, reencoded into JSON
     processed_post_json = sqlalchemy.Column(sqlalchemy.String())# The post's section of the API, reencoded into JSON, after we've fucked with it
@@ -249,8 +247,6 @@ def add_post_to_db(session,raw_post_dict,processed_post_dict,info_dict,blog_url,
     # Full post reencoded into JSON
     if config.store_full_posts:
         add_raw_post(session,raw_post_dict,processed_post_dict,info_dict,blog_url,username)
-        row_to_insert["raw_post_json"] = json.dumps(raw_post_dict)
-        row_to_insert["processed_post_json"] = json.dumps(processed_post_dict)
     # Things not in API docs
     row_to_insert["misc_slug"] = (processed_post_dict["slug"] if ("slug" in processed_post_dict.keys()) else None)# What does this do?
     row_to_insert["misc_short_url"] = (processed_post_dict["short_url"] if ("short_url" in processed_post_dict.keys()) else None)# shortened url?
@@ -337,6 +333,7 @@ def add_raw_post(session,raw_post_dict,processed_post_dict,info_dict,blog_url,us
     # User info
     row_to_insert["poster_username"] = username
     row_to_insert["blog_domain"] = blog_url
+    row_to_insert["post_id"] =  processed_post_dict["id"]
     # Full post reencoded into JSON
     row_to_insert["raw_post_json"] = json.dumps(raw_post_dict)
     row_to_insert["processed_post_json"] = json.dumps(processed_post_dict)
