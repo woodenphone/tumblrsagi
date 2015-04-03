@@ -225,8 +225,8 @@ def getwithinfo(url):
             logging.debug("getwithinfo() str(err):"+str(err))
             logging.debug("getwithinfo() type(err):"+repr(type(err)))
             continue
-    logging.critical("Too many repeated fails, exiting.")
-    sys.exit()# [19:51] <@CloverTheClever> if it does it more than 10 times, quit/throw an exception upstream
+    logging.error("Too many retries, failing.")
+    return
 
 
 
