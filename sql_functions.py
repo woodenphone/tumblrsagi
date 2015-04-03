@@ -172,7 +172,9 @@ class RawPosts(Base):
     # Who does this post belong to?
     poster_username = sqlalchemy.Column(sqlalchemy.String())# username for a blog, as given by the API "tsitra360"
     blog_domain = sqlalchemy.Column(sqlalchemy.String())# domain for the blog"tsitra360.tumblr.com"
-    post_id = sqlalchemy.Column(sqlalchemy.BigInteger)# Number	The post's unique ID
+    # Post identity from the post
+    all_posts_id = sqlalchemy.Column(sqlalchemy.BigInteger)# Number	The post's unique ID
+    all_posts_post_url = sqlalchemy.Column(sqlalchemy.String())# String	The location of the post
     # Full post API data
     raw_post_json = sqlalchemy.Column(sqlalchemy.String())# The post's section of the API, reencoded into JSON
     processed_post_json = sqlalchemy.Column(sqlalchemy.String())# The post's section of the API, reencoded into JSON, after we've fucked with it
@@ -333,7 +335,9 @@ def add_raw_post(session,raw_post_dict,processed_post_dict,info_dict,blog_url,us
     # User info
     row_to_insert["poster_username"] = username
     row_to_insert["blog_domain"] = blog_url
-    row_to_insert["post_id"] =  processed_post_dict["id"]
+    # post identity
+    row_to_insert["all_posts_id"] =  processed_post_dict["id"]
+    row_to_insert["all_posts_post_url"] = processed_post_dict["post_url"]
     # Full post reencoded into JSON
     row_to_insert["raw_post_json"] = json.dumps(raw_post_dict)
     row_to_insert["processed_post_json"] = json.dumps(processed_post_dict)
