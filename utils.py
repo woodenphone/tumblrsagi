@@ -28,9 +28,10 @@ import string
 import hashlib# Needed to hash file data
 import base64 # Needed to do base32 encoding of filenames
 
-def setup_logging(log_file_path):
-    # Setup logging (Before running any other code)
-    # http://inventwithpython.com/blog/2012/04/06/stop-using-print-for-debugging-a-5-minute-quickstart-guide-to-pythons-logging-module/
+def setup_logging(log_file_path,concise_log_file_path=None):
+    """Setup logging (Before running any other code)
+    http://inventwithpython.com/blog/2012/04/06/stop-using-print-for-debugging-a-5-minute-quickstart-guide-to-pythons-logging-module/
+    """
     assert( len(log_file_path) > 1 )
     assert( type(log_file_path) == type("") )
     global logger
@@ -39,18 +40,32 @@ def setup_logging(log_file_path):
     if log_file_folder is not None:
         if not os.path.exists(log_file_folder):
             os.makedirs(log_file_folder)
+    if concise_log_file_path is not None:
+        concise_log_folder = os.path.dirname(concise_log_file_path)
+        if concise_log_folder is not None:
+            if not os.path.exists(concise_log_folder):
+                os.makedirs(concise_log_folder)
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    # File 1, log everything
     fh = logging.FileHandler(log_file_path)
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
     logger.addHandler(fh)
+    # File 2, INFO and higher level for a concise log
+    if concise_log_file_path:
+        cfh = logging.FileHandler(concise_log_file_path)
+        cfh.setLevel(logging.INFO)
+        cfh.setFormatter(formatter)
+        logger.addHandler(cfh)
+        print"cfh"
+    # Console output
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
     ch.setFormatter(formatter)
     logger.addHandler(ch)
-    logging.debug("Logging started.")
+    logging.info("Logging started.")
     return
 
 

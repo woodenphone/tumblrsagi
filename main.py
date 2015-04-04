@@ -162,12 +162,13 @@ class tumblr_blog:
         raw_posts_list = self.get_posts()
         # Skip processing any posts that have previously been saved
         new_posts_list = self.crop_exisiting_posts(raw_posts_list)
+        number_of_posts = len(new_posts_list)
         counter = 0
         for raw_post_dict in new_posts_list:
             counter += 1
-            logging.debug("Processing "+str(counter)+"th post")
+            logging.debug("Processing "+repr(counter)+"th post of a total of "+repr(number_of_posts))
             # Dump post to disk for easier debugging
-            save_file(os.path.join("debug","last_post_tried_to_insert"),repr(raw_post_dict))
+            save_file(os.path.join("debug","last_post_tried_to_insert"),repr(raw_post_dict),True)
             # Handle links for the post
             processed_post_dict = save_media(self.session,raw_post_dict)
             # Insert post into the DB
@@ -225,7 +226,10 @@ def save_blogs(list_file_path="tumblr_todo_list.txt",max_pages=None):
 
 def main():
     try:
-        setup_logging(log_file_path=os.path.join("debug","tumblr-api-dumper-log.txt"))
+        setup_logging(
+        log_file_path=os.path.join("debug","tumblr-api-dumper-log.txt"),
+        concise_log_file_path=os.path.join("debug","short-tumblr-api-dumper-log.txt")
+        )
         # Program
         #classy_play()
         save_blogs(list_file_path="tumblr_todo_list.txt",max_pages=None)
