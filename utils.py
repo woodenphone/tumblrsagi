@@ -355,7 +355,7 @@ def clean_blog_url(raw_url):
     # http://havesomemoore.tumblr.com/
     # http://pwnypony.com/
     # (?:https?://)([^#/'"]+)
-    blog_url_regex = """(?:https?://)([^#/'"]+)"""
+    blog_url_regex = """(?:https?://)?([^#/'"]+)"""
     blog_url_search = re.search(blog_url_regex, raw_url, re.IGNORECASE)
     if blog_url_search:
         blog_url = blog_url_search.group(1)
