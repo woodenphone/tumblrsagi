@@ -119,6 +119,7 @@ def add_http(url):
             output_url = "https:"+url
             return output_url
         else:
+            logging.error("Error adding HTTP to URL string")
             logging.error(repr(locals()))
             raise ValueError
 
@@ -128,21 +129,6 @@ def deescape(html):
     # http://stackoverflow.com/questions/2360598/how-do-i-unescape-html-entities-in-a-string-in-python-3-1
     deescaped_string = HTMLParser.HTMLParser().unescape(html)
     return deescaped_string
-
-
-
-
-
-##def get(url):
-##    """Simpler url getter"""
-##    assert_is_string(url)
-##    deescaped_url = deescape(url)
-##    url_with_protocol = add_http(deescaped_url)
-##    response = urllib2.urlopen(url_with_protocol)
-##    html = response.read()
-##    return html
-
-
 
 
 def get(url):
@@ -187,7 +173,6 @@ def getwithinfo(url):
             #print info
             #print info["content-type"]
             if "html" in info["content-type"]:
-                #print "saving debug html"
                 save_file(os.path.join("debug","get_last_html.htm"), reply, True)
             else:
                 save_file(os.path.join("debug","get_last_not_html.txt"), reply, True)
@@ -198,47 +183,47 @@ def getwithinfo(url):
             return reply,info
         except urllib2.HTTPError, err:
             logging.exception(err)
-            logging.debug(repr(err))
+            logging.error(repr(err))
             if err.code == 404:
-                logging.debug("404 error! "+repr(url))
+                logging.error("404 error! "+repr(url))
                 return
             elif err.code == 403:
-                logging.debug("403 error, ACCESS DENIED! url: "+repr(url))
+                logging.error("403 error, ACCESS DENIED! url: "+repr(url))
                 return
             elif err.code == 410:
-                logging.debug("410 error, GONE")
+                logging.error("410 error, GONE")
                 return
             else:
                 save_file(os.path.join("debug","HTTPError.htm"), err.fp.read(), True)
                 continue
         except urllib2.URLError, err:
             logging.exception(err)
-            logging.debug(repr(err))
+            logging.error(repr(err))
             if "unknown url type:" in err.reason:
                 return
             else:
                 continue
         except httplib.BadStatusLine, err:
             logging.exception(err)
-            logging.debug(repr(err))
+            logging.error(repr(err))
             continue
         except httplib.IncompleteRead, err:
             logging.exception(err)
-            logging.debug(repr(err))
+            logging.error(repr(err))
             logging.exception(err)
             continue
         except socket.timeout, err:
             logging.exception(err)
-            logging.debug(repr( type(err) ) )
-            logging.debug(repr(err))
+            logging.error(repr( type(err) ) )
+            logging.error(repr(err))
             continue
         except Exception, err:
             logging.exception(err)
             # We have to do this because socket.py just uses "raise"
-            logging.debug("getwithinfo() caught an exception")
-            logging.debug("getwithinfo() repr(err):"+repr(err))
-            logging.debug("getwithinfo() str(err):"+str(err))
-            logging.debug("getwithinfo() type(err):"+repr(type(err)))
+            logging.error("getwithinfo() caught an exception")
+            logging.error("getwithinfo() repr(err):"+repr(err))
+            logging.error("getwithinfo() str(err):"+str(err))
+            logging.error("getwithinfo() type(err):"+repr(type(err)))
             continue
     logging.error("Too many retries, failing.")
     return
@@ -250,6 +235,7 @@ def assert_is_string(object_to_test):
     """Make sure input is either a string or a unicode string"""
     if( (type(object_to_test) == type("")) or (type(object_to_test) == type(u"")) ):
         return
+    logging.error("assert_is_string() test failed!")
     logging.critical(repr(locals()))
     raise(ValueError)
 
@@ -334,17 +320,17 @@ def move_file(original_path,final_path):
 
 def hash_file_data(file_data):
     """Take the data from a file and hash it for deduplication
-    Return a base32 encoded hash of the data"""
+    Return a base64 encoded hash of the data"""
     m = hashlib.sha512()
     m.update(file_data)
     raw_hash = m.digest()
-    logging.debug("raw_hash: "+repr(raw_hash))
+    #logging.debug("raw_hash: "+repr(raw_hash))
     sha512base64_hash = base64.b64encode(raw_hash)
-    sha512base32_hash = base64.b32encode(raw_hash)
-    sha512base16_hash = base64.b16encode(raw_hash)
-    logging.debug("sha512base64_hash: "+repr(sha512base64_hash))
-    logging.debug("sha512base32_hash: "+repr(sha512base32_hash))
-    logging.debug("sha512base16_hash: "+repr(sha512base16_hash))
+    #sha512base32_hash = base64.b32encode(raw_hash)
+    #sha512base16_hash = base64.b16encode(raw_hash)
+    #logging.debug("sha512base64_hash: "+repr(sha512base64_hash))
+    #logging.debug("sha512base32_hash: "+repr(sha512base32_hash))
+    #logging.debug("sha512base16_hash: "+repr(sha512base16_hash))
     return sha512base64_hash
 
 
@@ -379,6 +365,7 @@ def clean_blog_url(raw_url):
         logging.error("clean_blog_url()"+" "+"raw_url"+": "+repr(raw_url))
         return ""
 
+
 def import_blog_list(list_file_path="tumblr_todo_list.txt"):
     """Import (open and parse) list file of blogs to save
     return a list of api-friendly blog url strings"""
@@ -398,12 +385,18 @@ def import_blog_list(list_file_path="tumblr_todo_list.txt"):
     # Read each line from the list file and process it
     blog_urls = []
     list_file = open(list_file_path, "rU")
+    line_counter = 0
     for line in list_file:
+        line_counter += 1
         # Strip empty and comment lines
         if line[0] in ["#", "\r", "\n"]:
             continue
         else:
-            blog_urls.append(clean_blog_url(line))
+            cleaned_url = clean_blog_url(line)
+            if cleaned_url:
+                blog_urls.append(cleaned_url)
+            else:
+                logging.error("import_blog_list(): Cleaning line "+repr(line_counter)+" : "+repr(line)+"Failed!")
     logging.info("import_blog_list() blog_urls: "+repr(blog_urls))
     return blog_urls
 

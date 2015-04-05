@@ -78,7 +78,7 @@ class tumblr_blog:
                 if page_counter > max_pages:
                     logging.info("Reached max pages")
                     break
-            logging.info("Loading page "+repr(page_counter))
+            logging.info("Loading page "+repr(page_counter)+" of posts for "+repr(self.blog_url))
             # Load API page
             offset = page_counter*20 # Maximum posts per page is 20
             if offset != 0:
@@ -97,7 +97,7 @@ class tumblr_blog:
             # Check how many posts the blog says it has
             if page_counter == 1:
                 self.posts_post_count = page_dict["response"]["total_posts"]
-                logging.info("Blog thinks it has "+repr(self.posts_post_count)+" posts.")
+                logging.info("Blog /posts post_count: "+repr(self.posts_post_count))
             # Add posts
             this_page_posts_list = page_dict["response"]["posts"]
             #logging.debug("this_page_posts_list: "+repr(this_page_posts_list))
@@ -166,7 +166,7 @@ class tumblr_blog:
         counter = 0
         for raw_post_dict in new_posts_list:
             counter += 1
-            logging.debug("Processing "+repr(counter)+"th post of a total of "+repr(number_of_posts))
+            logging.info("Processing "+repr(counter)+"th post of a total of "+repr(number_of_posts))
             # Dump post to disk for easier debugging
             save_file(os.path.join("debug","last_post_tried_to_insert"),repr(raw_post_dict),True)
             # Handle links for the post

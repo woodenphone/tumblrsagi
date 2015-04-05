@@ -28,9 +28,6 @@ from image_handlers import *
 
 
 
-
-
-
 def replace_links(link_dict,post_dict):
     """Replace all instances of a link in a post with a marker string for whoever does the frontend
     link_dict = {link:hash}
@@ -47,9 +44,6 @@ def replace_links(link_dict,post_dict):
             field = string.replace(field, link, new_link_string)
             field = field
     return post_dict
-
-
-
 
 
 def handle_thumbnail(session,post_dict):
@@ -98,8 +92,6 @@ def save_media(session,post_dict):
     return post dict with links replaced by pointers to saved file in the database"""
     #logging.info("Saving post media")
     #logging.debug("post_dict"+repr(post_dict))
-    #logging.debug('post_dict["type"] '+repr(post_dict["type"] ))
-
     # Save anything not provided directly through the tumblr API (Remote) ex. http://foo.com/image.jpg
     # I.E. Links (<a href = "http://example.com/image.png">blah</a>)
     if config.save_external_links:
@@ -123,11 +115,11 @@ def save_media(session,post_dict):
         audio_embed_dict = {}
     # Join mapping dicts # {link:hash}
     link_to_hash_dict = merge_dicts(
-    remote_link_dict,
-    tumblr_photos_link_dict,
-    video_embed_dict,
-    audio_embed_dict,
-    )
+        remote_link_dict,
+        tumblr_photos_link_dict,
+        video_embed_dict,
+        audio_embed_dict,
+        )
     # Replace links with marker string
     logging.debug("link_to_hash_dict: "+repr(link_to_hash_dict))
     new_post_dict = replace_links(link_to_hash_dict,post_dict)

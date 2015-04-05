@@ -41,6 +41,7 @@ def handle_tumblr_videos(session,post_dict):
         preexisting_filename = video_page_row["filename"]
         sha512base64_hash = video_page_row["sha512base64_hash"]
         return {"tumblr_video_embed":sha512base64_hash}
+
     # Load video
     # Form command to run
     # Define arguments. see this url for help
@@ -65,6 +66,7 @@ def handle_tumblr_videos(session,post_dict):
         logging.error("Command did not return correct exit code! (Normal exit is 0)")
         return {}
     time_of_retreival = get_current_unix_time()
+
     # Verify download worked
     # Read info JSON file
     expected_info_path = os.path.join(output_dir, post_id+".info.json")
@@ -77,9 +79,11 @@ def handle_tumblr_videos(session,post_dict):
     logging.debug("media_temp_filepath: "+repr(media_temp_filepath))
     # Check that video file given in info JSON exists
     assert(os.path.exists(media_temp_filepath))
+
     # Generate hash for media file
     file_data = read_file(media_temp_filepath)
     sha512base64_hash = hash_file_data(file_data)
+
     # Decide where to put the file
     # Check if hash is in media DB
     hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
@@ -108,13 +112,13 @@ def handle_tumblr_videos(session,post_dict):
 
     # Add video to DB
     new_media_row = Media(
-    media_url=video_page,
-    sha512base64_hash=sha512base64_hash,
-    local_filename=filename,
-    date_added=time_of_retreival,
-    extractor_used="tumblr_video_embed",
-    tumblrvideo_yt_dl_info_json=info_json
-    )
+        media_url=video_page,
+        sha512base64_hash=sha512base64_hash,
+        local_filename=filename,
+        date_added=time_of_retreival,
+        extractor_used="tumblr_video_embed",
+        tumblrvideo_yt_dl_info_json=info_json
+        )
     session.add(new_media_row)
     session.commit()
     return {"tumblr_video_embed":sha512base64_hash}
@@ -143,6 +147,7 @@ def handle_youtube_video(session,post_dict):
     post_id = str(post_dict["id"])
     logging.debug("video_page: "+repr(video_page))
     logging.debug("post_id: "+repr(post_id))
+
     # Extract youtube links from video field
     # ex. https://www.youtube.com/embed/lGIEmH3BoyA
     video_items = post_dict["player"]
@@ -159,6 +164,7 @@ def handle_youtube_video(session,post_dict):
                 embed_url = embed_url_search.group(1)
                 youtube_urls.append(embed_url)
         continue
+
     # Check if videos are already saved
     new_youtube_urls = []
     for youtube_url in youtube_urls:
@@ -231,7 +237,6 @@ def handle_youtube_video(session,post_dict):
                 logging.info("Deleting duplicate video file: "+repr(media_temp_filepath))
                 os.remove(media_temp_filepath)
                 os.remove(expected_info_path)
-                continue
             else:
                 # If media not in DB, move temp file to permanent location
                 # Move file to media DL location
@@ -246,13 +251,13 @@ def handle_youtube_video(session,post_dict):
 
             # Add video to DB
             new_media_row = Media(
-            media_url=new_youtube_url,
-            sha512base64_hash=sha512base64_hash,
-            local_filename=filename,
-            date_added=time_of_retreival,
-            extractor_used="youtube_embed",
-            youtube_yt_dl_info_json=info_json
-            )
+                media_url=new_youtube_url,
+                sha512base64_hash=sha512base64_hash,
+                local_filename=filename,
+                date_added=time_of_retreival,
+                extractor_used="youtube_embed",
+                youtube_yt_dl_info_json=info_json
+                )
             session.add(new_media_row)
             session.commit()
             continue
@@ -268,6 +273,7 @@ def handle_vine_videos(session,post_dict):
     https://github.com/rg3/youtube-dl/blob/master/docs/supportedsites.md"""
     logging.debug("post_dict"+repr(post_dict))
     post_id = str(post_dict["id"])
+
     # Extract video links from post dict
     video_items = post_dict["player"]
     vine_urls = []
@@ -288,6 +294,7 @@ def handle_vine_videos(session,post_dict):
     # Deduplicate links
     vine_urls = uniquify(vine_urls)
     logging.debug("vine_urls: "+repr(vine_urls))
+
     download_urls = []
     # Skip IDs that have already been done
     for vine_url in vine_urls:
@@ -308,11 +315,13 @@ def handle_vine_videos(session,post_dict):
         download_urls.append(vine_url)
         continue
     logging.debug("download_urls: "+repr(download_urls))
+
     # Send video URLs to YT-DL
     if len(download_urls) > 0:
         # Download each new video
         for download_url in download_urls:
             logging.debug("download_url: "+repr(download_url))
+
             # Form command to run
             # Define arguments. see this url for help
             # https://github.com/rg3/youtube-dl
@@ -332,6 +341,7 @@ def handle_vine_videos(session,post_dict):
             command_result = subprocess.call(command)
             logging.debug("command_result: "+repr(command_result))
             time_of_retreival = get_current_unix_time()
+
             # Verify download worked
             # Read info JSON file
             expected_info_path = os.path.join(output_dir, post_id+".info.json")
@@ -363,7 +373,6 @@ def handle_vine_videos(session,post_dict):
                 logging.info("Deleting duplicate video file: "+repr(media_temp_filepath))
                 os.remove(media_temp_filepath)
                 os.remove(expected_info_path)
-                continue
             else:
                 # If media not in DB, move temp file to permanent location
                 # Move file to media DL location
@@ -378,13 +387,13 @@ def handle_vine_videos(session,post_dict):
 
             # Add video to DB
             new_media_row = Media(
-            media_url=download_url,
-            sha512base64_hash=sha512base64_hash,
-            local_filename=filename,
-            date_added=time_of_retreival,
-            extractor_used="vine_embed",
-            vine_yt_dl_info_json=info_json,
-            )
+                media_url=download_url,
+                sha512base64_hash=sha512base64_hash,
+                local_filename=filename,
+                date_added=time_of_retreival,
+                extractor_used="vine_embed",
+                vine_yt_dl_info_json=info_json,
+                )
             session.add(new_media_row)
             session.commit()
             continue
@@ -421,6 +430,7 @@ def handle_vimeo_videos(session,post_dict):
     # Deduplicate links
     vimeo_urls = uniquify(vimeo_urls)
     logging.debug("vimeo_urls: "+repr(vimeo_urls))
+
     download_urls = []
     # Skip IDs that have already been done
     for vimeo_url in vimeo_urls:
@@ -433,6 +443,7 @@ def handle_vimeo_videos(session,post_dict):
         download_urls.append(vimeo_url)
         continue
     logging.debug("download_urls: "+repr(download_urls))
+
     # Send video URLs to YT-DL
     if len(download_urls) > 0:
         # Download each new video
@@ -488,7 +499,6 @@ def handle_vimeo_videos(session,post_dict):
                 logging.info("Deleting duplicate video file: "+repr(media_temp_filepath))
                 os.remove(media_temp_filepath)
                 os.remove(expected_info_path)
-                continue
             else:
                 # If media not in DB, move temp file to permanent location
                 # Move file to media DL location
@@ -503,13 +513,13 @@ def handle_vimeo_videos(session,post_dict):
 
             # Add video to DB
             new_media_row = Media(
-            media_url=download_url,
-            sha512base64_hash=sha512base64_hash,
-            local_filename=filename,
-            date_added=time_of_retreival,
-            extractor_used="vimeo_embed",
-            vimeo_yt_dl_info_json=info_json,
-            )
+                media_url=download_url,
+                sha512base64_hash=sha512base64_hash,
+                local_filename=filename,
+                date_added=time_of_retreival,
+                extractor_used="vimeo_embed",
+                vimeo_yt_dl_info_json=info_json,
+                )
             session.add(new_media_row)
             session.commit()
             continue

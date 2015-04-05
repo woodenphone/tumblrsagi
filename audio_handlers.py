@@ -53,6 +53,7 @@ def handle_soundcloud_audio(session,post_dict):
     # Grab url to send to youtube-dl
     soundcloud_url = post_dict["audio_url"]
     logging.debug("soundcloud_url: "+repr(soundcloud_url))
+
     # Form command to run
     # Define arguments. see this url for help
     # https://github.com/rg3/youtube-dl
@@ -71,6 +72,7 @@ def handle_soundcloud_audio(session,post_dict):
     command_result = subprocess.call(command)
     logging.debug("command_result: "+repr(command_result))
     time_of_retreival = get_current_unix_time()
+
     # Verify download worked
     # Read info JSON file
     expected_info_path = os.path.join(output_dir, post_id+".info.json")
@@ -87,6 +89,7 @@ def handle_soundcloud_audio(session,post_dict):
     logging.debug("media_temp_filepath: "+repr(media_temp_filepath))
     # Check that video file given in info JSON exists
     assert(os.path.exists(media_temp_filepath))
+
     # Generate hash for media file
     file_data = read_file(media_temp_filepath)
     sha512base64_hash = hash_file_data(file_data)
@@ -119,14 +122,14 @@ def handle_soundcloud_audio(session,post_dict):
 
     # Add video to DB
     new_media_row = Media(
-    media_url=soundcloud_link,
-    sha512base64_hash=sha512base64_hash,
-    local_filename=filename,
-    date_added=time_of_retreival,
-    extractor_used="soundcloud_audio_embed",
-    soundcloud_yt_dl_info_json=info_json,
-    soundcloud_id = soundcloud_id
-    )
+        media_url=soundcloud_link,
+        sha512base64_hash=sha512base64_hash,
+        local_filename=filename,
+        date_added=time_of_retreival,
+        extractor_used="soundcloud_audio_embed",
+        soundcloud_yt_dl_info_json=info_json,
+        soundcloud_id = soundcloud_id
+        )
     session.add(new_media_row)
     session.commit()
     logging.debug("Finished downloading soundcloud embed")
@@ -149,6 +152,7 @@ def handle_tumblr_audio(session,post_dict):
     else:
         media_url = api_media_url
     logging.debug("media_url: "+repr(media_url))
+
     # Check the DB to see if media is already saved
     url_check_row_dict = sql_functions.check_if_media_url_in_DB(session,media_url)
     if url_check_row_dict:
@@ -157,12 +161,15 @@ def handle_tumblr_audio(session,post_dict):
         existing_filename = row_dict["local_filename"]
         logging.debug("URL is already in DB, no need to save file.")
         return {"tumblr_audio":sha512base64_hash}
+
     # Load the media file
     file_data = get(media_url)
     time_of_retreival = get_current_unix_time()
+
     # Check if file is saved already using file hash
     sha512base64_hash = hash_file_data(file_data)
     logging.debug("sha512base64_hash: "+repr(sha512base64_hash))
+
     # Check if hash is in media DB
     hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
     if hash_check_row_dict:
@@ -181,14 +188,15 @@ def handle_tumblr_audio(session,post_dict):
         file_path = generate_media_file_path_timestamp(root_path=config.root_path,filename=audio_filename)
         # Save media to disk
         save_file(filenamein=file_path,data=file_data,force_save=False)
+
     # Add new row to DB
     new_media_row = Media(
-    media_url = media_url,
-    sha512base64_hash = sha512base64_hash,
-    local_filename = audio_filename,
-    date_added = time_of_retreival,
-    extractor_used = "tumblr_audio"
-    )
+        media_url = media_url,
+        sha512base64_hash = sha512base64_hash,
+        local_filename = audio_filename,
+        date_added = time_of_retreival,
+        extractor_used = "tumblr_audio"
+        )
     session.add(new_media_row)
     session.commit()
     return {"tumblr_audio":sha512base64_hash}
@@ -199,14 +207,19 @@ def handle_audio_posts(session,post_dict):
     # Determing if post is tumblr audio
     if post_dict["type"] != u"audio":
         return {}
+
     # Tumblr hosted audio
     if post_dict["audio_type"] == u"tumblr":
         logging.debug("Post is tumblr audio")
         return handle_tumblr_audio(session,post_dict)
-    if post_dict["audio_type"] == u"soundcloud":
+    elif post_dict["audio_type"] == u"soundcloud":
         logging.debug("Post is tumblr audio")
         return handle_soundcloud_audio(session,post_dict)
-    return {}
+    else:
+        logging.error("Unknown audio type!")
+        logging.error("locals(): "+repr(locals()))
+        assert(False)
+
 
 
 
