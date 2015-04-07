@@ -65,6 +65,7 @@ class Media(Base):
     remote_filename = sqlalchemy.Column(sqlalchemy.String())# Filename from original location (If any)
     file_extention = sqlalchemy.Column(sqlalchemy.String(250))# ex. .png, .jpeg
     extractor_used = sqlalchemy.Column(sqlalchemy.String(250))# internal name of the extractor used
+
     # Video
     # Youtube
     youtube_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
@@ -82,6 +83,9 @@ class Media(Base):
     vimeo_video_id = sqlalchemy.Column(sqlalchemy.String())# https://player.vimeo.com/video/11891219 > 11891219
     # Imgur video
     imgur_video_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
+    # livestream video
+    livestream_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
+
     # Audio
     # SoundCloud audio embeds
     soundcloud_id = sqlalchemy.Column(sqlalchemy.String())
