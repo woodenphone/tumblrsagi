@@ -112,9 +112,14 @@ class tumblr_blog:
             if len(this_page_posts_list) == 0:
                 logging.error("No posts found on this page, stopping loading posts.")
                 break
+
             # Add posts to post list
+            this_page_add_counter = 0
             for current_post_dict in this_page_posts_list:
+                this_page_add_counter += 1
                 self.posts_list.append(current_post_dict)
+            logging.debug("Added "+repr(this_page_add_counter)+" posts from page "+repr(page_counter))# to figure out why post counts differed fro number saved
+
             # Update duplicate check list
             prev_page_posts_list = this_page_posts_list
             continue
