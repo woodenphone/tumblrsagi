@@ -360,8 +360,10 @@ def clean_blog_url(raw_url):
     # http://havesomemoore.tumblr.com/
     # http://pwnypony.com/
     # (?:https?://)([^#/'"]+)
+    stripped_url = raw_url.strip("\r\n\t ")
+    logging.debug("stripped_url: "+repr(stripped_url))
     blog_url_regex = """(?:https?://)?([^#/'"]+)"""
-    blog_url_search = re.search(blog_url_regex, raw_url, re.IGNORECASE)
+    blog_url_search = re.search(blog_url_regex, stripped_url, re.IGNORECASE)
     if blog_url_search:
         blog_url = blog_url_search.group(1)
         return blog_url
