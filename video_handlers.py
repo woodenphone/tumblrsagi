@@ -97,7 +97,6 @@ def handle_tumblr_videos(session,post_dict):
         # Delete duplicate file if media is already saved
         logging.info("Deleting duplicate video file: "+repr(media_temp_filepath))
         os.remove(media_temp_filepath)
-        os.remove(expected_info_path)
         final_media_filepath = preexisting_filename
     else:
         # Move file to media DL location
@@ -109,6 +108,9 @@ def handle_tumblr_videos(session,post_dict):
         # Move file to final location
         move_file(media_temp_filepath,final_media_filepath)
         assert(os.path.exists(final_media_filepath))
+
+    # Remove info file
+    os.remove(expected_info_path)
 
     # Add video to DB
     new_media_row = Media(
@@ -236,7 +238,6 @@ def handle_youtube_video(session,post_dict):
                 # Delete duplicate file if media is already saved
                 logging.info("Deleting duplicate video file: "+repr(media_temp_filepath))
                 os.remove(media_temp_filepath)
-                os.remove(expected_info_path)
             else:
                 # If media not in DB, move temp file to permanent location
                 # Move file to media DL location
@@ -248,6 +249,9 @@ def handle_youtube_video(session,post_dict):
                 # Move file to final location
                 move_file(media_temp_filepath,final_media_filepath)
                 assert(os.path.exists(final_media_filepath))
+
+            # Remove info file
+            os.remove(expected_info_path)
 
             # Add video to DB
             new_media_row = Media(
@@ -372,7 +376,6 @@ def handle_vine_videos(session,post_dict):
                 # Delete duplicate file if media is already saved
                 logging.info("Deleting duplicate video file: "+repr(media_temp_filepath))
                 os.remove(media_temp_filepath)
-                os.remove(expected_info_path)
             else:
                 # If media not in DB, move temp file to permanent location
                 # Move file to media DL location
@@ -384,6 +387,9 @@ def handle_vine_videos(session,post_dict):
                 # Move file to final location
                 move_file(media_temp_filepath,final_media_filepath)
                 assert(os.path.exists(final_media_filepath))
+
+            # Remove info file
+            os.remove(expected_info_path)
 
             # Add video to DB
             new_media_row = Media(
@@ -498,7 +504,6 @@ def handle_vimeo_videos(session,post_dict):
                 # Delete duplicate file if media is already saved
                 logging.info("Deleting duplicate video file: "+repr(media_temp_filepath))
                 os.remove(media_temp_filepath)
-                os.remove(expected_info_path)
             else:
                 # If media not in DB, move temp file to permanent location
                 # Move file to media DL location
@@ -510,6 +515,9 @@ def handle_vimeo_videos(session,post_dict):
                 # Move file to final location
                 move_file(media_temp_filepath,final_media_filepath)
                 assert(os.path.exists(final_media_filepath))
+
+            # Remove info file
+            os.remove(expected_info_path)
 
             # Add video to DB
             new_media_row = Media(
