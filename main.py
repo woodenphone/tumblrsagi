@@ -163,6 +163,7 @@ class tumblr_blog:
         # Skip processing any posts that have previously been saved
         new_posts_list = self.crop_exisiting_posts(raw_posts_list)
         number_of_posts = len(new_posts_list)
+        logging.info("Processing a total of "+repr(number_of_posts)+" new posts for "+repr(self.sanitized_username))
         counter = 0
         for raw_post_dict in new_posts_list:
             counter += 1

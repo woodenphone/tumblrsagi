@@ -309,12 +309,17 @@ def uniquify(seq, idfun=None):
 
 def move_file(original_path,final_path):
     """Move a file from one location to another"""
+    assert_is_string(original_path)
+    assert_is_string(final_path)
     # Make sure output folder exists
     output_dir = os.path.dirname(final_path)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+    assert(os.path.exists(output_dir))
     # Move file
-    shutil.copy2(original_path, final_path)
+    shutil.move(original_path, final_path)
+    assert(not os.path.exists(original_path))
+    assert(os.path.exists(final_path))
     return
 
 
