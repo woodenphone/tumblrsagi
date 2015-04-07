@@ -69,6 +69,7 @@ class tumblr_blog:
 
     def load_posts(self,max_pages=None):
         """Load posts for the blog"""
+        added_posts_counter = 0
         page_counter = -1 # -1 so we start at 0
         prev_page_posts_list = ["prev page"]# Dummy value
         this_page_posts_list = ["this page"]# Dummy value
@@ -116,9 +117,10 @@ class tumblr_blog:
             # Add posts to post list
             this_page_add_counter = 0
             for current_post_dict in this_page_posts_list:
-                this_page_add_counter += 1
+                this_page_add_counter += 1# to figure out why post counts differed from number saved
+                added_posts_counter += 1
                 self.posts_list.append(current_post_dict)
-            logging.debug("Added "+repr(this_page_add_counter)+" posts from page "+repr(page_counter))# to figure out why post counts differed fro number saved
+            logging.debug("Added "+repr(this_page_add_counter)+" posts from page "+repr(page_counter))
 
             # Update duplicate check list
             prev_page_posts_list = this_page_posts_list
@@ -126,6 +128,7 @@ class tumblr_blog:
 
         # Make sure we got all posts
         number_of_posts_retrieved = len(self.posts_list)
+        logging.debug("Added "+repr(added_posts_counter)+" individual posts ")
         logging.info("number_of_posts_retrieved: "+repr(number_of_posts_retrieved)+
         ", self.posts_post_count: "+repr(self.posts_post_count)+", self.info_post_count: "+repr(self.info_post_count))
         if max_pages is None:# Only run these tests if max_pages option not used
