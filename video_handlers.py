@@ -33,6 +33,7 @@ def handle_tumblr_videos(session,post_dict):
     post_id = str(post_dict["id"])
     logging.debug("video_page: "+repr(video_page))
     logging.debug("post_id: "+repr(post_id))
+
     # Check if video is already saved
     video_page_query = sqlalchemy.select([Media]).where(Media.media_url == video_page)
     video_page_rows = session.execute(video_page_query)
@@ -92,12 +93,13 @@ def handle_tumblr_videos(session,post_dict):
         preexisting_filename = hash_check_row_dict["local_filename"]
     else:
         preexisting_filename = None
+
     # Deal with temp file (Move or delete)
     if preexisting_filename:
         # Delete duplicate file if media is already saved
         logging.info("Deleting duplicate video file: "+repr(media_temp_filepath))
         os.remove(media_temp_filepath)
-        final_media_filepath = preexisting_filename
+        filename = preexisting_filename
     else:
         # Move file to media DL location
         logging.info("Moving video to final location")
@@ -413,7 +415,6 @@ def handle_vine_videos(session,post_dict):
 def handle_vimeo_videos(session,post_dict):
     """Handle downloading of vimeo videos
     https://github.com/rg3/youtube-dl/blob/master/docs/supportedsites.md"""
-    logging.warning("FIX VIMEO CODE")# TODO FIXME
     logging.debug("post_dict"+repr(post_dict))
     post_id = str(post_dict["id"])
     # Extract video links from post dict
@@ -540,11 +541,130 @@ def handle_vimeo_videos(session,post_dict):
 
 def handle_imgur_videos(session,post_dict):
     """This is where I plan to put code for imgur videos"""
-    logging.debug("FIX IMGUR CODE")
     logging.debug("post_dict"+repr(post_dict))
-    example_post_dict = {u'highlighted': [], u'reblog_key': u'qX0EtplN', u'player': [{u'width': 250, u'embed_code': u'<iframe class="imgur-embed" width="100%" height="720" frameborder="0" src="http://i.imgur.com/wSBlRyv.gifv#embed"></iframe>'}, {u'width': 400, u'embed_code': u'<iframe class="imgur-embed" width="100%" height="720" frameborder="0" src="http://i.imgur.com/wSBlRyv.gifv#embed"></iframe>'}, {u'width': 500, u'embed_code': u'<iframe class="imgur-embed" width="100%" height="720" frameborder="0" src="http://i.imgur.com/wSBlRyv.gifv#embed"></iframe>'}], u'format': u'html', u'timestamp': 1415466120, u'note_count': 109, u'tags': [], u'thumbnail_width': 0, u'id': 102102282191, u'post_url': u'http://jessicaanner.tumblr.com/post/102102282191/front-view-clothed-large-version-gif-back', u'caption': u'<p><em><strong><a href="http://jessicaanner.tumblr.com/post/101601852991/front-view-clothed-large-version-gif-back">Front View (Clothed)</a> <a href="http://i.imgur.com/fDixfAC.gifv"><span class="auto_link" title="">(Large version)</span></a><a href="http://d.facdn.net/art/benezia/1414952655.benezia_front_armored_optimized.gif"><span class="auto_link" title=""> (GIF)</span></a></strong></em><br/><em><strong><a href="http://jessicaanner.tumblr.com/post/101666148721/front-view-clothed-large-version-gif-back">Back View (Clothed)</a> <a href="http://i.imgur.com/QYfRNeQ.gifv" title="">(Large version)</a> <a href="http://d.facdn.net/art/benezia/1415012804.benezia_back_armored_optimized.gif">(GIF)</a></strong></em><br/><em><strong><a href="http://jessicaanner.tumblr.com/post/101768307896/front-view-clothed-large-version-gif-back">Front View (Nude)</a> <a href="http://i.imgur.com/0N7ir7o.gifv">(Large version)</a> <a href="http://d.facdn.net/art/benezia/1415120393.benezia_front_nude_optimized.gif" title="">(GIF)</a></strong></em><br/><em><strong><a href="http://jessicaanner.tumblr.com/post/101852253284/front-view-clothed-large-version-gif-back">Back View (Nude)</a> <a href="http://i.imgur.com/sP5h9ux.gifv" title="">(Large version)</a> <a href="http://d.facdn.net/art/benezia/1415120590.benezia_back_nude_optimized.gif" title="">(GIF)</a></strong></em><br/><strong><em><a href="http://jessicaanner.tumblr.com/post/101934955336/front-view-clothed-large-version-gif-back">Buttocks Closeup View</a> <a href="http://i.imgur.com/BXMYuxk.gifv" title="">(Large version)</a> <a href="http://i.imgur.com/3bhzRP2.gif">(GIF)</a></em></strong><br/><em><strong><a href="http://jessicaanner.tumblr.com/post/102102282191/front-view-clothed-large-version-gif-back">Crotch Closeup View</a> <a href="http://i.imgur.com/wSBlRyv.gifv">(Large version)</a> <a href="http://i.imgur.com/UiDU1XB.gif">(GIF)</a></strong></em><br/><em><strong><a href="http://jessicaanner.tumblr.com/post/102017653601/front-view-clothed-large-version-gif-back">Bust Closeup View</a> <a href="http://i.imgur.com/S5M6PID.gifv">(Large version)</a> <a href="http://i.imgur.com/BlMYohP.gif">(GIF)</a></strong></em></p>', u'state': u'published', u'html5_capable': False, u'video_type': u'unknown', u'short_url': u'http://tmblr.co/ZLO7Om1V5nI-F', u'date': u'2014-11-08 17:02:00 GMT', u'thumbnail_height': 0, u'thumbnail_url': u'', u'type': u'video', u'slug': u'front-view-clothed-large-version-gif-back', u'blog_name': u'jessicaanner'}
-    assert(False)# Not implimented
-    return {"imgur_video_embed":sha512base64_hash}
+
+    post_id = str(post_dict["id"])
+
+    # Extract video links from post dict
+    imgur_urls = []
+    video_items = post_dict["player"]
+    for video_item in video_items:
+        embed_code = video_item["embed_code"]
+        # u'<iframe class="imgur-embed" width="100%" height="720" frameborder="0" src="http://i.imgur.com/wSBlRyv.gifv#embed"></iframe>'
+        # http://i.imgur.com/wSBlRyv.gifv
+        if embed_code:
+            # Process links so YT-DL can understand them
+            logging.debug("embed_code: "+repr(embed_code))
+            embed_url_regex ="""src=["']([^?"'#]+)"""
+            embed_url_search = re.search(embed_url_regex, embed_code, re.IGNORECASE|re.DOTALL)
+            if embed_url_search:
+                embed_url = embed_url_search.group(1)
+                imgur_urls.append(embed_url)
+        continue
+
+    # Deduplicate links
+    imgur_urls = uniquify(imgur_urls)
+    logging.debug("imgur_urls: "+repr(imgur_urls))
+
+    # Skip IDs that have already been done
+    download_urls = []
+    for imgur_url in imgur_urls:
+        video_page_query = sqlalchemy.select([Media]).where(Media.media_url == imgur_url)
+        video_page_rows = session.execute(video_page_query)
+        video_page_row = video_page_rows.fetchone()
+        if video_page_row:
+            logging.debug("Skipping previously saved video: "+repr(video_page_row))
+            continue
+        download_urls.append(imgur_url)
+        continue
+    logging.debug("download_urls: "+repr(download_urls))
+
+    # Send video URLs to YT-DL
+    if len(download_urls) > 0:
+        # Download each new video
+        for download_url in download_urls:
+            logging.debug("download_url: "+repr(download_url))
+            # Form command to run
+            # Define arguments. see this url for help
+            # https://github.com/rg3/youtube-dl
+            program_path = config.youtube_dl_path
+            assert(os.path.exists(program_path))
+            ignore_errors = "-i"
+            safe_filenames = "--restrict-filenames"
+            output_arg = "-o"
+            info_json_arg = "--write-info-json"
+            description_arg ="--write-description"
+            output_dir = os.path.join(config.root_path,"temp")
+            output_template = os.path.join(output_dir, post_id+".%(ext)s")
+            # "youtube-dl.exe -i --restrict-filenames -o --write-info-json --write-description"
+            command = [program_path, ignore_errors, safe_filenames, info_json_arg, description_arg, output_arg, output_template, download_url]
+            logging.debug("command: "+repr(command))
+            # Call youtube-dl
+            command_result = subprocess.call(command)
+            logging.debug("command_result: "+repr(command_result))
+            time_of_retreival = get_current_unix_time()
+            # Verify download worked
+            # Read info JSON file
+            expected_info_path = os.path.join(output_dir, post_id+".info.json")
+            info_exists = os.path.exists(expected_info_path)
+            if not info_exists:
+                logging.error("Info file not found!")
+                logging.error(repr(locals()))
+            info_json = read_file(expected_info_path)
+            yt_dl_info_dict = json.loads(info_json)
+            logging.debug("yt_dl_info_dict: "+repr(yt_dl_info_dict))
+            # Grab file path
+            media_temp_filepath = yt_dl_info_dict["_filename"]
+            media_temp_filename = os.path.basename(media_temp_filepath)
+            logging.debug("media_temp_filepath: "+repr(media_temp_filepath))
+            # Check that video file given in info JSON exists
+            assert(os.path.exists(media_temp_filepath))
+            # Generate hash for media file
+            file_data = read_file(media_temp_filepath)
+            sha512base64_hash = hash_file_data(file_data)
+            # Decide where to put the file
+
+            # Check if hash is in media DB
+            video_page_row = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
+            if video_page_row:
+                # If media already saved, delete temp file and use old entry's data
+                filename = video_page_row["local_filename"]
+                logging.debug("Skipping previously saved video: "+repr(video_page_row))
+                # Delete duplicate file if media is already saved
+                logging.info("Deleting duplicate video file: "+repr(media_temp_filepath))
+                os.remove(media_temp_filepath)
+            else:
+                # If media not in DB, move temp file to permanent location
+                # Move file to media DL location
+                logging.info("Moving video to final location")
+                # Generate output filepath
+                file_ext = media_temp_filename.split(".")[-1]
+                filename = str(time_of_retreival)+"."+file_ext
+                final_media_filepath = generate_media_file_path_timestamp(root_path=config.root_path,filename=filename)
+                # Move file to final location
+                move_file(media_temp_filepath,final_media_filepath)
+                assert(os.path.exists(final_media_filepath))
+
+            # Remove info file
+            os.remove(expected_info_path)
+
+            # Add video to DB
+            new_media_row = Media(
+                media_url=download_url,
+                sha512base64_hash=sha512base64_hash,
+                local_filename=filename,
+                date_added=time_of_retreival,
+                extractor_used="imgur_video_embed",
+                imgur_video_yt_dl_info_json=info_json,
+                )
+            session.add(new_media_row)
+            session.commit()
+            continue
+
+        logging.debug("Finished downloading imgur_video embeds")
+        return {"imgur_video_embed":sha512base64_hash}
+    else:
+        return {}
 
 
 def handle_video_posts(session,post_dict):
@@ -584,8 +704,8 @@ def handle_video_posts(session,post_dict):
 
 
 def main():
+    pass
 
-    handle_vimeo_videos(session,post_dict={u'reblog_key': u'3BuzwM1q', u'reblog': {u'comment': u'', u'tree_html': u'<p><a href="http://robscorner.tumblr.com/post/110250942998/a-hyperfast-preview-video-for-the-kind-of-content" class="tumblr_blog">robscorner</a>:</p><blockquote><p>A hyperfast preview video for the kind of content I\u2019m featuring on Patreon (patreon.com/robaato)! Slower version will be available for my supporters!<br/>MUSIC: The End (T.E.I.N. Pt. 2) | 12th Planet<br/></p><p>Support for high-resolution art, PSDs, process videos, tutorials, character requests, and more!<br/></p></blockquote>', u'trail': [{u'blog': {u'theme': {u'title_font_weight': u'bold', u'header_full_height': 1071, u'title_color': u'#FFFFFF', u'header_bounds': u'92,1581,978,3', u'title_font': u'Gibson', u'link_color': u'#529ECC', u'header_image_focused': u'http://static.tumblr.com/a5a733e78671519e8eb9cf3700ccfb70/ybimlef/1eon5zyi0/tumblr_static_tumblr_static_2df9bnxrqh1c4c8sgk8448s80_focused_v3.jpg', u'show_description': False, u'header_full_width': 1600, u'header_focus_width': 1578, u'header_stretch': True, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_image_scaled': u'http://static.tumblr.com/cfa3addece89b58093ea0a8a87082653/ybimlef/FWyn5zyhv/tumblr_static_2df9bnxrqh1c4c8sgk8448s80_2048_v2.png', u'avatar_shape': u'square', u'show_avatar': True, u'header_focus_height': 886, u'background_color': u'#337db1', u'header_image': u'http://static.tumblr.com/cfa3addece89b58093ea0a8a87082653/ybimlef/FWyn5zyhv/tumblr_static_2df9bnxrqh1c4c8sgk8448s80.png'}, u'name': u'robscorner'}, u'comment': u'<p>A hyperfast preview video for the kind of content I\u2019m featuring on Patreon (patreon.com/robaato)! Slower version will be available for my supporters!<br>MUSIC: The End (T.E.I.N. Pt. 2) | 12th Planet<br></p><p>Support for high-resolution art, PSDs, process videos, tutorials, character requests, and more!<br></p>', u'post': {u'id': u'110250942998'}}]}, u'thumbnail_width': 295, u'player': [{u'width': 250, u'embed_code': u'<iframe src="https://player.vimeo.com/video/118912193?title=0&byline=0&portrait=0" width="250" height="156" frameborder="0" title="Hyperfast Preview - Mai (Patreon Process Videos)" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>'}, {u'width': 400, u'embed_code': u'<iframe src="https://player.vimeo.com/video/118912193?title=0&byline=0&portrait=0" width="400" height="250" frameborder="0" title="Hyperfast Preview - Mai (Patreon Process Videos)" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>'}, {u'width': 500, u'embed_code': u'<iframe src="https://player.vimeo.com/video/118912193?title=0&byline=0&portrait=0" width="500" height="312" frameborder="0" title="Hyperfast Preview - Mai (Patreon Process Videos)" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>'}], u'id': 110255840681, u'post_url': u'http://nsfw.kevinsano.com/post/110255840681/robscorner-a-hyperfast-preview-video-for-the-kind', u'source_title': u'robscorner', u'tags': [u'reblog', u'erohua'], u'highlighted': [], u'state': u'published', u'short_url': u'http://tmblr.co/Zo9zBq1chmfsf', u'html5_capable': True, u'type': u'video', u'format': u'html', u'timestamp': 1423238010, u'note_count': 415, u'video_type': u'vimeo', u'source_url': u'http://robscorner.tumblr.com/post/110250942998/a-hyperfast-preview-video-for-the-kind-of-content', u'date': u'2015-02-06 15:53:30 GMT', u'thumbnail_height': 184, u'permalink_url': u'https://vimeo.com/118912193', u'slug': u'robscorner-a-hyperfast-preview-video-for-the-kind', u'blog_name': u'nsfwkevinsano', u'caption': u'<p><a href="http://robscorner.tumblr.com/post/110250942998/a-hyperfast-preview-video-for-the-kind-of-content" class="tumblr_blog">robscorner</a>:</p><blockquote><p>A hyperfast preview video for the kind of content I\u2019m featuring on Patreon (patreon.com/robaato)! Slower version will be available for my supporters!<br/>MUSIC: The End (T.E.I.N. Pt. 2) | 12th Planet<br/></p><p>Support for high-resolution art, PSDs, process videos, tutorials, character requests, and more!<br/></p></blockquote>', u'thumbnail_url': u'https://i.vimeocdn.com/video/506047324_295x166.jpg'})
 
 if __name__ == '__main__':
     main()

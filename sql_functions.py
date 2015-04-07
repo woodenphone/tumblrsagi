@@ -80,6 +80,8 @@ class Media(Base):
     # Vimeo embeds
     vimeo_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
     vimeo_video_id = sqlalchemy.Column(sqlalchemy.String())# https://player.vimeo.com/video/11891219 > 11891219
+    # Imgur video
+    imgur_video_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
     # Audio
     # SoundCloud audio embeds
     soundcloud_id = sqlalchemy.Column(sqlalchemy.String())
