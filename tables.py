@@ -217,7 +217,7 @@ class TumblrAudio(Base):
     file_extention = sqlalchemy.Column(sqlalchemy.String(250))# ex. .png, .jpeg
     # Remote
     yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
-    video_id = sqlalchemy.Column(sqlalchemy.String(250))
+    audio_id = sqlalchemy.Column(sqlalchemy.String(250))
     annotations = sqlalchemy.Column(sqlalchemy.String())
 
 
@@ -235,7 +235,7 @@ class SoundcloudAudio(Base):
     file_extention = sqlalchemy.Column(sqlalchemy.String(250))# ex. .png, .jpeg
     # Remote
     yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
-    video_id = sqlalchemy.Column(sqlalchemy.String(250))
+    audio_id = sqlalchemy.Column(sqlalchemy.String(250))
     annotations = sqlalchemy.Column(sqlalchemy.String())
 # /Audio
 # /Media
