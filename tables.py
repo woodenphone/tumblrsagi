@@ -11,6 +11,8 @@
 import sqlalchemy# Database library
 from sqlalchemy.ext.declarative import declarative_base# Magic for ORM
 
+from utils import * # General utility functions
+
 
 # SQLAlchemy table setup
 Base = declarative_base()
@@ -88,6 +90,7 @@ class Media(Base):
 # Video
 class YoutubeVideo(Base):
     """Class that defines the youtube video table in the DB"""
+    __tablename__ = "youtube_video"
     # Columns
     # Locally generated
     primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
@@ -106,6 +109,7 @@ class YoutubeVideo(Base):
 
 class TubmlrVideo(Base):
     """Class that defines the tumblr video table in the DB"""
+    __tablename__ = "tumblr_video"
     # Columns
     # Locally generated
     primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
@@ -123,6 +127,7 @@ class TubmlrVideo(Base):
 
 class VineVideo(Base):
     """Class that defines the vine video table in the DB"""
+    __tablename__ = "vine_video"
     # Columns
     # Locally generated
     primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
@@ -140,6 +145,7 @@ class VineVideo(Base):
 
 class LivestreamVideo(Base):
     """Class that defines the livestream video table in the DB"""
+    __tablename__ = "livestream_video"
     # Columns
     # Locally generated
     primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
@@ -156,8 +162,9 @@ class LivestreamVideo(Base):
 
 # /Video
 # Audio
-class TubmlrAudio(Base):
+class TumblrAudio(Base):
     """Class that defines the livestream video table in the DB"""
+    __tablename__ = "tumblr_audio"
     # Columns
     # Locally generated
     primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
@@ -175,6 +182,7 @@ class TubmlrAudio(Base):
 
 class SoundcloudAudio(Base):
     """Class that defines the livestream video table in the DB"""
+    __tablename__ = "soundcloud_audio"
     # Columns
     # Locally generated
     primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
@@ -286,11 +294,35 @@ class RawPosts(Base):
 # /SQLAlchemy table setup
 
 
+def create_example_db():
+    """Provide a DB session
+    http://www.pythoncentral.io/introductory-tutorial-python-sqlalchemy/"""
+    logging.debug("Opening DB connection")
+    # add "echo=True" to see SQL being run
+    engine = sqlalchemy.create_engine("sqlite:///tables_example.sqllite", echo=True)
+    # Bind the engine to the metadata of the Base class so that the
+    # declaratives can be accessed through a DBSession instance
+    Base.metadata.bind = engine
+    Base.metadata.create_all(engine)
 
+    DBSession = sqlalchemy.orm.sessionmaker(bind=engine)
+    # A DBSession() instance establishes all conversations with the database
+    # and represents a "staging zone" for all the objects loaded into the
+    # database session object. Any change made against the objects in the
+    # session won't be persisted into the database until you call
+    # session.commit(). If you're not happy about the changes, you can
+    # revert all of them back to the last commit by calling
+    # session.rollback()
+    session = DBSession()
+    session.commit()
+
+    logging.debug("Session connected to DB")
+    return
 
 
 def main():
-    pass
+    setup_logging(log_file_path=os.path.join("debug","tables-log.txt"))
+    create_example_db()
 
 if __name__ == '__main__':
     main()

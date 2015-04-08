@@ -6,4 +6,5 @@ config.py
 *.pyc
 youtube-dl/
 *.db
+*.sqllite
 tumblr_todo_list.txt
