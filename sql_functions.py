@@ -92,7 +92,6 @@ class Media(Base):
     soundcloud_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
 
 
-
 class Posts(Base):
     """The posts in a blog
     <type>_<api_field_name>
