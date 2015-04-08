@@ -62,6 +62,7 @@ class Media(Base):
     file_extention = sqlalchemy.Column(sqlalchemy.String(250))# ex. .png, .jpeg
     extractor_used = sqlalchemy.Column(sqlalchemy.String(250))# internal name of the extractor used
 
+    # OBSOLETE, still in use
     # Video
     # Youtube
     youtube_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
@@ -86,6 +87,9 @@ class Media(Base):
     # SoundCloud audio embeds
     soundcloud_id = sqlalchemy.Column(sqlalchemy.String())
     soundcloud_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
+    # /OBSOLETE
+
+
 
 # Video
 class YoutubeVideo(Base):
@@ -143,9 +147,46 @@ class VineVideo(Base):
     annotations = sqlalchemy.Column(sqlalchemy.String())
 
 
+
+class VimeoVideo(Base):
+    """Class that defines the vine video table in the DB"""
+    __tablename__ = "vimeo_video"
+    # Columns
+    # Locally generated
+    primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    date_added = sqlalchemy.Column(sqlalchemy.BigInteger)
+    media_url = sqlalchemy.Column(sqlalchemy.String())
+    sha512base64_hash = sqlalchemy.Column(sqlalchemy.String(250))
+    local_filename = sqlalchemy.Column(sqlalchemy.String(250))# Filename on local storage, file path is deterministically generated from this
+    remote_filename = sqlalchemy.Column(sqlalchemy.String())# Filename from original location (If any)
+    file_extention = sqlalchemy.Column(sqlalchemy.String(250))# ex. .png, .jpeg
+    # Remote
+    yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
+    video_id = sqlalchemy.Column(sqlalchemy.String(250))
+    annotations = sqlalchemy.Column(sqlalchemy.String())
+
+
 class LivestreamVideo(Base):
     """Class that defines the livestream video table in the DB"""
     __tablename__ = "livestream_video"
+    # Columns
+    # Locally generated
+    primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    date_added = sqlalchemy.Column(sqlalchemy.BigInteger)
+    media_url = sqlalchemy.Column(sqlalchemy.String())
+    sha512base64_hash = sqlalchemy.Column(sqlalchemy.String(250))
+    local_filename = sqlalchemy.Column(sqlalchemy.String(250))# Filename on local storage, file path is deterministically generated from this
+    remote_filename = sqlalchemy.Column(sqlalchemy.String())# Filename from original location (If any)
+    file_extention = sqlalchemy.Column(sqlalchemy.String(250))# ex. .png, .jpeg
+    # Remote
+    yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
+    video_id = sqlalchemy.Column(sqlalchemy.String(250))
+    annotations = sqlalchemy.Column(sqlalchemy.String())
+
+
+class ImgurVideo(Base):
+    """Class that defines the imgur video table in the DB"""
+    __tablename__ = "imgur_video"
     # Columns
     # Locally generated
     primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
@@ -316,7 +357,7 @@ def create_example_db():
     session = DBSession()
     session.commit()
 
-    logging.debug("Session connected to DB")
+    logging.debug("Example DB created")
     return
 
 
