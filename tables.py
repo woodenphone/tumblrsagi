@@ -62,32 +62,32 @@ class Media(Base):
     file_extention = sqlalchemy.Column(sqlalchemy.String(250))# ex. .png, .jpeg
     extractor_used = sqlalchemy.Column(sqlalchemy.String(250))# internal name of the extractor used
 
-    # OBSOLETE, still in use
-    # Video
-    # Youtube
-    youtube_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
-    youtube_video_id = sqlalchemy.Column(sqlalchemy.String(250))
-    # Tubmlr video
-    tumblrvideo_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
-    # Vine Video embeds
-    vine_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
-    vine_video_id = sqlalchemy.Column(sqlalchemy.String(250))# https://vine.co/v/hjWIUFOYD31/embed/simple -> hjWIUFOYD31
-    # Tumblr audio
-    tumblraudio_album_art = sqlalchemy.Column(sqlalchemy.String())
-    tumblraudio_artist = sqlalchemy.Column(sqlalchemy.String())
-    # Vimeo embeds
-    vimeo_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
-    vimeo_video_id = sqlalchemy.Column(sqlalchemy.String())# https://player.vimeo.com/video/11891219 > 11891219
-    # Imgur video
-    imgur_video_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
-    # livestream video
-    livestream_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
-
-    # Audio
-    # SoundCloud audio embeds
-    soundcloud_id = sqlalchemy.Column(sqlalchemy.String())
-    soundcloud_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
-    # /OBSOLETE
+##    # OBSOLETE, still in use
+##    # Video
+##    # Youtube
+##    youtube_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
+##    youtube_video_id = sqlalchemy.Column(sqlalchemy.String(250))
+##    # Tubmlr video
+##    tumblrvideo_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
+##    # Vine Video embeds
+##    vine_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
+##    vine_video_id = sqlalchemy.Column(sqlalchemy.String(250))# https://vine.co/v/hjWIUFOYD31/embed/simple -> hjWIUFOYD31
+##    # Tumblr audio
+##    tumblraudio_album_art = sqlalchemy.Column(sqlalchemy.String())
+##    tumblraudio_artist = sqlalchemy.Column(sqlalchemy.String())
+##    # Vimeo embeds
+##    vimeo_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
+##    vimeo_video_id = sqlalchemy.Column(sqlalchemy.String())# https://player.vimeo.com/video/11891219 > 11891219
+##    # Imgur video
+##    imgur_video_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
+##    # livestream video
+##    livestream_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
+##
+##    # Audio
+##    # SoundCloud audio embeds
+##    soundcloud_id = sqlalchemy.Column(sqlalchemy.String())
+##    soundcloud_yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
+##    # /OBSOLETE
 
 
 
@@ -214,9 +214,8 @@ class TumblrAudio(Base):
     sha512base64_hash = sqlalchemy.Column(sqlalchemy.String(250))
     local_filename = sqlalchemy.Column(sqlalchemy.String(250))# Filename on local storage, file path is deterministically generated from this
     remote_filename = sqlalchemy.Column(sqlalchemy.String())# Filename from original location (If any)
-    file_extention = sqlalchemy.Column(sqlalchemy.String(250))# ex. .png, .jpeg
+    file_extention = sqlalchemy.Column(sqlalchemy.String(250))# ex. png, jpeg
     # Remote
-    yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
     audio_id = sqlalchemy.Column(sqlalchemy.String(250))
     annotations = sqlalchemy.Column(sqlalchemy.String())
 

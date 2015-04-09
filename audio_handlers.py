@@ -125,12 +125,12 @@ def handle_tumblr_audio(session,post_dict):
         save_file(filenamein=file_path,data=file_data,force_save=False)
 
     # Add new row to DB
-    new_media_row = Media(
+    new_media_row = TumblrAudio(
         media_url = media_url,
         sha512base64_hash = sha512base64_hash,
         local_filename = audio_filename,
         date_added = time_of_retreival,
-        extractor_used = "tumblr_audio"
+        file_extention = "mp3"
         )
     session.add(new_media_row)
     session.commit()

@@ -344,6 +344,7 @@ def handle_livestream_videos(session,post_dict):
 
 def handle_yahoo_videos(session,post_dict):
     """TODO"""
+    assert(False)# Unimplimented
     pass
 
 
