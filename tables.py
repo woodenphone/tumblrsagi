@@ -61,6 +61,11 @@ class Media(Base):
     remote_filename = sqlalchemy.Column(sqlalchemy.String())# Filename from original location (If any)
     file_extention = sqlalchemy.Column(sqlalchemy.String(250))# ex. .png, .jpeg
     extractor_used = sqlalchemy.Column(sqlalchemy.String(250))# internal name of the extractor used
+    # Video and Audio use these
+    yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
+    video_id = sqlalchemy.Column(sqlalchemy.String())
+    audio_id = sqlalchemy.Column(sqlalchemy.String())
+    annotations = sqlalchemy.Column(sqlalchemy.String())
 
 ##    # OBSOLETE, still in use
 ##    # Video
@@ -111,7 +116,7 @@ class YoutubeVideo(Base):
     annotations = sqlalchemy.Column(sqlalchemy.String())
 
 
-class TubmlrVideo(Base):
+class TumblrVideo(Base):
     """Class that defines the tumblr video table in the DB"""
     __tablename__ = "tumblr_video"
     # Columns
@@ -200,6 +205,26 @@ class ImgurVideo(Base):
     yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
     video_id = sqlalchemy.Column(sqlalchemy.String(250))
     annotations = sqlalchemy.Column(sqlalchemy.String())
+
+
+
+class YahooVideo(Base):
+    """Class that defines the imgur video table in the DB"""
+    __tablename__ = "yahoo_video"
+    # Columns
+    # Locally generated
+    primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    date_added = sqlalchemy.Column(sqlalchemy.BigInteger)
+    media_url = sqlalchemy.Column(sqlalchemy.String())
+    sha512base64_hash = sqlalchemy.Column(sqlalchemy.String(250))
+    local_filename = sqlalchemy.Column(sqlalchemy.String(250))# Filename on local storage, file path is deterministically generated from this
+    remote_filename = sqlalchemy.Column(sqlalchemy.String())# Filename from original location (If any)
+    file_extention = sqlalchemy.Column(sqlalchemy.String(250))# ex. .png, .jpeg
+    # Remote
+    yt_dl_info_json = sqlalchemy.Column(sqlalchemy.String())
+    video_id = sqlalchemy.Column(sqlalchemy.String(250))
+    annotations = sqlalchemy.Column(sqlalchemy.String())
+
 
 # /Video
 # Audio

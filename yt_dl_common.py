@@ -21,7 +21,7 @@ import config # User settings
 
 
 
-def run_yt_dl_multiple(session,post_dict,table_class,download_urls,post_id,audio_id=None,video_id=None):
+def run_yt_dl_multiple(session,post_dict,table_class,download_urls,post_id,extractor_used,audio_id=None,video_id=None):
     """Run yt-dl for n >= 0 videos
     Return joined dicts passed back from run_yt_dl_single()
     """
@@ -33,13 +33,14 @@ def run_yt_dl_multiple(session,post_dict,table_class,download_urls,post_id,audio
     video_dicts = []
     for download_url in download_urls:
         video_dict = run_yt_dl_single(
-            session,
-            post_dict,
-            table_class,# The class that defines the table
-            download_url,
-            post_id,
-            audio_id,
-            video_id,
+            session=session,
+            post_dict=post_dict,
+            table_class=table_class,# The class that defines the table
+            download_url=download_url,
+            post_id=post_id,
+            extractor_used=extractor_used,
+            audio_id=audio_id,
+            video_id=video_id,
             )
         assert(type(video_dict) is type({}))# Must be a dict
         video_dicts.append(video_dict)
@@ -52,7 +53,7 @@ def run_yt_dl_multiple(session,post_dict,table_class,download_urls,post_id,audio
     return combined_video_dict
 
 
-def run_yt_dl_single(session,post_dict,table_class,download_url,post_id,audio_id=None,video_id=None):
+def run_yt_dl_single(session,post_dict,table_class,download_url,post_id,extractor_used,audio_id=None,video_id=None):
     """Run youtube-dl for extractors, adding row to the table whose ORM class is given
     return """
     logging.debug("download_url: "+repr(download_url))
@@ -144,6 +145,7 @@ def run_yt_dl_single(session,post_dict,table_class,download_url,post_id,audio_id
     row_dict["sha512base64_hash"] = sha512base64_hash
     row_dict["local_filename"] = filename
     row_dict["date_added"] = time_of_retreival
+    row_dict["extractor_used"] = extractor_used
     row_dict["yt_dl_info_json"] = info_json
     # Optional values
     if audio_id:

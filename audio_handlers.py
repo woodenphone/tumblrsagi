@@ -89,7 +89,11 @@ def handle_tumblr_audio(session,post_dict):
     logging.debug("media_url: "+repr(media_url))
 
     # Check the DB to see if media is already saved
-    url_check_row_dict = sql_functions.check_if_media_url_in_DB(session,media_url)
+    url_check_row_dict = sql_functions.lookup_media_url(
+        session,
+        table_class=TumblrAudio,
+        media_url=media_url
+        )
     if url_check_row_dict:
         media_already_saved = True
         sha512base64_hash = row_dict["sha512base64_hash"]
@@ -105,8 +109,12 @@ def handle_tumblr_audio(session,post_dict):
     sha512base64_hash = hash_file_data(file_data)
     logging.debug("sha512base64_hash: "+repr(sha512base64_hash))
 
-    # Check if hash is in media DB
-    hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
+    # Check if hash is in DB
+    hash_check_row_dict = lookup_media_hash(
+        session,
+        table_class=TumblrAudio,
+        sha512base64_hash=sha512base64_hash
+        )
     if hash_check_row_dict:
         media_already_saved = True
         preexisting_filename = hash_check_row_dict["local_filename"]
