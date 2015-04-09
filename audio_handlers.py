@@ -44,7 +44,7 @@ def handle_soundcloud_audio(session,post_dict):
     logging.debug("cleaned_soundcloud_link"+repr(cleaned_soundcloud_link))
 
     # Check if audio has been saved, and return if it has
-    id_query = sqlalchemy.select([SoundcloudAudio]).where(SoundcloudAudio.audio_id == soundcloud_id)
+    id_query = sqlalchemy.select([Media]).where(Media.audio_id == soundcloud_id)
     id_rows = session.execute(id_query)
     id_row = id_rows.fetchone()
     logging.debug("id_row: "+repr(id_row))
@@ -60,9 +60,9 @@ def handle_soundcloud_audio(session,post_dict):
     combined_audio_dict = run_yt_dl_multiple(
         session = session,
         post_dict = post_dict,
-        table_class = SoundcloudAudio,
         download_urls = download_urls,
         post_id = post_id,
+        extractor_used="handle_soundcloud_audio",
         audio_id = soundcloud_id
         )
     logging.debug("Finished downloading Tumblr embeds")
@@ -91,7 +91,7 @@ def handle_tumblr_audio(session,post_dict):
     # Check the DB to see if media is already saved
     url_check_row_dict = sql_functions.lookup_media_url(
         session,
-        table_class=TumblrAudio,
+        table_class=Media,
         media_url=media_url
         )
     if url_check_row_dict:
@@ -112,7 +112,7 @@ def handle_tumblr_audio(session,post_dict):
     # Check if hash is in DB
     hash_check_row_dict = lookup_media_hash(
         session,
-        table_class=TumblrAudio,
+        table_class=Media,
         sha512base64_hash=sha512base64_hash
         )
     if hash_check_row_dict:
@@ -133,12 +133,13 @@ def handle_tumblr_audio(session,post_dict):
         save_file(filenamein=file_path,data=file_data,force_save=False)
 
     # Add new row to DB
-    new_media_row = TumblrAudio(
+    new_media_row = Media(
         media_url = media_url,
         sha512base64_hash = sha512base64_hash,
         local_filename = audio_filename,
         date_added = time_of_retreival,
-        file_extention = "mp3"
+        file_extention = "mp3",
+        extractor_used="handle_tumblr_audio",
         )
     session.add(new_media_row)
     session.commit()

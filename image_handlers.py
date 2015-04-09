@@ -67,7 +67,7 @@ def download_image_link(session,media_url):
         sha512base64_hash=sha512base64_hash,
         local_filename=image_filename,
         date_added=time_of_retreival,
-        extractor_used="image_link",
+        extractor_used="download_image_link",
         )
     session.add(new_media_row)
     session.commit()

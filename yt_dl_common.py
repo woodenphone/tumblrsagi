@@ -21,7 +21,7 @@ import config # User settings
 
 
 
-def run_yt_dl_multiple(session,post_dict,table_class,download_urls,post_id,extractor_used,audio_id=None,video_id=None):
+def run_yt_dl_multiple(session,post_dict,download_urls,post_id,extractor_used,audio_id=None,video_id=None):
     """Run yt-dl for n >= 0 videos
     Return joined dicts passed back from run_yt_dl_single()
     """
@@ -35,7 +35,6 @@ def run_yt_dl_multiple(session,post_dict,table_class,download_urls,post_id,extra
         video_dict = run_yt_dl_single(
             session=session,
             post_dict=post_dict,
-            table_class=table_class,# The class that defines the table
             download_url=download_url,
             post_id=post_id,
             extractor_used=extractor_used,
@@ -53,7 +52,7 @@ def run_yt_dl_multiple(session,post_dict,table_class,download_urls,post_id,extra
     return combined_video_dict
 
 
-def run_yt_dl_single(session,post_dict,table_class,download_url,post_id,extractor_used,audio_id=None,video_id=None):
+def run_yt_dl_single(session,post_dict,download_url,post_id,extractor_used,audio_id=None,video_id=None):
     """Run youtube-dl for extractors, adding row to the table whose ORM class is given
     return """
     logging.debug("download_url: "+repr(download_url))
@@ -70,6 +69,7 @@ def run_yt_dl_single(session,post_dict,table_class,download_url,post_id,extracto
     description_arg ="--write-annotations"
     output_dir = os.path.join(config.root_path,"temp")
     output_template = os.path.join(output_dir, post_id+".%(ext)s")# CHECK THIS! Will multiple videos in a link be an issue?
+
     # "youtube-dl.exe -i --restrict-filenames -o --write-info-json --write-description"
     command = [program_path, ignore_errors, safe_filenames, info_json_arg, description_arg, output_arg, output_template, download_url]
     logging.debug("command: "+repr(command))
@@ -153,7 +153,7 @@ def run_yt_dl_single(session,post_dict,table_class,download_url,post_id,extracto
     if video_id:
         row_dict["video_id"] = video_id
 
-    new_db_row = table_class(**row_dict)# Create a row by instantiating the table's class using the dict as arguments
+    new_db_row = Media(**row_dict)# Create a row by instantiating the table's class using the dict as arguments
     session.add(new_db_row)
     session.commit()
 

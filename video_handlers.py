@@ -74,7 +74,7 @@ def handle_youtube_video(session,post_dict):# NEW TABLES
     for youtube_url in youtube_urls:
         video_id = crop_youtube_id(youtube_url)
         # Look up ID in DB
-        video_page_query = sqlalchemy.select([YoutubeVideo]).where(YoutubeVideo.video_id == video_id)
+        video_page_query = sqlalchemy.select([Media]).where(Media.video_id == video_id)
         video_page_rows = session.execute(video_page_query)
         video_page_row = video_page_rows.fetchone()
         if video_page_row:
@@ -89,9 +89,9 @@ def handle_youtube_video(session,post_dict):# NEW TABLES
         video_dict = run_yt_dl_single(
             session,
             post_dict,
-            table_class = YoutubeVideo,# The class that defines the table
             download_url = download_url,
             post_id = post_id,
+            extractor_used="handle_youtube_video",
             video_id = crop_youtube_id(download_url),
             )
         video_dicts.append(video_dict)
@@ -139,7 +139,7 @@ def handle_vimeo_videos(session,post_dict):# New table
     for vimeo_url in vimeo_urls:
         video_page_row = sql_functions.lookup_media_url(
             session,
-            table_class=VimeoVideo,
+            table_class=Media,
             media_url=vimeo_url
             )
         if video_page_row:
@@ -153,9 +153,9 @@ def handle_vimeo_videos(session,post_dict):# New table
     combined_video_dict = run_yt_dl_multiple(
         session = session,
         post_dict = post_dict,
-        table_class = VimeoVideo,
         download_urls = download_urls,
         post_id = post_id,
+        extractor_used="handle_vimeo_videos",
         )
     logging.debug("Finished downloading vimeo embeds")
     return combined_video_dict
@@ -192,7 +192,7 @@ def handle_imgur_videos(session,post_dict):# NEW TABLES
     for imgur_url in imgur_urls:
         video_page_row = sql_functions.lookup_media_url(
             session,
-            table_class=ImgurVideo,
+            table_class=Media,
             media_url=imgur_url
             )
         if video_page_row:
@@ -206,9 +206,9 @@ def handle_imgur_videos(session,post_dict):# NEW TABLES
     combined_video_dict = run_yt_dl_multiple(
         session = session,
         post_dict = post_dict,
-        table_class = ImgurVideo,
         download_urls = download_urls,
         post_id = post_id,
+        extractor_used="handle_imgur_videos",
         )
     logging.debug("Finished downloading imgur_video embeds")
     return combined_video_dict
@@ -254,7 +254,7 @@ def handle_vine_videos(session,post_dict):# New table
             logging.debug("video_id: "+repr(video_id))
             video_page_row = sql_functions.lookup_media_url(
             session,
-            table_class=VineVideo,
+            table_class=Media,
             media_url=vine_url
             )
             if video_page_row:
@@ -268,7 +268,6 @@ def handle_vine_videos(session,post_dict):# New table
     combined_video_dict = run_yt_dl_multiple(
         session = session,
         post_dict = post_dict,
-        table_class = VineVideo,
         download_urls = download_urls,
         post_id = post_id,
         extractor_used="handle_vine_videos",
@@ -290,7 +289,7 @@ def handle_tumblr_videos(session,post_dict):
     # Check if video is already saved, return URL:Hash pair if it is
     video_page_row = sql_functions.lookup_media_url(
             session,
-            table_class=TumblrVideo,
+            table_class=Media,
             media_url=video_page
             )
     if video_page_row:
@@ -303,7 +302,6 @@ def handle_tumblr_videos(session,post_dict):
     combined_video_dict = run_yt_dl_multiple(
         session = session,
         post_dict = post_dict,
-        table_class = TumblrVideo,
         download_urls = download_urls,
         post_id = post_id,
         extractor_used="handle_tumblr_videos",
@@ -343,7 +341,7 @@ def handle_livestream_videos(session,post_dict):
     for livestream_url in livestream_urls:
         video_page_row = sql_functions.lookup_media_url(
             session,
-            table_class=LivestreamVideo,
+            table_class=Media,
             media_url=livestream_url
             )
         if video_page_row:
@@ -357,7 +355,6 @@ def handle_livestream_videos(session,post_dict):
     combined_video_dict = run_yt_dl_multiple(
         session = session,
         post_dict = post_dict,
-        table_class = LivestreamVideo,
         download_urls = download_urls,
         post_id = post_id,
         extractor_used="handle_livestream_videos",
@@ -401,7 +398,7 @@ def handle_yahoo_videos(session,post_dict):
     for yahoo_url in yahoo_urls:
         video_page_row = sql_functions.lookup_media_url(
             session,
-            table_class=YahooVideo,
+            table_class=Media,
             media_url=yahoo_url
             )
         if video_page_row:
@@ -415,9 +412,9 @@ def handle_yahoo_videos(session,post_dict):
     combined_video_dict = run_yt_dl_multiple(
         session = session,
         post_dict = post_dict,
-        table_class = LivestreamVideo,
         download_urls = download_urls,
         post_id = post_id,
+        extractor_used="handle_yahoo_videos",
         )
 
     logging.debug("Finished downloading yahoo embeds")
@@ -451,13 +448,19 @@ def handle_video_posts(session,post_dict):
     elif post_dict["video_type"] == u"vimeo":
         logging.debug("Post is vimeo video")
         return handle_vimeo_videos(session,post_dict)
+    # Yahoo
+    elif post_dict["video_type"] == u"yahoo":
+        logging.debug("Post is yahoo video")
+        return handle_yahoo_videos(session,post_dict)
     # "unknown" - special cases?
     elif (post_dict["video_type"] == u"unknown"):
         logging.warning("API reports video type as unknown, handlers may be inappropriate or absent.")
+        # imgur
         if "imgur-embed" in repr(post_dict["player"]):
             logging.debug("Post is imgur video")
             return handle_imgur_videos(session,post_dict)
-        elif "" in repr(post_dict["player"]):
+        # Livestream
+        elif "livestream.com" in repr(post_dict["player"]):
             logging.debug("Post is livestream video")
             return handle_livestream_videos(session,post_dict)
     # If no handler is applicable, stop for fixing
@@ -496,6 +499,11 @@ def debug():
     # Yahoo video
     yahoo_post_dict = {u'reblog_key': u'GGWw7A77', u'reblog': {u'comment': u'<p>It&rsquo;s really happening!</p>', u'tree_html': u'<p><a class="tumblr_blog" href="http://whitehouse.tumblr.com/post/88396016693/obamairl">whitehouse</a>:</p><blockquote>\n<p>President Obama is answering your questions on education and college affordability in his first-ever Tumblr Q&amp;A today.</p>\n<p>Tune in right here at 4 p.m. ET, and make sure to follow us @<a class="tumblelog" href="http://tmblr.co/mWgXp6TEB4GEsC_jKXfrSvw">whitehouse</a>.</p>\n</blockquote>', u'trail': [{u'blog': {u'theme': {u'title_font_weight': u'bold', u'header_full_height': 1056, u'title_color': u'#444444', u'header_bounds': u'43,1500,887,0', u'title_font': u'Gibson', u'link_color': u'#529ECC', u'header_image_focused': u'http://static.tumblr.com/861cd9f032b93a7ace681b4fcb7d05e4/mjqkjev/pEEn56435/tumblr_static_tumblr_static_17trsnvc8xes0og8kgk88coc0_focused_v3.jpg', u'show_description': True, u'header_full_width': 1500, u'header_focus_width': 1500, u'header_stretch': True, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_image_scaled': u'http://static.tumblr.com/861cd9f032b93a7ace681b4fcb7d05e4/mjqkjev/sgln56432/tumblr_static_17trsnvc8xes0og8kgk88coc0_2048_v2.jpg', u'avatar_shape': u'square', u'show_avatar': True, u'header_focus_height': 844, u'background_color': u'#FAFAFA', u'header_image': u'http://static.tumblr.com/861cd9f032b93a7ace681b4fcb7d05e4/mjqkjev/sgln56432/tumblr_static_17trsnvc8xes0og8kgk88coc0.jpg'}, u'name': u'whitehouse'}, u'comment': u'<p>President Obama is answering your questions on education and college affordability in his first-ever Tumblr Q&A today.</p>\n<p>Tune in right here at 4 p.m. ET, and make sure to follow us @<a class="tumblelog" href="http://tmblr.co/mWgXp6TEB4GEsC_jKXfrSvw">whitehouse</a>.</p>', u'post': {u'id': u'88396016693'}}]}, u'thumbnail_width': 320, u'player': [{u'width': 250, u'embed_code': u'<iframe width="250" height="140" src="https://news.yahoo.com/video/tumblr-goes-white-house-190000218.html?format=embed" frameborder="0" allowfullscreen></iframe>'}, {u'width': 400, u'embed_code': u'<iframe width="400" height="225" src="https://news.yahoo.com/video/tumblr-goes-white-house-190000218.html?format=embed" frameborder="0" allowfullscreen></iframe>'}, {u'width': 500, u'embed_code': u'<iframe width="500" height="281" src="https://news.yahoo.com/video/tumblr-goes-white-house-190000218.html?format=embed" frameborder="0" allowfullscreen></iframe>'}], u'id': 88400573880, u'post_url': u'http://staff.tumblr.com/post/88400573880/whitehouse-president-obama-is-answering-your', u'tags': [u'ObamaIRL'], u'highlighted': [], u'state': u'published', u'short_url': u'http://tmblr.co/ZE5Fby1IL5RMu', u'html5_capable': True, u'type': u'video', u'format': u'html', u'timestamp': 1402430040, u'note_count': 9899, u'video_type': u'yahoo', u'date': u'2014-06-10 19:54:00 GMT', u'thumbnail_height': 180, u'permalink_url': u'https://news.yahoo.com/video/tumblr-goes-white-house-190000218.html', u'slug': u'whitehouse-president-obama-is-answering-your', u'blog_name': u'staff', u'caption': u'<p><a class="tumblr_blog" href="http://whitehouse.tumblr.com/post/88396016693/obamairl">whitehouse</a>:</p>\n<blockquote>\n<p>President Obama is answering your questions on education and college affordability in his first-ever Tumblr Q&amp;A today.</p>\n<p>Tune in right here at 4 p.m. ET, and make sure to follow us @<a class="tumblelog" href="http://tmblr.co/mWgXp6TEB4GEsC_jKXfrSvw">whitehouse</a>.</p>\n</blockquote>\n<p>It\u2019s really happening!</p>', u'thumbnail_url': u'https://s1.yimg.com/uu/api/res/1.2/JW58D_.UFfRLkBOrIemIXw--/dz0zMjA7c209MTtmaT1maWxsO3B5b2ZmPTA7aD0xODA7YXBwaWQ9eXRhY2h5b24-/http://l.yimg.com/os/publish-images/ivy/2014-06-10/912811c0-f0c6-11e3-bb53-bd3ad1c7b3ec_06102014_tumblr_white_house.jpg'}
     yahoo_result = handle_video_posts(session,yahoo_post_dict)
+
+
+    # Livestream
+    livestream_post_dict ={u'reblog_key': u'oapXWQlr', u'reblog': {u'comment': u'<p><span>To reiterate: this an&nbsp;</span><strong>only</strong><span>&nbsp;and an&nbsp;</span><strong>exclusive&nbsp;</strong><span>and it&nbsp;</span><strong>starts in just a few minutes</strong><span>. Hurry on over. &nbsp;</span></p>', u'tree_html': u'<p><a class="tumblr_blog" href="http://92y.tumblr.com/post/101031505431/watch-the-92y-livestream-of-game-of-thrones">92y</a>:</p><blockquote>\n<p>Watch the 92Y Livestream of <strong>Game of Thrones</strong> creator <strong>George R.R. Martin, TONIGHT at 8\xa0pm ET</strong>, in his <strong>only</strong> public U.S. appearance for the release of <a href="http://www.amazon.com/gp/product/B00EGMGGVK/ref=as_li_tl?ie=UTF8&amp;camp=1789&amp;creative=390957&amp;creativeASIN=B00EGMGGVK&amp;linkCode=as2&amp;tag=92y-20&amp;linkId=V3MMY57QIQ7QVFNK"><em>The World of Ice and Fire: The Untold History of Westeros and the Game of Thrones</em></a>. Exclusively on Tumblr!</p>\n</blockquote>', u'trail': [{u'blog': {u'theme': {u'title_font_weight': u'bold', u'title_color': u'#444444', u'header_bounds': u'', u'title_font': u'Gibson', u'link_color': u'#529ECC', u'header_image_focused': u'http://assets.tumblr.com/images/default_header/optica_pattern_13_focused_v3.png?_v=2f4063be1dd2ee91e4eca54332e25191', u'show_description': True, u'show_header_image': True, u'header_stretch': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_image_scaled': u'http://assets.tumblr.com/images/default_header/optica_pattern_13_focused_v3.png?_v=2f4063be1dd2ee91e4eca54332e25191', u'avatar_shape': u'square', u'show_avatar': True, u'background_color': u'#FAFAFA', u'header_image': u'http://assets.tumblr.com/images/default_header/optica_pattern_13.png?_v=2f4063be1dd2ee91e4eca54332e25191'}, u'name': u'92y'}, u'comment': u'<p>Watch the 92Y Livestream of <strong>Game of Thrones</strong> creator <strong>George R.R. Martin, TONIGHT at 8\xa0pm ET</strong>, in his <strong>only</strong> public U.S. appearance for the release of <a href="http://www.amazon.com/gp/product/B00EGMGGVK/ref=as_li_tl?ie=UTF8&camp=1789&creative=390957&creativeASIN=B00EGMGGVK&linkCode=as2&tag=92y-20&linkId=V3MMY57QIQ7QVFNK"><em>The World of Ice and Fire: The Untold History of Westeros and the Game of Thrones</em></a>. Exclusively on Tumblr!</p>', u'post': {u'id': u'101031505431'}}]}, u'thumbnail_width': 0, u'player': [{u'width': 250, u'embed_code': u'<iframe src="http://new.livestream.com/accounts/1249127/events/3464519/player?width=560&height=315&autoPlay=true&mute=false" width="250" height="140" frameborder="0" scrolling="no"> </iframe>'}, {u'width': 400, u'embed_code': u'<iframe src="http://new.livestream.com/accounts/1249127/events/3464519/player?width=560&height=315&autoPlay=true&mute=false" width="400" height="225" frameborder="0" scrolling="no"> </iframe>'}, {u'width': 500, u'embed_code': u'<iframe src="http://new.livestream.com/accounts/1249127/events/3464519/player?width=560&height=315&autoPlay=true&mute=false" width="500" height="281" frameborder="0" scrolling="no"> </iframe>'}], u'id': 101038462325, u'post_url': u'http://staff.tumblr.com/post/101038462325/92y-watch-the-92y-livestream-of-game-of-thrones', u'tags': [], u'highlighted': [], u'state': u'published', u'short_url': u'http://tmblr.co/ZE5Fby1U6N9Lr', u'html5_capable': False, u'type': u'video', u'format': u'html', u'timestamp': 1414366397, u'note_count': 917, u'video_type': u'unknown', u'date': u'2014-10-26 23:33:17 GMT', u'thumbnail_height': 0, u'slug': u'92y-watch-the-92y-livestream-of-game-of-thrones', u'blog_name': u'staff', u'caption': u'<p><a class="tumblr_blog" href="http://92y.tumblr.com/post/101031505431/watch-the-92y-livestream-of-game-of-thrones">92y</a>:</p>\n<blockquote>\n<p>Watch the 92Y Livestream of <strong>Game of Thrones</strong> creator <strong>George R.R. Martin, TONIGHT at 8\xa0pm ET</strong>, in his <strong>only</strong> public U.S. appearance for the release of <a href="http://www.amazon.com/gp/product/B00EGMGGVK/ref=as_li_tl?ie=UTF8&amp;camp=1789&amp;creative=390957&amp;creativeASIN=B00EGMGGVK&amp;linkCode=as2&amp;tag=92y-20&amp;linkId=V3MMY57QIQ7QVFNK"><em>The World of Ice and Fire: The Untold History of Westeros and the Game of Thrones</em></a>. Exclusively on Tumblr!</p>\n</blockquote>\n<p><span>To reiterate: this an\xa0</span><strong>only</strong><span>\xa0and an\xa0</span><strong>exclusive\xa0</strong><span>and it\xa0</span><strong>starts in just a few minutes</strong><span>. Hurry on over. \xa0</span></p>', u'thumbnail_url': u''}
+    livestream_result = handle_video_posts(session,livestream_post_dict)
 
     return
 
