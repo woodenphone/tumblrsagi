@@ -144,6 +144,7 @@ def run_yt_dl_single(session,post_dict,download_url,post_id,extractor_used,audio
     row_dict["media_url"] = download_url
     row_dict["sha512base64_hash"] = sha512base64_hash
     row_dict["local_filename"] = filename
+    row_dict["file_extention"] = file_ext
     row_dict["date_added"] = time_of_retreival
     row_dict["extractor_used"] = extractor_used
     row_dict["yt_dl_info_json"] = info_json

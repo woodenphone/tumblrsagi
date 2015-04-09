@@ -53,18 +53,18 @@ class Media(Base):
     __tablename__ = "media"
     # Columns
     # Locally generated
-    primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    date_added = sqlalchemy.Column(sqlalchemy.BigInteger)
-    media_url = sqlalchemy.Column(sqlalchemy.UnicodeText())
-    sha512base64_hash = sqlalchemy.Column(sqlalchemy.String(250))
+    primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Only used as a primary key
+    date_added = sqlalchemy.Column(sqlalchemy.BigInteger)# The unix time the media was saved
+    media_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# Should have a constant length since it's a hash
+    sha512base64_hash = sqlalchemy.Column(sqlalchemy.String(88))
     local_filename = sqlalchemy.Column(sqlalchemy.String(250))# Filename on local storage, file path is deterministically generated from this
     remote_filename = sqlalchemy.Column(sqlalchemy.UnicodeText())# Filename from original location (If any)
-    file_extention = sqlalchemy.Column(sqlalchemy.String(250))# ex. .png, .jpeg
-    extractor_used = sqlalchemy.Column(sqlalchemy.String(250))# internal name of the extractor used
+    file_extention = sqlalchemy.Column(sqlalchemy.String(25))# ex. png, jpeg
+    extractor_used = sqlalchemy.Column(sqlalchemy.String(250))# internal name of the extractor used (function name of extractor)
     # Video and Audio use these
     yt_dl_info_json = sqlalchemy.Column(sqlalchemy.UnicodeText())
-    video_id = sqlalchemy.Column(sqlalchemy.UnicodeText())
-    audio_id = sqlalchemy.Column(sqlalchemy.UnicodeText())
+    video_id = sqlalchemy.Column(sqlalchemy.UnicodeText())# The ID of the video used by the originating site
+    audio_id = sqlalchemy.Column(sqlalchemy.UnicodeText())# The ID of the audio used by the originating site
     annotations = sqlalchemy.Column(sqlalchemy.UnicodeText())
 
 
