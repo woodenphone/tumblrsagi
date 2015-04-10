@@ -48,24 +48,26 @@ def download_image_link(session,media_url):
 
     # Generate filename for output file (With extention)
     cropped_full_image_url = media_url.split("?")[0]# Remove after ?
-    full_image_filename = os.path.split(cropped_full_image_url)[1]
-    extention = full_image_filename.split(".")[-1]
-    image_filename = str(time_of_retreival)+"."+extention
-    logging.debug("download_image_link() ""image_filename: "+repr(image_filename))
-    file_path = generate_media_file_path_timestamp(root_path=config.root_path,filename=image_filename)
+    remote_filename = os.path.split(cropped_full_image_url)[1]
+    file_extention = get_file_extention(remote_filename)
+    local_filename = str(time_of_retreival)+"."+file_extention
+    logging.debug("download_image_link() ""local_filename: "+repr(local_filename))
+    file_path = generate_media_file_path_timestamp(root_path=config.root_path,filename=local_filename)
     logging.debug("download_image_link() ""file_path: "+repr(file_path))
 
     # Compare hash with database and add new entry for this URL
     hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
     if hash_check_row_dict:
         media_already_saved = True
-        image_filename = hash_check_row_dict["local_filename"]
+        local_filename = hash_check_row_dict["local_filename"]
 
     # Add new row
     new_media_row = Media(
         media_url=media_url,
         sha512base64_hash=sha512base64_hash,
-        local_filename=image_filename,
+        local_filename=local_filename,
+        remote_filename = remote_filename,
+        file_extention=file_extention,
         date_added=time_of_retreival,
         extractor_used="download_image_link",
         )

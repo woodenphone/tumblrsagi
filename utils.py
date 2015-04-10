@@ -433,6 +433,17 @@ def appendlist(lines,list_file_path="tumblr_done_list.txt",initial_text="# List 
     return
 
 
+def get_file_extention(file_path):
+    """Take a file name or path and return the extention
+    If no extention, return None"""
+    filename = os.path.basename(file_path)
+    if "." in filename:
+        file_ext = filename.split(".")[-1]
+        return file_ext
+    else:
+        return None
+
+
 def main():
     pass
 

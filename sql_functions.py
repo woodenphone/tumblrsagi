@@ -220,7 +220,7 @@ def find_blog_posts(session,sanitized_username):
     post_ids = []
     for row in posts_rows:
         post_ids.append(row["all_posts_id"])
-        #logging.debug("find_blog_posts()"+"row"+": "+repr(row))
+         #logging.debug("find_blog_posts()"+"row"+": "+repr(row))
     logging.debug("find_blog_posts()"+"post_ids"+": "+repr(post_ids))
     return post_ids
 

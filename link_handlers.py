@@ -122,6 +122,62 @@ def handle_image_links(session,all_post_links):
     return link_hash_dict# {link:hash}
 
 
+
+
+def handle_video_file_links(session,all_post_links):# WIP
+    """Check and save video files linked to by a post
+    return link_hash_dict = {}# {link:hash}"""
+    logging.debug("handle_image_links() all_post_links"+repr(all_post_links))
+    # Find all links in post dict
+    # Select whick links are image links
+    link_extentions = [
+
+    ]
+    video_links = []
+    for link in all_post_links:
+        # Grab extention if one exists
+        after_last_dot = link.split(".")[-1]
+        before_first_q_mark = after_last_dot.split("?")[0]
+        # Check if extention is one we want
+        for extention in link_extentions:
+            if extention in before_first_q_mark:
+                video_links.append(link)
+    logging.debug("handle_video_file_links() video_links: "+repr(video_links))
+    # Save image links
+    link_hash_dict = download_image_links(session,video_links)
+    return link_hash_dict# {link:hash}
+
+
+def handle_video_links(session,all_post_links):# WIP
+    video_dicts = []
+    for link in all_post_links:
+        # Site handlers
+        # Youtube
+        if "youtube.com" in link[0:100]:
+            logging.debug("Link is youtube video: "+repr(link))
+            video_dict = run_yt_dl_single(session,post_dict,download_url,post_id,extractor_used,audio_id=None,video_id=None)
+            video_dicts.append(video_dict)
+
+        # gfycat.com
+        elif "//gfycat.com/" in link[0:20]:
+            logging.debug("Link is gfycat video: "+repr(link))
+            video_dict = run_yt_dl_single(session,post_dict,download_url,post_id,extractor_used,audio_id=None,video_id=None)
+            video_dicts.append(video_dict)
+
+        # http://webmshare.com
+        elif "//webmshare.com" in link[0:20]:
+            logging.debug("Link is webmshare video: "+repr(link))
+            video_dict = run_yt_dl_single(session,post_dict,download_url,post_id,extractor_used,audio_id=None,video_id=None)
+            video_dicts.append(video_dict)
+
+
+    combined_video_dict =  merge_dicts(*video_dicts)# Join the dicts for different videos togather
+    assert(type(combined_video_dict) is type({}))# Must be a dict
+    return combined_video_dict
+
+
+
+
 def remove_tumblr_links(link_list):
     """Remove links to posts and other known unwanted tumblr links"""
     wanted_links = []
@@ -159,13 +215,16 @@ def handle_links(session,post_dict):# TODO FIXME
             new_links.append(post_link)
     new_links = uniquify(new_links)
     logging.debug("new_links: "+repr(new_links))
-
+    link_info_dicts = []
     # Saved linked images
     # TODO FIXME
     remote_images_dict = handle_image_links(session,new_links)# {link:hash}
+    link_info_dicts.append(remote_images_dict)
 
     # Saved linked videos
     # TODO FIXME
+    remote_videos_dict = handle_video_links(session,all_post_links)
+    link_info_dicts.append(remote_videos_dict)
 
     # Saved linked audio
     # TODO FIXME
@@ -183,10 +242,7 @@ def handle_links(session,post_dict):# TODO FIXME
 
 
     # Join mapping dicts # {link:hash}
-    remote_link_to_hash_dict = merge_dicts(
-    preexisting_link_dict,# Links that were already in the DB
-    remote_images_dict,
-    )
+    remote_link_to_hash_dict = combined_video_dict =  merge_dicts(*link_info_dicts)
     logging.debug("handle_links() Finished processing external links.")
     logging.debug("handle_links() remote_link_to_hash_dict:"+repr(remote_link_to_hash_dict))
     return remote_link_to_hash_dict# {link:hash}
