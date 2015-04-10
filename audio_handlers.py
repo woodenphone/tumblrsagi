@@ -110,7 +110,7 @@ def handle_tumblr_audio(session,post_dict):
     logging.debug("sha512base64_hash: "+repr(sha512base64_hash))
 
     # Check if hash is in DB
-    hash_check_row_dict = lookup_media_hash(
+    hash_check_row_dict = sql_functions.lookup_media_hash(
         session,
         table_class=Media,
         sha512base64_hash=sha512base64_hash
