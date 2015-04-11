@@ -43,7 +43,7 @@ def handle_youtube_video(session,post_dict):# NEW TABLES
     https://github.com/rg3/youtube-dl/"""
     assert(post_dict["type"] == u"video")# Ensure calling code isn't broken
     assert(post_dict["video_type"] == u"youtube")# Ensure calling code isn't broken
-
+    video_dicts = []# Init early so skipped videos can still return results
     logging.debug("Processing youtube video")
     video_page = post_dict["post_url"]
     post_id = str(post_dict["id"])
@@ -77,12 +77,15 @@ def handle_youtube_video(session,post_dict):# NEW TABLES
         video_page_row = video_page_rows.fetchone()
         if video_page_row:
             logging.debug("Skipping previously saved video: "+repr(video_page_row))
+            video_dicts.append(
+                {download_url : video_page_row["sha512base64_hash"]}
+                )
         else:
             download_urls.append(youtube_url)
         continue
 
     # Download videos if there are any
-    video_dicts = []
+
     for download_url in download_urls:
         video_dict = run_yt_dl_single(
             session,

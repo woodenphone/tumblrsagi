@@ -63,7 +63,7 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
         )
     if video_page_row:
         logging.debug("Skipping previously saved video: "+repr(video_page_row))
-        return
+        return {download_url : video_page_row["sha512base64_hash"]}
 
     # Form command to run
     # Define arguments. see this url for help
