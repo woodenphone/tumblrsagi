@@ -78,7 +78,7 @@ def handle_youtube_video(session,post_dict):# NEW TABLES
         if video_page_row:
             logging.debug("Skipping previously saved video: "+repr(video_page_row))
             video_dicts.append(
-                {download_url : video_page_row["sha512base64_hash"]}
+                {video_page_row["media_url"] : video_page_row["sha512base64_hash"]}
                 )
         else:
             download_urls.append(youtube_url)
