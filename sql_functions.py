@@ -47,7 +47,7 @@ def connect_to_db():
 
 
 # Media
-def check_if_hash_in_db(session,sha512base64_hash):# Phase this out
+def check_if_hash_in_db(session,sha512base64_hash):
     """Check if a hash is in the media DB
     Return a dict of the first found row if it is, otherwise return None"""
     hash_query = sqlalchemy.select([Media]).where(Media.sha512base64_hash == sha512base64_hash)
@@ -59,7 +59,7 @@ def check_if_hash_in_db(session,sha512base64_hash):# Phase this out
         return None
 
 
-def check_if_media_url_in_DB(session,media_url):# Phase this out
+def check_if_media_url_in_DB(session,media_url):
     """Check if a URL is in the media DB
     Return a dict of the first found row if it is, otherwise return None"""
     media_url_query = sqlalchemy.select([Media]).where(Media.media_url == media_url)
@@ -71,7 +71,7 @@ def check_if_media_url_in_DB(session,media_url):# Phase this out
         return None
 
 
-def lookup_media_url(session,table_class,media_url):# New and shiny
+def lookup_media_url(session,table_class,media_url):# New and obsolete
     """Check if a URL is in the given table
     Return a dict of the first found row if it is, otherwise return None"""
     media_url_query = sqlalchemy.select([table_class]).where(table_class.media_url == media_url)
@@ -83,7 +83,7 @@ def lookup_media_url(session,table_class,media_url):# New and shiny
         return None
 
 
-def lookup_media_hash(session,table_class,sha512base64_hash):# New and shiny
+def lookup_media_hash(session,table_class,sha512base64_hash):# New and obsolete
     """Check if a sha512base64_hash is in the given table
     Return a dict of the first found row if it is, otherwise return None"""
     media_url_query = sqlalchemy.select([table_class]).where(table_class.sha512base64_hash == sha512base64_hash)

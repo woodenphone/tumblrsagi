@@ -56,6 +56,15 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
 
     temp_id = str(get_current_unix_time())# For filenames in the temp dir
 
+    # Check that URL is not already saved
+    video_page_row = sql_functions.check_if_media_url_in_DB(
+        session=session,
+        media_url=download_url
+        )
+    if video_page_row:
+        logging.debug("Skipping previously saved video: "+repr(video_page_row))
+        return
+
     # Form command to run
     # Define arguments. see this url for help
     # https://github.com/rg3/youtube-dl

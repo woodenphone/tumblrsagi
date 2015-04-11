@@ -37,8 +37,6 @@ def crop_youtube_id(url):
         return
 
 
-
-# updated for new tables and yt-dl wrapper
 def handle_youtube_video(session,post_dict):# NEW TABLES
     """Download youtube videos from video posts
     https://github.com/rg3/youtube-dl/blob/master/docs/supportedsites.md
@@ -102,10 +100,6 @@ def handle_youtube_video(session,post_dict):# NEW TABLES
     return combined_video_dict
 
 
-
-
-
-
 def handle_vimeo_videos(session,post_dict):# New table
     """Handle downloading of vimeo videos
     https://github.com/rg3/youtube-dl/blob/master/docs/supportedsites.md"""
@@ -127,30 +121,12 @@ def handle_vimeo_videos(session,post_dict):# New table
                 embed_url = embed_url_search.group(1)
                 vimeo_urls.append(embed_url)
         continue
-
-    # Deduplicate links
-    vimeo_urls = uniquify(vimeo_urls)
     logging.debug("vimeo_urls: "+repr(vimeo_urls))
-
-    # Skip IDs that have already been done
-    download_urls = []
-    for vimeo_url in vimeo_urls:
-        video_page_row = sql_functions.lookup_media_url(
-            session,
-            table_class=Media,
-            media_url=vimeo_url
-            )
-        if video_page_row:
-            logging.debug("Skipping previously saved video: "+repr(video_page_row))
-            continue
-        download_urls.append(vimeo_url)
-        continue
-    logging.debug("download_urls: "+repr(download_urls))
 
     # Download videos if there are any
     combined_video_dict = run_yt_dl_multiple(
         session = session,
-        download_urls = download_urls,
+        download_urls = vimeo_urls,
         extractor_used="handle_vimeo_videos",
         )
     logging.debug("Finished downloading vimeo embeds")
@@ -179,29 +155,12 @@ def handle_imgur_videos(session,post_dict):# NEW TABLES
                 imgur_urls.append(embed_url)
         continue
 
-    # Deduplicate links
-    imgur_urls = uniquify(imgur_urls)
     logging.debug("imgur_urls: "+repr(imgur_urls))
-
-    # Skip IDs that have already been done
-    download_urls = []
-    for imgur_url in imgur_urls:
-        video_page_row = sql_functions.lookup_media_url(
-            session,
-            table_class=Media,
-            media_url=imgur_url
-            )
-        if video_page_row:
-            logging.debug("Skipping previously saved video: "+repr(video_page_row))
-            continue
-        download_urls.append(imgur_url)
-        continue
-    logging.debug("download_urls: "+repr(download_urls))
 
     # Download videos if there are any
     combined_video_dict = run_yt_dl_multiple(
         session = session,
-        download_urls = download_urls,
+        download_urls = imgur_urls,
         extractor_used="handle_imgur_videos",
         )
     logging.debug("Finished downloading imgur_video embeds")
@@ -246,12 +205,8 @@ def handle_vine_videos(session,post_dict):# New table
             # Look up ID in media DB
             video_id = id_search.group(1)
             logging.debug("video_id: "+repr(video_id))
-            video_page_row = sql_functions.lookup_media_url(
-            session,
-            table_class=Media,
-            media_url=vine_url
-            )
-            if video_page_row:
+            video_id_row = None# TODO FIXME
+            if video_id_row:
                 logging.debug("Skipping previously saved video: "+repr(video_page_row))
                 continue
         download_urls.append(vine_url)
@@ -277,17 +232,6 @@ def handle_tumblr_videos(session,post_dict):
     post_id = str(post_dict["id"])
     logging.debug("video_page: "+repr(video_page))
     logging.debug("post_id: "+repr(post_id))
-
-    # Check if video is already saved, return URL:Hash pair if it is
-    video_page_row = sql_functions.lookup_media_url(
-            session,
-            table_class=Media,
-            media_url=video_page
-            )
-    if video_page_row:
-        preexisting_filename = video_page_row["filename"]
-        sha512base64_hash = video_page_row["sha512base64_hash"]
-        return {video_page:sha512base64_hash}
 
     download_urls = [video_page]
     # Download videos if there are any
@@ -321,30 +265,12 @@ def handle_livestream_videos(session,post_dict):
                 embed_url = embed_url_search.group(1)
                 livestream_urls.append(embed_url)
         continue
-
-    # Deduplicate links
-    livestream_urls = uniquify(livestream_urls)
     logging.debug("livestream_urls: "+repr(livestream_urls))
-
-    # Skip IDs that have already been done
-    download_urls = []
-    for livestream_url in livestream_urls:
-        video_page_row = sql_functions.lookup_media_url(
-            session,
-            table_class=Media,
-            media_url=livestream_url
-            )
-        if video_page_row:
-            logging.debug("Skipping previously saved video: "+repr(video_page_row))
-            continue
-        download_urls.append(livestream_url)
-        continue
-    logging.debug("download_urls: "+repr(download_urls))
 
     # Download videos if there are any
     combined_video_dict = run_yt_dl_multiple(
         session = session,
-        download_urls = download_urls,
+        download_urls = livestream_urls,
         extractor_used="handle_livestream_videos",
         )
 
@@ -355,8 +281,7 @@ def handle_livestream_videos(session,post_dict):
 
 
 def handle_yahoo_videos(session,post_dict):
-    """TODO"""
-
+    """Download yahoo videos given by the videos section fo the API"""
     logging.debug("Processing yahoo video")
     post_id = str(post_dict["id"])
 
@@ -376,39 +301,17 @@ def handle_yahoo_videos(session,post_dict):
                 embed_url = embed_url_search.group(1)
                 yahoo_urls.append(embed_url)
         continue
-
-    # Deduplicate links
-    yahoo_urls = uniquify(yahoo_urls)
     logging.debug("yahoo_urls: "+repr(yahoo_urls))
-
-    # Skip IDs that have already been done
-    download_urls = []
-    for yahoo_url in yahoo_urls:
-        video_page_row = sql_functions.lookup_media_url(
-            session,
-            table_class=Media,
-            media_url=yahoo_url
-            )
-        if video_page_row:
-            logging.debug("Skipping previously saved video: "+repr(video_page_row))
-            continue
-        download_urls.append(yahoo_url)
-        continue
-    logging.debug("download_urls: "+repr(download_urls))
 
     # Download videos if there are any
     combined_video_dict = run_yt_dl_multiple(
         session = session,
-        download_urls = download_urls,
+        download_urls = yahoo_urls,
         extractor_used="handle_yahoo_videos",
         )
 
     logging.debug("Finished downloading yahoo embeds")
     return combined_video_dict
-
-
-    assert(False)# Unimplimented
-    pass
 
 
 

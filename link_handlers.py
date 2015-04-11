@@ -20,7 +20,7 @@ from sql_functions import Media
 import sql_functions
 import config # User settings
 from image_handlers import *
-
+from yt_dl_common import *
 
 
 
@@ -161,6 +161,7 @@ def handle_video_links(session,all_post_links):# WIP
         # Site handlers
         # Youtube
         if "youtube.com" in link[0:100]:
+            continue
             logging.debug("Link is youtube video: "+repr(link))
             video_dict = run_yt_dl_single(
             session=session,
