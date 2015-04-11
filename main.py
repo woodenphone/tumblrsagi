@@ -241,7 +241,9 @@ def main():
         )
         # Program
         #classy_play()
-        save_blogs(list_file_path="tumblr_todo_list.txt",max_pages=None)
+        save_blogs(
+            list_file_path=config.blog_list_path,
+            max_pages=config.max_pages_to_check)
         # /Program
         logging.info("Finished, exiting.")
         return

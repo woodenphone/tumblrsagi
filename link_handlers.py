@@ -131,7 +131,14 @@ def handle_video_file_links(session,all_post_links):# WIP
     # Find all links in post dict
     # Select whick links are image links
     link_extentions = [
-
+    "wmv",
+    "mp4",
+    "mov",
+    "",
+    "",
+    # Flash
+    "fla",
+    "swf",
     ]
     video_links = []
     for link in all_post_links:
@@ -155,19 +162,36 @@ def handle_video_links(session,all_post_links):# WIP
         # Youtube
         if "youtube.com" in link[0:100]:
             logging.debug("Link is youtube video: "+repr(link))
-            video_dict = run_yt_dl_single(session,post_dict,download_url,post_id,extractor_used,audio_id=None,video_id=None)
+            video_dict = run_yt_dl_single(
+            session=session,
+            download_url=download_url,
+            extractor_used="handle_video_links:youtube.com",
+            video_id=video_id,
+            )
             video_dicts.append(video_dict)
 
         # gfycat.com
         elif "//gfycat.com/" in link[0:20]:
             logging.debug("Link is gfycat video: "+repr(link))
-            video_dict = run_yt_dl_single(session,post_dict,download_url,post_id,extractor_used,audio_id=None,video_id=None)
+            video_dict = run_yt_dl_single(
+            session=session,
+            download_url=download_url,
+            extractor_used="handle_video_links:gfycat.com",
+            audio_id=audio_id,
+            video_id=video_id,
+            )
             video_dicts.append(video_dict)
 
         # http://webmshare.com
         elif "//webmshare.com" in link[0:20]:
             logging.debug("Link is webmshare video: "+repr(link))
-            video_dict = run_yt_dl_single(session,post_dict,download_url,post_id,extractor_used,audio_id=None,video_id=None)
+            video_dict = run_yt_dl_single(
+            session=session,
+            download_url=download_url,
+            extractor_used="handle_video_links:webmshare.com",
+            audio_id=audio_id,
+            video_id=video_id,
+            )
             video_dicts.append(video_dict)
 
 
@@ -239,8 +263,6 @@ def handle_links(session,post_dict):# TODO FIXME
     # https://e621.net/post/show/599802
     # TODO FIXME
 
-
-
     # Join mapping dicts # {link:hash}
     remote_link_to_hash_dict = combined_video_dict =  merge_dicts(*link_info_dicts)
     logging.debug("handle_links() Finished processing external links.")
@@ -254,12 +276,24 @@ def handle_links(session,post_dict):# TODO FIXME
 
 
 
+def debug():
+    """For WIP, debug, ect function calls"""
+    session = sql_functions.connect_to_db()
+
+
 
 
 
 
 def main():
-    pass
+    try:
+        setup_logging(log_file_path=os.path.join("debug","link_handlers_log.txt"))
+        debug()
+    except Exception, e:# Log fatal exceptions
+        logging.critical("Unhandled exception!")
+        logging.exception(e)
+    return
+
 
 if __name__ == '__main__':
     main()

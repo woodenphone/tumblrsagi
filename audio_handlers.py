@@ -59,9 +59,7 @@ def handle_soundcloud_audio(session,post_dict):
     # Download videos if there are any
     combined_audio_dict = run_yt_dl_multiple(
         session = session,
-        post_dict = post_dict,
         download_urls = download_urls,
-        post_id = post_id,
         extractor_used="handle_soundcloud_audio",
         audio_id = soundcloud_id
         )

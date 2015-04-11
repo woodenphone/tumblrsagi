@@ -88,9 +88,7 @@ def handle_youtube_video(session,post_dict):# NEW TABLES
     for download_url in download_urls:
         video_dict = run_yt_dl_single(
             session,
-            post_dict,
             download_url = download_url,
-            post_id = post_id,
             extractor_used="handle_youtube_video",
             video_id = crop_youtube_id(download_url),
             )
@@ -152,9 +150,7 @@ def handle_vimeo_videos(session,post_dict):# New table
     # Download videos if there are any
     combined_video_dict = run_yt_dl_multiple(
         session = session,
-        post_dict = post_dict,
         download_urls = download_urls,
-        post_id = post_id,
         extractor_used="handle_vimeo_videos",
         )
     logging.debug("Finished downloading vimeo embeds")
@@ -205,9 +201,7 @@ def handle_imgur_videos(session,post_dict):# NEW TABLES
     # Download videos if there are any
     combined_video_dict = run_yt_dl_multiple(
         session = session,
-        post_dict = post_dict,
         download_urls = download_urls,
-        post_id = post_id,
         extractor_used="handle_imgur_videos",
         )
     logging.debug("Finished downloading imgur_video embeds")
@@ -267,9 +261,7 @@ def handle_vine_videos(session,post_dict):# New table
     # Download videos if there are any
     combined_video_dict = run_yt_dl_multiple(
         session = session,
-        post_dict = post_dict,
         download_urls = download_urls,
-        post_id = post_id,
         extractor_used="handle_vine_videos",
         )
     logging.debug("Finished downloading Vine embeds")
@@ -301,9 +293,7 @@ def handle_tumblr_videos(session,post_dict):
     # Download videos if there are any
     combined_video_dict = run_yt_dl_multiple(
         session = session,
-        post_dict = post_dict,
         download_urls = download_urls,
-        post_id = post_id,
         extractor_used="handle_tumblr_videos",
         )
     logging.debug("Finished downloading Tumblr embeds")
@@ -354,9 +344,7 @@ def handle_livestream_videos(session,post_dict):
     # Download videos if there are any
     combined_video_dict = run_yt_dl_multiple(
         session = session,
-        post_dict = post_dict,
         download_urls = download_urls,
-        post_id = post_id,
         extractor_used="handle_livestream_videos",
         )
 
@@ -411,9 +399,7 @@ def handle_yahoo_videos(session,post_dict):
     # Download videos if there are any
     combined_video_dict = run_yt_dl_multiple(
         session = session,
-        post_dict = post_dict,
         download_urls = download_urls,
-        post_id = post_id,
         extractor_used="handle_yahoo_videos",
         )
 

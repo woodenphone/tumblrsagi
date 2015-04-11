@@ -21,11 +21,10 @@ import config # User settings
 
 
 
-def run_yt_dl_multiple(session,post_dict,download_urls,post_id,extractor_used,audio_id=None,video_id=None):
+def run_yt_dl_multiple(session,download_urls,extractor_used,audio_id=None,video_id=None):
     """Run yt-dl for n >= 0 videos
     Return joined dicts passed back from run_yt_dl_single()
     """
-    assert(type(post_dict) is type({}))
     assert(type(download_urls) is type([]))
     # Prevent duplicate downloads
     download_urls = uniquify(download_urls)
@@ -34,9 +33,7 @@ def run_yt_dl_multiple(session,post_dict,download_urls,post_id,extractor_used,au
     for download_url in download_urls:
         video_dict = run_yt_dl_single(
             session=session,
-            post_dict=post_dict,
             download_url=download_url,
-            post_id=post_id,
             extractor_used=extractor_used,
             audio_id=audio_id,
             video_id=video_id,
@@ -52,10 +49,12 @@ def run_yt_dl_multiple(session,post_dict,download_urls,post_id,extractor_used,au
     return combined_video_dict
 
 
-def run_yt_dl_single(session,post_dict,download_url,post_id,extractor_used,audio_id=None,video_id=None):
+def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=None):
     """Run youtube-dl for extractors, adding row to the table whose ORM class is given
     return """
     logging.debug("download_url: "+repr(download_url))
+
+    temp_id = str(get_current_unix_time())# For filenames in the temp dir
 
     # Form command to run
     # Define arguments. see this url for help
@@ -68,7 +67,7 @@ def run_yt_dl_single(session,post_dict,download_url,post_id,extractor_used,audio
     info_json_arg = "--write-info-json"
     description_arg ="--write-annotations"
     output_dir = os.path.join(config.root_path,"temp")
-    output_template = os.path.join(output_dir, post_id+".%(ext)s")# CHECK THIS! Will multiple videos in a link be an issue?
+    output_template = os.path.join(output_dir, temp_id+".%(ext)s")# CHECK THIS! Will multiple videos in a link be an issue?
 
     # "youtube-dl.exe -i --restrict-filenames -o --write-info-json --write-description"
     command = [program_path, ignore_errors, safe_filenames, info_json_arg, description_arg, output_arg, output_template, download_url]
@@ -86,7 +85,7 @@ def run_yt_dl_single(session,post_dict,download_url,post_id,extractor_used,audio
         #return {}
 
     # Read info JSON file
-    expected_info_path = os.path.join(output_dir, post_id+".info.json")
+    expected_info_path = os.path.join(output_dir, temp_id+".info.json")
     info_exists = os.path.exists(expected_info_path)
     if not info_exists:
         logging.error("Info file not found!")
@@ -164,8 +163,36 @@ def run_yt_dl_single(session,post_dict,download_url,post_id,extractor_used,audio
         }
 
 
+
+
+
+def debug():
+    """For WIP, debug, ect function calls"""
+    session = sql_functions.connect_to_db()
+
+    # gfycat
+    gfycat_result = run_yt_dl_single(
+        session,
+        download_url = "http://gfycat.com/MerryAdolescentAlaskankleekai",
+        extractor_used = "DEBUG:linked_gfycat",
+        audio_id=None,
+        video_id=None
+        )
+    logging.debug("gfycat_result: "+repr(gfycat_result))
+
+
+
+
+
+
 def main():
-    pass
+    try:
+        setup_logging(log_file_path=os.path.join("debug","yt_dl_common_log.txt"))
+        debug()
+    except Exception, e:# Log fatal exceptions
+        logging.critical("Unhandled exception!")
+        logging.exception(e)
+    return
 
 if __name__ == '__main__':
     main()
