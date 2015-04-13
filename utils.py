@@ -434,18 +434,28 @@ def appendlist(lines,list_file_path="tumblr_done_list.txt",initial_text="# List 
 
 
 def get_file_extention(file_path):
-    """Take a file name or path and return the extention
+    """Take a file name, URL, or path and return the extention
     If no extention, return None"""
-    filename = os.path.basename(file_path)
-    if "." in filename:
-        file_ext = filename.split(".")[-1]
-        return file_ext
-    else:
-        return None
+    # http://domain.tld/foo.bar -> foo.bar
+    filename = os.path.basename(file_path)# Make sure we don't include domain names
+    # foo.bar -> bar
+    # foo.bar?baz -> bar
+    # foobar/baz -> None
+    # foobar/baz?fizz -> None
+    file_extention_regex = """\.([a-zA-Z0-9]+)[?]?"""
+    file_extention_search = re.search(file_extention_regex, filename, re.IGNORECASE)
+    if file_extention_search:
+        file_extention = file_extention_search.group(1)
+        return file_extention
 
 
 def main():
     pass
+    # Test get_file_extention
+    print get_file_extention("http://41.media.tumblr.com/5f52121f2a8f03b086aff076a00a5e2d/tumblr_nfcz9lPRUR1qbvkmso1_1280.jpg?")# jpg
+    print get_file_extention(u'https://www.tumblr.com/explore/links')# None
+    print get_file_extention("gLdiLePCFaV6t1x56uokkwMvcuTNwhFYksCfR6h4zk3gU2bvGjnIprjtcKaLNUW8Snxl9iFutq51hjgO2DLB9A==")# None
+    print get_file_extention("http://www.papermag.com/2014/11/arabelle_sicardi.php")# php
 
 if __name__ == '__main__':
     main()

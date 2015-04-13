@@ -102,7 +102,7 @@ def handle_image_links(session,all_post_links):
     logging.debug("handle_image_links() all_post_links"+repr(all_post_links))
     # Find all links in post dict
     # Select whick links are image links
-    link_extentions = [
+    valid_extentions = [
     "jpg","jpeg",
     "gif",
     "png",
@@ -110,12 +110,12 @@ def handle_image_links(session,all_post_links):
     image_links = []
     for link in all_post_links:
         # Grab extention if one exists
-        after_last_dot = link.split(".")[-1]
-        before_first_q_mark = after_last_dot.split("?")[0]
+        link_extention = get_file_extention(link)
+        logging.debug("handle_image_links() "+"Link: "+repr(link)+" , link_extention: "+repr(link_extention))
         # Check if extention is one we want
-        for extention in link_extentions:
-            if extention in before_first_q_mark:
-                image_links.append(link)
+        if link_extention in valid_extentions:
+            logging.debug("handle_image_links() "+"Link has valid extention: "+repr(link))
+            image_links.append(link)
     #logging.debug("handle_image_links() image_links: "+repr(image_links))
     # Save image links
     link_hash_dict = download_image_links(session,image_links)
@@ -127,10 +127,10 @@ def handle_image_links(session,all_post_links):
 def handle_video_file_links(session,all_post_links):# WIP
     """Check and save video files linked to by a post
     return link_hash_dict = {}# {link:hash}"""
-    logging.debug("handle_image_links() all_post_links"+repr(all_post_links))
+    logging.debug("handle_video_file_links() all_post_links"+repr(all_post_links))
     # Find all links in post dict
     # Select whick links are image links
-    link_extentions = [
+    valid_extentions = [
     "wmv",
     "mp4",
     "mov",
@@ -143,12 +143,12 @@ def handle_video_file_links(session,all_post_links):# WIP
     video_links = []
     for link in all_post_links:
         # Grab extention if one exists
-        after_last_dot = link.split(".")[-1]
-        before_first_q_mark = after_last_dot.split("?")[0]
+        link_extention = get_file_extention(link)
+        logging.debug("handle_video_file_links() "+"Link: "+repr(link)+" , link_extention: "+repr(link_extention))
         # Check if extention is one we want
-        for extention in link_extentions:
-            if extention in before_first_q_mark:
-                video_links.append(link)
+        if link_extention in valid_extentions:
+            logging.debug("handle_video_file_links() "+"Link has valid extention: "+repr(link))
+            video_links.append(link)
     logging.debug("handle_video_file_links() video_links: "+repr(video_links))
     # Save image links
     link_hash_dict = download_image_links(session,video_links)
@@ -160,7 +160,7 @@ def handle_video_links(session,all_post_links):# WIP
     for link in all_post_links:
         # Site handlers
         # Youtube
-        if "youtube.com" in link[0:100]:
+        if ("youtube.com" in link[0:100]) or ("youtu.be" in link[0:100]):
             continue
             logging.debug("Link is youtube video: "+repr(link))
             video_dict = run_yt_dl_single(
@@ -172,7 +172,7 @@ def handle_video_links(session,all_post_links):# WIP
             video_dicts.append(video_dict)
 
         # gfycat.com
-        elif "//gfycat.com/" in link[0:20]:
+        elif "gfycat.com/" in link[0:20]:
             logging.debug("Link is gfycat video: "+repr(link))
             video_dict = run_yt_dl_single(
             session=session,
@@ -184,7 +184,7 @@ def handle_video_links(session,all_post_links):# WIP
             video_dicts.append(video_dict)
 
         # http://webmshare.com
-        elif "//webmshare.com" in link[0:20]:
+        elif "webmshare.com" in link[0:20]:
             logging.debug("Link is webmshare video: "+repr(link))
             video_dict = run_yt_dl_single(
             session=session,

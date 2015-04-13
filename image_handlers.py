@@ -48,8 +48,12 @@ def download_image_link(session,media_url):
 
     # Generate filename for output file (With extention)
     cropped_full_image_url = media_url.split("?")[0]# Remove after ?
-    remote_filename = os.path.split(cropped_full_image_url)[1]
+    remote_filename = os.path.basename(cropped_full_image_url)
     file_extention = get_file_extention(remote_filename)
+    if not file_extention:
+        logging.error("download_image_link() No file extention!")
+        logging.error(repr(locals()))
+        assert(False)# Something broke and then called this
     local_filename = str(time_of_retreival)+"."+file_extention
     logging.debug("download_image_link() ""local_filename: "+repr(local_filename))
     file_path = generate_media_file_path_timestamp(root_path=config.root_path,filename=local_filename)
