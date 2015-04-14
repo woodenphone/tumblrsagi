@@ -133,13 +133,13 @@ class tumblr_blog:
         ", self.posts_post_count: "+repr(self.posts_post_count)+", self.info_post_count: "+repr(self.info_post_count))
         if max_pages is None:# Only run these tests if max_pages option not used
             if number_of_posts_retrieved < self.posts_post_count:
-                logging.error("Post count from /posts API was higher than the number of posts retrieved!")
-                logging.error(repr(locals()))
-                assert(False)# Stop for easier debugging
+                logging.warning("Post count from /posts API was higher than the number of posts retrieved!")
+                logging.warning(repr(locals()))
+                #assert(False)# Stop for easier debugging
             if number_of_posts_retrieved < self.info_post_count:
-                logging.error("Post count from /info API was higher than the number of posts retrieved!")
-                logging.error(repr(locals()))
-                assert(False)# Stop for easier debugging
+                logging.warning("Post count from /info API was higher than the number of posts retrieved!")
+                logging.warning(repr(locals()))
+                #assert(False)# Stop for easier debugging
         logging.info("Finished loading posts.")
         return
 
