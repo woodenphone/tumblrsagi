@@ -131,15 +131,27 @@ class tumblr_blog:
         logging.debug("Added "+repr(added_posts_counter)+" individual posts ")
         logging.info("number_of_posts_retrieved: "+repr(number_of_posts_retrieved)+
         ", self.posts_post_count: "+repr(self.posts_post_count)+", self.info_post_count: "+repr(self.info_post_count))
-        if max_pages is None:# Only run these tests if max_pages option not used
+        # Only run these tests if max_pages option not used
+        if max_pages is None:
+            # If actual does not match /posts
             if number_of_posts_retrieved < self.posts_post_count:
                 logging.warning("Post count from /posts API was higher than the number of posts retrieved!")
                 logging.warning(repr(locals()))
                 #assert(False)# Stop for easier debugging
+
+            # If actual does not match /info
             if number_of_posts_retrieved < self.info_post_count:
                 logging.warning("Post count from /info API was higher than the number of posts retrieved!")
                 logging.warning(repr(locals()))
                 #assert(False)# Stop for easier debugging
+
+            # If difference of post counts if more than 1
+            retreived_to_info_difference = abs(number_of_posts_retrieved - self.info_post_count)
+            if ( retreived_to_info_difference > 1 ):
+                logging.error("More than one post is missing!")
+                logging.error(repr(locals()))
+                assert(False)
+
         logging.info("Finished loading posts.")
         return
 
