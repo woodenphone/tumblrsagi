@@ -185,6 +185,7 @@ class tumblr_blog:
         number_of_posts = len(new_posts_list)
         logging.info("Processing a total of "+repr(number_of_posts)+" new posts for "+repr(self.sanitized_username))
         counter = 0
+
         for raw_post_dict in new_posts_list:
             counter += 1
             logging.info("Processing "+repr(counter)+"th post of a total of "+repr(number_of_posts))
@@ -193,14 +194,21 @@ class tumblr_blog:
             # Handle links for the post
             processed_post_dict = save_media(self.session,raw_post_dict)
             # Insert post into the DB
-            sql_functions.add_post_to_db(self.session,
-            raw_post_dict, processed_post_dict,
-            self.info_dict, self.sanitized_blog_url,
-            self.sanitized_username)
+            sql_functions.add_post_to_db(
+                self.session,
+                raw_post_dict,
+                processed_post_dict,
+                self.info_dict,
+                self.sanitized_blog_url,
+                self.sanitized_username
+                )
 
             self.session.commit()
+            continue
+
         logging.info("Finished processing posts")
         # Change date last saved in DB
+        self.update_blog_record(self)
         logging.warning("DATE LAST SAVED NOT YET IMPLIMENTED!")# TODO FIXME!
         #sql_functions.update_last_saved(self.session,self.info_dict,self.sanitized_blog_url)
         # Commit/save new data
@@ -216,6 +224,10 @@ class tumblr_blog:
             logging.debug(repr(c)+": "+repr(post))
         return
 
+    def update_blog_record(self):
+        """Add or update this blog's record in the blog metadata table"""
+        logging.warning("update_blog_record() not implimented!")
+        pass
 
 
 def save_blog(blog_url,max_pages=None):

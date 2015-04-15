@@ -54,7 +54,7 @@ def download_image_link(session,media_url):
         logging.error("download_image_link() No file extention!")
         logging.error(repr(locals()))
         assert(False)# Something broke and then called this
-    local_filename = str(time_of_retreival)+"."+file_extention
+    local_filename = generate_filename(ext=file_extention,hash=sha512base64_hash)
     logging.debug("download_image_link() ""local_filename: "+repr(local_filename))
     file_path = generate_media_file_path_timestamp(root_path=config.root_path,filename=local_filename)
     logging.debug("download_image_link() ""file_path: "+repr(file_path))

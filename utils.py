@@ -353,6 +353,21 @@ def generate_media_file_path_timestamp(root_path,filename):
     return file_path
 
 
+def generate_filename(ext,hash=None):# WIP
+    """Abstraction for generating filenames, this is so only one function needs to care about it
+    Take the file extention and maybe some other info and return a filename"""
+    # Timestamp filename
+    timestamp = str(get_current_unix_time())
+    filename = timestamp+"."+ext
+    return filename
+
+
+def generate_file_path(root_path,filename):#WIP
+    """Abstraction for generating file paths
+    Take a filename and create a path for it"""
+    return generate_media_file_path_timestamp(root_path,filename)# Lazy but good enough
+
+
 def clean_blog_url(raw_url):
     """Given a blog name or URL, mangle it into something the tumblr API will probably like"""
     # Example urls that need handling:

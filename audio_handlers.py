@@ -156,12 +156,12 @@ def handle_tumblr_audio(session,post_dict):
         return {"tumblr_audio":sha512base64_hash}
     if media_already_saved:
         # Use filename from DB
-        audio_filename = existing_filename
+        local_filename = existing_filename
     else:
         # Generate filename
-        audio_filename = str(time_of_retreival)+".mp3"
-        logging.debug("audio_filename: "+repr(audio_filename))
-        file_path = generate_media_file_path_timestamp(root_path=config.root_path,filename=audio_filename)
+        local_filename = generate_filename(ext=".mp3",hash=sha512base64_hash)
+        logging.debug("local_filename: "+repr(local_filename))
+        file_path = generate_file_path(root_path=config.root_path,filename=local_filename)
         # Save media to disk
         save_file(filenamein=file_path,data=file_data,force_save=False)
 
@@ -169,7 +169,7 @@ def handle_tumblr_audio(session,post_dict):
     new_media_row = Media(
         media_url = media_url,
         sha512base64_hash = sha512base64_hash,
-        local_filename = audio_filename,
+        local_filename = local_filename,
         date_added = time_of_retreival,
         file_extention = "mp3",
         extractor_used="handle_tumblr_audio",
