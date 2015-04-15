@@ -339,14 +339,14 @@ def hash_file_data(file_data):
     return sha512base64_hash
 
 
-def generate_media_file_path_hash(root_path,filename):
+def _generate_media_file_path_hash(root_path,filename):
     assert(len(filename) == 128)# Filenames should be of fixed length
     folder = filename[0:4]
     file_path = os.path.join(root_path,folder,filename)
     return file_path
 
 
-def generate_media_file_path_timestamp(root_path,filename):
+def _generate_media_file_path_timestamp(root_path,filename):
     first_four_chars = filename[0:4]
     second_two_chars = filename[4:6]
     file_path = os.path.join(root_path,first_four_chars,second_two_chars,filename)
@@ -362,10 +362,10 @@ def generate_filename(ext,hash=None):# WIP
     return filename
 
 
-def generate_file_path(root_path,filename):#WIP
+def generate_path(root_path,filename):#WIP
     """Abstraction for generating file paths
     Take a filename and create a path for it"""
-    return generate_media_file_path_timestamp(root_path,filename)# Lazy but good enough
+    return _generate_media_file_path_timestamp(root_path,filename)# Lazy but good enough
 
 
 def clean_blog_url(raw_url):
