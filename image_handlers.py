@@ -56,7 +56,7 @@ def download_image_link(session,media_url):
         assert(False)# Something broke and then called this
     local_filename = generate_filename(ext=file_extention,hash=sha512base64_hash)
     logging.debug("download_image_link() ""local_filename: "+repr(local_filename))
-    file_path = generate_media_file_path_timestamp(root_path=config.root_path,filename=local_filename)
+    file_path = generate_path(root_path=config.root_path,filename=local_filename)
     logging.debug("download_image_link() ""file_path: "+repr(file_path))
 
     # Compare hash with database and add new entry for this URL
@@ -73,7 +73,7 @@ def download_image_link(session,media_url):
         remote_filename = remote_filename,
         file_extention=file_extention,
         date_added=time_of_retreival,
-        extractor_used="download_image_link",
+        extractor_used="image_handlers.download_image_link()",
         )
     session.add(new_media_row)
     session.commit()

@@ -208,7 +208,7 @@ class tumblr_blog:
 
         logging.info("Finished processing posts")
         # Change date last saved in DB
-        self.update_blog_record(self)
+        self.update_blog_record()
         logging.warning("DATE LAST SAVED NOT YET IMPLIMENTED!")# TODO FIXME!
         #sql_functions.update_last_saved(self.session,self.info_dict,self.sanitized_blog_url)
         # Commit/save new data
@@ -224,7 +224,7 @@ class tumblr_blog:
             logging.debug(repr(c)+": "+repr(post))
         return
 
-    def update_blog_record(self):
+    def update_blog_record(self):# TODO
         """Add or update this blog's record in the blog metadata table"""
         logging.warning("update_blog_record() not implimented!")
         pass

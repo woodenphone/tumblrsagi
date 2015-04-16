@@ -136,8 +136,8 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
         logging.info("Moving video to final location")
         # Generate output filepath
         file_ext = media_temp_filename.split(".")[-1]
-        filename = generate_filename(ext=file_extention,hash=sha512base64_hash)
-        final_media_filepath = generate_file_path(root_path=config.root_path,filename=filename)
+        filename = generate_filename(ext=file_ext,hash=sha512base64_hash)
+        final_media_filepath = generate_path(root_path=config.root_path,filename=filename)
         # Move file to final location
         move_file(media_temp_filepath,final_media_filepath)
         assert(os.path.exists(final_media_filepath))
@@ -172,6 +172,8 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
         }
 
 
+def update_yt_dl():# TODO
+    """Update youtube-dl to the latest version"""
 
 
 

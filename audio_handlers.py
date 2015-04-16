@@ -60,7 +60,7 @@ def handle_soundcloud_audio(session,post_dict):
     combined_audio_dict = run_yt_dl_multiple(
         session = session,
         download_urls = download_urls,
-        extractor_used="handle_soundcloud_audio",
+        extractor_used="audio_handlers.handle_soundcloud_audio()",
         audio_id = soundcloud_id
         )
     logging.debug("Finished downloading soundcloud embeds")
@@ -96,7 +96,7 @@ def handle_bandcamp_audio(session,post_dict):#WIP
     combined_audio_dict = run_yt_dl_multiple(
         session = session,
         download_urls = [bandcamp_link],
-        extractor_used="handle_bandcamp_audio",
+        extractor_used="audio_handlers.handle_bandcamp_audio()",
         audio_id = bandcamp_id
         )
     logging.debug("Finished downloading bandcamp embeds")
@@ -172,7 +172,7 @@ def handle_tumblr_audio(session,post_dict):
         local_filename = local_filename,
         date_added = time_of_retreival,
         file_extention = "mp3",
-        extractor_used="handle_tumblr_audio",
+        extractor_used="audio_handlers.handle_tumblr_audio()",
         )
     session.add(new_media_row)
     session.commit()

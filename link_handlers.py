@@ -134,8 +134,6 @@ def handle_video_file_links(session,all_post_links):# WIP
     "wmv",
     "mp4",
     "mov",
-    "",
-    "",
     # Flash
     "fla",
     "swf",
@@ -166,7 +164,7 @@ def handle_video_links(session,all_post_links):# WIP
             video_dict = run_yt_dl_single(
             session=session,
             download_url=download_url,
-            extractor_used="handle_video_links:youtube.com",
+            extractor_used="link_handlers.handle_video_links:youtube.com",
             video_id=video_id,
             )
             video_dicts.append(video_dict)
@@ -177,7 +175,7 @@ def handle_video_links(session,all_post_links):# WIP
             video_dict = run_yt_dl_single(
             session=session,
             download_url=download_url,
-            extractor_used="handle_video_links:gfycat.com",
+            extractor_used="link_handlers.handle_video_links:gfycat.com",
             audio_id=audio_id,
             video_id=video_id,
             )
@@ -189,7 +187,7 @@ def handle_video_links(session,all_post_links):# WIP
             video_dict = run_yt_dl_single(
             session=session,
             download_url=download_url,
-            extractor_used="handle_video_links:webmshare.com",
+            extractor_used="link_handlers.handle_video_links:webmshare.com",
             audio_id=audio_id,
             video_id=video_id,
             )
