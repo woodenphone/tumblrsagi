@@ -179,8 +179,6 @@ def handle_tumblr_audio(session,post_dict):
     return {"tumblr_audio":sha512base64_hash}
 
 
-
-
 def handle_audio_posts(session,post_dict):
     """Download audio from audio posts"""
     # Determing if post is tumblr audio
@@ -199,6 +197,11 @@ def handle_audio_posts(session,post_dict):
     elif post_dict["audio_type"] == u"bandcamp":
         logging.debug("Post is bandcamp audio")
         return handle_bandcamp_audio(session,post_dict)
+    # Spotify
+    elif post_dict["audio_type"] == u"spotify":
+        logging.debug("Post is spotify audio")
+        logging.warning("Spotify is unsupported")# TODO FIXME
+        return {}
     # Unknown
     else:
         logging.error("Unknown audio type!")
@@ -221,6 +224,10 @@ def debug():
     # bandcamp
     bandcamp_post_dict = {u'reblog_key': u'AbxPRz4A', u'short_url': u'http://tmblr.co/ZE5FbyhlEyOo', u'audio_url': u'http://popplers5.bandcamp.com/download/track?enc=mp3-128&fsig=ca33bbe78b527483940c050bd627a33d&id=2851867171&nl=1&stream=1&ts=1428792368.0', u'player': u'<iframe class="bandcamp_audio_player" width="500" height="120" src="http://bandcamp.com/EmbeddedPlayer/size=medium/bgcol=ffffff/linkcol=0687f5/notracklist=true/transparent=true/track=2851867171/" allowtransparency="true" frameborder="0"></iframe>', u'id': 46963344946, u'album': u'Hunter Hunted - EP', u'post_url': u'http://staff.tumblr.com/post/46963344946/listen-up-our-audio-player-just-got-super-rad', u'source_title': u'Bandcamp', u'tags': [u'hunter hunted', u'keep together', u'music on tumblr', u'bands on tumblr'], u'highlighted': [], u'state': u'published', u'track_name': u'Keep Together', u'type': u'audio', u'featured_in_tag': [u'Music', u'Design'], u'format': u'html', u'timestamp': 1364937324, u'note_count': 5105, u'source_url': u'http://hunterhuntedmusic.bandcamp.com/track/keep-together', u'date': u'2013-04-02 21:15:24 GMT', u'plays': 110209, u'slug': u'listen-up-our-audio-player-just-got-super-rad', u'album_art': u'http://31.media.tumblr.com/tumblr_mkn8sgrMDN1qz8q0h_dSDeaHscmUuv4sl8epf8mAC32IU_cover.jpg', u'blog_name': u'staff', u'is_external': True, u'artist': u'Hunter Hunted', u'caption': u'<p>Listen up: our audio player just got super rad!</p>\n<ul><li><span>Fancy new audio visualizer</span></li>\n<li><span>Bigger album art</span></li>\n<li><span>Click and drag to skip around</span></li>\n</ul><p>Hit play and happy listening!</p>', u'audio_type': u'bandcamp', u'audio_source_url': u'http://popplers5.bandcamp.com/download/track?enc=mp3-128&fsig=ca33bbe78b527483940c050bd627a33d&id=2851867171&nl=1&stream=1&ts=1428792368.0', u'embed': u'<iframe class="bandcamp_audio_player" width="100%" height="120" src="http://bandcamp.com/EmbeddedPlayer/size=medium/bgcol=ffffff/linkcol=0687f5/notracklist=true/transparent=true/track=2851867171/" allowtransparency="true" frameborder="0"></iframe>'}
     bandcamp_result = handle_audio_posts(session,bandcamp_post_dict)
+
+    # Spotify
+    spotify_post_dict = {u'reblog_key': u'AbxPRz4A', u'short_url': u'http://tmblr.co/ZE5FbyhlEyOo', u'audio_url': u'http://popplers5.bandcamp.com/download/track?enc=mp3-128&fsig=ca33bbe78b527483940c050bd627a33d&id=2851867171&nl=1&stream=1&ts=1428792368.0', u'player': u'<iframe class="bandcamp_audio_player" width="500" height="120" src="http://bandcamp.com/EmbeddedPlayer/size=medium/bgcol=ffffff/linkcol=0687f5/notracklist=true/transparent=true/track=2851867171/" allowtransparency="true" frameborder="0"></iframe>', u'id': 46963344946, u'album': u'Hunter Hunted - EP', u'post_url': u'http://staff.tumblr.com/post/46963344946/listen-up-our-audio-player-just-got-super-rad', u'source_title': u'Bandcamp', u'tags': [u'hunter hunted', u'keep together', u'music on tumblr', u'bands on tumblr'], u'highlighted': [], u'state': u'published', u'track_name': u'Keep Together', u'type': u'audio', u'featured_in_tag': [u'Music', u'Design'], u'format': u'html', u'timestamp': 1364937324, u'note_count': 5105, u'source_url': u'http://hunterhuntedmusic.bandcamp.com/track/keep-together', u'date': u'2013-04-02 21:15:24 GMT', u'plays': 110209, u'slug': u'listen-up-our-audio-player-just-got-super-rad', u'album_art': u'http://31.media.tumblr.com/tumblr_mkn8sgrMDN1qz8q0h_dSDeaHscmUuv4sl8epf8mAC32IU_cover.jpg', u'blog_name': u'staff', u'is_external': True, u'artist': u'Hunter Hunted', u'caption': u'<p>Listen up: our audio player just got super rad!</p>\n<ul><li><span>Fancy new audio visualizer</span></li>\n<li><span>Bigger album art</span></li>\n<li><span>Click and drag to skip around</span></li>\n</ul><p>Hit play and happy listening!</p>', u'audio_type': u'bandcamp', u'audio_source_url': u'http://popplers5.bandcamp.com/download/track?enc=mp3-128&fsig=ca33bbe78b527483940c050bd627a33d&id=2851867171&nl=1&stream=1&ts=1428792368.0', u'embed': u'<iframe class="bandcamp_audio_player" width="100%" height="120" src="http://bandcamp.com/EmbeddedPlayer/size=medium/bgcol=ffffff/linkcol=0687f5/notracklist=true/transparent=true/track=2851867171/" allowtransparency="true" frameborder="0"></iframe>'}
+    spotify_result = handle_audio_posts(session,spotify_post_dict)
 
     return
 

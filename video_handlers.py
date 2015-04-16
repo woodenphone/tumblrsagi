@@ -90,7 +90,7 @@ def handle_youtube_video(session,post_dict):# NEW TABLES
         video_dict = run_yt_dl_single(
             session,
             download_url = download_url,
-            extractor_used="handle_youtube_video",
+            extractor_used="video_handlers.handle_youtube_video()",
             video_id = crop_youtube_id(download_url),
             )
         video_dicts.append(video_dict)
@@ -130,7 +130,7 @@ def handle_vimeo_videos(session,post_dict):# New table
     combined_video_dict = run_yt_dl_multiple(
         session = session,
         download_urls = vimeo_urls,
-        extractor_used="handle_vimeo_videos",
+        extractor_used="video_handlers.handle_vimeo_videos()",
         )
     logging.debug("Finished downloading vimeo embeds")
     return combined_video_dict
@@ -164,7 +164,7 @@ def handle_imgur_videos(session,post_dict):# NEW TABLES
     combined_video_dict = run_yt_dl_multiple(
         session = session,
         download_urls = imgur_urls,
-        extractor_used="handle_imgur_videos",
+        extractor_used="video_handlers.handle_imgur_videos()",
         )
     logging.debug("Finished downloading imgur_video embeds")
     return combined_video_dict
@@ -220,7 +220,7 @@ def handle_vine_videos(session,post_dict):# New table
     combined_video_dict = run_yt_dl_multiple(
         session = session,
         download_urls = download_urls,
-        extractor_used="handle_vine_videos",
+        extractor_used="video_handlers.handle_vine_videos()",
         )
     logging.debug("Finished downloading Vine embeds")
     return combined_video_dict
@@ -241,7 +241,7 @@ def handle_tumblr_videos(session,post_dict):
     combined_video_dict = run_yt_dl_multiple(
         session = session,
         download_urls = download_urls,
-        extractor_used="handle_tumblr_videos",
+        extractor_used="video_handlers.handle_tumblr_videos()",
         )
     logging.debug("Finished downloading Tumblr embeds")
     return combined_video_dict
@@ -274,7 +274,7 @@ def handle_livestream_videos(session,post_dict):
     combined_video_dict = run_yt_dl_multiple(
         session = session,
         download_urls = livestream_urls,
-        extractor_used="handle_livestream_videos",
+        extractor_used="video_handlers.handle_livestream_videos()",
         )
 
     logging.debug("Finished downloading livestream embeds")
@@ -308,7 +308,7 @@ def handle_yahoo_videos(session,post_dict):
     combined_video_dict = run_yt_dl_multiple(
         session = session,
         download_urls = yahoo_urls,
-        extractor_used="handle_yahoo_videos",
+        extractor_used="video_handlers.handle_yahoo_videos()",
         )
 
     logging.debug("Finished downloading yahoo embeds")
@@ -436,6 +436,7 @@ def debug():
     # dailymotion
     dailymotion_post_dict = {u'reblog_key': u'itw5H3n3', u'reblog': {u'comment': u'<p>Dat ending</p>', u'tree_html': u'<p><a href="http://orcasnack-garth.tumblr.com/post/116512570927/i-made-a-video-a-silly-video-with-vore-of-my" class="tumblr_blog" target="_blank">orcasnack-garth</a>:</p><blockquote><p>I made a video! A silly video with vore of my favorite Disney Princess Mermaid and her pet killer whale who may or may not be canon. Enjoy the silliness!\n\n</p><p><a href="http://orcasnack-garth.tumblr.com/post/116512570927/i-made-a-video-a-silly-video-with-vore-of-my" target="_blank">Read More</a></p></blockquote>', u'trail': [{u'blog': {u'theme': {u'title_font_weight': u'bold', u'title_color': u'#444444', u'header_bounds': u'', u'title_font': u'Gibson', u'link_color': u'#529ECC', u'header_image_focused': u'http://assets.tumblr.com/images/default_header/optica_pattern_05.png?_v=671444c5f47705cce40d8aefd23df3b1', u'show_description': True, u'show_header_image': True, u'header_stretch': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_image_scaled': u'http://assets.tumblr.com/images/default_header/optica_pattern_05.png?_v=671444c5f47705cce40d8aefd23df3b1', u'avatar_shape': u'square', u'show_avatar': True, u'background_color': u'#FAFAFA', u'header_image': u'http://assets.tumblr.com/images/default_header/optica_pattern_05.png?_v=671444c5f47705cce40d8aefd23df3b1'}, u'name': u'orcasnack-garth'}, u'comment': u'<p>I made a video! A silly video with vore of my favorite Disney Princess Mermaid and her pet killer whale who may or may not be canon. Enjoy the silliness!\n\n</p><p><a href="http://orcasnack-garth.tumblr.com/post/116512570927/i-made-a-video-a-silly-video-with-vore-of-my" target="_blank">Read More</a></p>', u'post': {u'id': u'116512570927'}}]}, u'thumbnail_width': 430, u'player': [{u'width': 250, u'embed_code': u'<iframe src="https://www.dailymotion.com/embed/video/x2msryd" width="250" height="139" frameborder="0" allowfullscreen></iframe>'}, {u'width': 400, u'embed_code': u'<iframe src="https://www.dailymotion.com/embed/video/x2msryd" width="400" height="222" frameborder="0" allowfullscreen></iframe>'}, {u'width': 500, u'embed_code': u'<iframe src="https://www.dailymotion.com/embed/video/x2msryd" width="500" height="278" frameborder="0" allowfullscreen></iframe>'}], u'id': 116527639439, u'post_url': u'http://ponyoptica.tumblr.com/post/116527639439/orcasnack-garth-i-made-a-video-a-silly-video', u'tags': [], u'highlighted': [], u'state': u'published', u'short_url': u'http://tmblr.co/Z0KBot1iXbgkF', u'html5_capable': True, u'type': u'video', u'format': u'html', u'timestamp': 1429155957, u'note_count': 5, u'video_type': u'dailymotion', u'date': u'2015-04-16 03:45:57 GMT', u'thumbnail_height': 240, u'permalink_url': u'http://www.dailymotion.com/video/x2msryd', u'slug': u'orcasnack-garth-i-made-a-video-a-silly-video', u'blog_name': u'ponyoptica', u'caption': u'<p><a href="http://orcasnack-garth.tumblr.com/post/116512570927/i-made-a-video-a-silly-video-with-vore-of-my" class="tumblr_blog" target="_blank">orcasnack-garth</a>:</p>\n\n<blockquote><p>I made a video! A silly video with vore of my favorite Disney Princess Mermaid and her pet killer whale who may or may not be canon. Enjoy the silliness!\n\n</p><p><a href="http://orcasnack-garth.tumblr.com/post/116512570927/i-made-a-video-a-silly-video-with-vore-of-my" target="_blank">Read More</a></p></blockquote>\n\n<p>Dat ending</p>', u'thumbnail_url': u'https://s2-ssl.dmcdn.net/J8u2z/x240-zHV.jpg'}
     dailymotion_result = handle_video_posts(session,dailymotion_post_dict)
+
 
     return
 
