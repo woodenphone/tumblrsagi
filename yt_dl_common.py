@@ -107,6 +107,7 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
     # Grab file path
     media_temp_filepath = yt_dl_info_dict["_filename"]
     media_temp_filename = os.path.basename(media_temp_filepath)
+    file_ext = media_temp_filename.split(".")[-1]
     logging.debug("media_temp_filepath: "+repr(media_temp_filepath))
 
     # Check that video file given in info JSON exists
@@ -135,7 +136,6 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
         # Move file to media DL location
         logging.info("Moving video to final location")
         # Generate output filepath
-        file_ext = media_temp_filename.split(".")[-1]
         filename = generate_filename(ext=file_ext,hash=sha512base64_hash)
         final_media_filepath = generate_path(root_path=config.root_path,filename=filename)
         # Move file to final location
