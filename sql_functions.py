@@ -215,7 +215,7 @@ def find_blog_posts(session,sanitized_username):
     """Lookup a blog's posts in the DB and return a list of the IDs"""
     logging.debug("find_blog_posts()"+"sanitized_username"+": "+repr(sanitized_username))
     # select all posts with field "poster_username" matching our value
-    posts_query = sqlalchemy.select([Posts.all_posts_id]).where(Posts.poster_username == sanitized_username)
+    posts_query = sqlalchemy.select([RawPosts.all_posts_id]).where(RawPosts.poster_username == sanitized_username)
     posts_rows = session.execute(posts_query)
     post_ids = []
     for row in posts_rows:
