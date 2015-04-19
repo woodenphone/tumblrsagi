@@ -278,7 +278,10 @@ def save_blogs(list_file_path="tumblr_todo_list.txt",max_pages=None):
     """Save tumblr blogs from a list"""
     logging.info("Saving list of blogs: "+repr(list_file_path))
     blog_url_list = import_blog_list(list_file_path)
+    counter = 0
     for blog_url in blog_url_list:
+        counter += 1
+        logging.info("Now processing blog "+repr(counter)+"of "+repr(len(blog_url_list))+" "+repr(blog_url))
         save_blog(blog_url,max_pages)
         appendlist(blog_url,list_file_path=config.done_list_path,initial_text="# List of completed items.\n")
     logging.info("Finished downloading blogs list")
