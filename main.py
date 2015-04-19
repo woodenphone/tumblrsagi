@@ -216,6 +216,32 @@ class tumblr_blog:
         self.session.commit()
         return
 
+    def insert_posts_into_db_no_media(self):
+        # Get posts from API
+        raw_posts_list = self.get_posts()
+        # Skip processing any posts that have previously been saved
+        new_posts_list = self.crop_exisiting_posts(raw_posts_list)
+        number_of_posts = len(new_posts_list)
+        logging.info("Processing a total of "+repr(number_of_posts)+" new posts for "+repr(self.sanitized_username))
+        # Insert posts to DB
+        counter = 0
+        for raw_post_dict in new_posts_list:
+            sql_functions.add_raw_post(
+                session=self.session,
+                raw_post_dict=raw_post_dict,
+                processed_post_dict=None,
+                info_dict=self.info_dict,
+                blog_url=self.sanitized_blog_url,
+                username=self.sanitized_username,
+                version=0
+                )
+            self.session.commit()
+            continue
+        # Update metatable
+        self.update_blog_record()
+        logging.info("Finished inserting "+repr(number_of_posts)+" new raw posts for "+repr(self.sanitized_username))
+        return
+
     def print_posts(self):
         """Output posts to log file for debugging"""
         c = 0
@@ -239,8 +265,10 @@ def save_blog(blog_url,max_pages=None):
     blog = tumblr_blog(session, consumer_key = config.consumer_key, blog_url=blog_url)
     # Collect posts for the blog
     posts = blog.get_posts(max_pages)
-    # Save media for posts and insert them into the DB
-    blog.insert_posts_into_db()
+    # Insert only raw post for other code to process later TODO FIXME
+    blog.insert_posts_into_db_no_media()
+##    # Save media for posts and insert them into the DB
+##    blog.insert_posts_into_db()
     logging.info("Finished saving blog: "+repr(blog_url))
     return
 

@@ -188,19 +188,19 @@ def add_post_to_db(session,raw_post_dict,processed_post_dict,info_dict,blog_url,
     return
 
 
-def add_raw_post(session,raw_post_dict,processed_post_dict,info_dict,blog_url,username):
+def add_raw_post(session,raw_post_dict,processed_post_dict,info_dict,blog_url,username,version=0):
     """Store the raw data from a post into the raw data table"""
     # Build row to insert
     row_to_insert = {}
     # Local stuff
     row_to_insert["date_saved"] = get_current_unix_time()
-    row_to_insert["version"] = 0# FIXME
+    row_to_insert["version"] = version# FIXME
     # User info
     row_to_insert["poster_username"] = username
     row_to_insert["blog_domain"] = blog_url
     # post identity
-    row_to_insert["all_posts_id"] =  processed_post_dict["id"]
-    row_to_insert["all_posts_post_url"] = processed_post_dict["post_url"]
+    row_to_insert["all_posts_id"] =  raw_post_dict["id"]
+    row_to_insert["all_posts_post_url"] = raw_post_dict["post_url"]
     # Full post reencoded into JSON
     row_to_insert["raw_post_json"] = json.dumps(raw_post_dict)
     row_to_insert["processed_post_json"] = json.dumps(processed_post_dict)
