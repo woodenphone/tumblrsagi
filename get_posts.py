@@ -21,6 +21,7 @@ import config # Settings and configuration
 class tumblr_blog:
     def __init__(self,session,consumer_key,blog_url=None,blog_username=None):
         # Store args for later and initialise variables
+        self.blog_exists = None
         self.consumer_key = consumer_key
         self.blog_url = blog_url
         self.blog_username = blog_username
@@ -28,11 +29,15 @@ class tumblr_blog:
         self.posts_list = []# List of post dicts
         self.info_post_count = None # Number of posts the /info API says the blog has
         self.posts_post_count = None # Number of posts the /posts API says the blog has
+
         # Load blog info from API
         self.load_info()
+        if not self.blog_exists:
+            return
         # Convert blog username/URL into safer name
         self.sanitized_blog_url = self.blog_url# TODO FIXME!
         self.sanitized_username = self.info_blog_username# TODO FIXME!
+
         # Make sure user is in blogs DB
         #sql_functions.insert_user_into_db(self.session,self.info_dict,self.sanitized_username,self.sanitized_blog_url)
         # DEBUG
@@ -51,7 +56,10 @@ class tumblr_blog:
         if not info_json:
             logging.error("Cannot load info page! (Maybe blog URL is wrong?)")
             logging.error("locals(): "+repr(locals()))
-            assert(False)# We should stop if this happens, without /info data later code will probably malfunction
+            self.blog_exists = False
+            return
+        else:
+            self.blog_exists = True
         info_dict = json.loads(info_json)
         logging.debug("info_dict"+repr(info_dict))
         assert(type(info_dict) is type({}))
@@ -275,6 +283,16 @@ def save_blog(blog_url,max_pages=None):
     session = sql_functions.connect_to_db()
     # Instantiate blog, collect blog metadata
     blog = tumblr_blog(session, consumer_key = config.consumer_key, blog_url=blog_url)
+    # Ensure blog actually exists
+    if blog.blog_exists is False:
+        logging.error("Blog does not exist! "+repr(blog_url))
+        appendlist(
+            blog_url,
+            list_file_path="tumblr_failed_list.txt",
+            initial_text="# List of failed items.\n"
+            )
+        return
+
     # Collect posts for the blog
     posts = blog.get_posts(max_pages)
     # Insert only raw post for other code to process later TODO FIXME
