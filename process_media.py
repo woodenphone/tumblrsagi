@@ -34,7 +34,8 @@ def check_if_there_are_new_posts_to_do_media_for(session):
 
 
 def process_one_new_posts_media(session):
-
+    """Return True if everything was fine.
+    Return False if no more posts should be tried"""
     # Select a new post from RawPosts table
     # New posts don't have a processed JSON
     posts_query = sqlalchemy.select([RawPosts]).where(RawPosts.processed_post_json == "null")# I expected "== None" to work, but apparently a string of "null" is the thing to do?
@@ -44,6 +45,10 @@ def process_one_new_posts_media(session):
 
     # Process posts
     post_row = post_rows.fetchone()
+    # Stop if no rows
+    if post_row is None:
+        logging.info("No posts to check.")
+        return False
 
     logging.debug("post_row"": "+repr(post_row))
     raw_post_dict = json.loads(post_row["raw_post_json"])
@@ -76,7 +81,7 @@ def process_one_new_posts_media(session):
     session.commit()
 
     logging.debug("Finished processing new post media")
-    return
+    return True
 
 
 
@@ -84,10 +89,12 @@ def process_one_new_posts_media(session):
 
 def process_all_posts_media(session):
     counter = 0
-    while True:
+    keep_going = True
+    while keep_going:
         counter += 1
         logging.debug("Row "+repr(counter))
-        process_one_new_posts_media(session)
+        keep_going = process_one_new_posts_media(session)
+    logging.debug("Finished processing posts for media")
 
 
 
