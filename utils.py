@@ -419,7 +419,7 @@ def clean_blog_url(raw_url):
 def import_blog_list(list_file_path="tumblr_todo_list.txt"):
     """Import (open and parse) list file of blogs to save
     return a list of api-friendly blog url strings"""
-    logging.info("import_blog_list() list_file_path: "+repr(list_file_path))
+    logging.debug("import_blog_list() list_file_path: "+repr(list_file_path))
     # Make sure list file folder exists
     list_file_folder =  os.path.dirname(list_file_path)
     if list_file_folder:
@@ -427,7 +427,7 @@ def import_blog_list(list_file_path="tumblr_todo_list.txt"):
             os.makedirs(list_file_folder)
     # Create new empty list file if no list file exists
     if not os.path.exists(list_file_path):
-        logging.info("import_blog_list() Blog list file not found, creating it.")
+        logging.debug("import_blog_list() Blog list file not found, creating it.")
         new_file = open(list_file_path, "w")
         new_file.write('# Add one URL per line, comments start with a #, nothing but username on a line that isnt a comment\n\n')
         new_file.close()
@@ -447,7 +447,8 @@ def import_blog_list(list_file_path="tumblr_todo_list.txt"):
                 blog_urls.append(cleaned_url)
             else:
                 logging.error("import_blog_list(): Cleaning line "+repr(line_counter)+" : "+repr(line)+"Failed!")
-    logging.info("import_blog_list() blog_urls: "+repr(blog_urls))
+    blog_urls = uniquify(blog_urls)
+    logging.debug("import_blog_list() blog_urls: "+repr(blog_urls))
     return blog_urls
 
 
