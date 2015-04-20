@@ -109,9 +109,6 @@ def add_post_to_db(session,raw_post_dict,processed_post_dict,info_dict,blog_url,
     # User info
     row_to_insert["poster_username"] = username
     row_to_insert["blog_domain"] = blog_url
-    # Full post reencoded into JSON
-    if config.store_full_posts:
-        add_raw_post(session,raw_post_dict,processed_post_dict,info_dict,blog_url,username)
     # Things not in API docs
     row_to_insert["misc_slug"] = (processed_post_dict["slug"] if ("slug" in processed_post_dict.keys()) else None)# What does this do?
     row_to_insert["misc_short_url"] = (processed_post_dict["short_url"] if ("short_url" in processed_post_dict.keys()) else None)# shortened url?
@@ -225,11 +222,11 @@ def find_blog_posts(session,sanitized_username):
     return post_ids
 
 
+
 # Blogs metadata table
 def insert_user_into_db(session,info_dict,sanitized_username,sanitized_blog_url):
         """Add blog information to blogs DB"""
         logging.debug("Adding blog metadata to DB")
-
         # Check if blog is already in blogs table
         create_entry = False# Should we create a new entry?
         # Check username
@@ -354,11 +351,20 @@ def update_last_saved(session,info_dict,sanitized_blog_url):
 
 
 
+
+
+
+
+
+
+
+
 def debug():
     """Temp code for debug"""
     session = connect_to_db()
-    sanitized_username = "jessicaanner"
-    find_blog_posts(session,sanitized_username)
+    process_posts_media(session)
+    #sanitized_username = "jessicaanner"
+    #find_blog_posts(session,sanitized_username)
 
 
 def main():

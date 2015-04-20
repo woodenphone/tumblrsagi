@@ -194,6 +194,18 @@ class tumblr_blog:
             # Handle links for the post
             processed_post_dict = save_media(self.session,raw_post_dict)
             # Insert post into the DB
+            # Full post reencoded into JSON
+            if config.store_full_posts:
+                sql_functions.add_raw_post(
+                    session=self.session,
+                    raw_post_dict=raw_post_dict,
+                    processed_post_dict=None,
+                    info_dict=self.info_dict,
+                    blog_url=self.sanitized_blog_url,
+                    username=self.sanitized_username,
+                    version=0
+                    )
+
             sql_functions.add_post_to_db(
                 self.session,
                 raw_post_dict,
@@ -286,6 +298,8 @@ def save_blogs(list_file_path="tumblr_todo_list.txt",max_pages=None):
         appendlist(blog_url,list_file_path=config.done_list_path,initial_text="# List of completed items.\n")
     logging.info("Finished downloading blogs list")
     return
+
+
 
 
 def main():
