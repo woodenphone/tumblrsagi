@@ -147,7 +147,7 @@ class tumblr_blog:
 
             # If difference of post counts if more than 1
             retreived_to_info_difference = abs(number_of_posts_retrieved - self.info_post_count)
-            if ( retreived_to_info_difference > 1 ):
+            if ( retreived_to_info_difference > 1 ) and (number_of_posts_retrieved < self.info_post_count):
                 logging.error("More than one post is missing!")
                 logging.error(repr(locals()))
                 assert(False)
