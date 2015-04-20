@@ -69,22 +69,21 @@ def setup_logging(log_file_path,concise_log_file_path=None):
     return
 
 
-def save_file(filenamein,data,force_save=False):
-    assert_is_string(filenamein)
+def save_file(file_path,data,force_save=False,allow_fail=False):
+    assert_is_string(file_path)
     counter = 0
     while counter <= 10:
         counter += 1
         try:
             if not force_save:
-                if os.path.exists(filenamein):
-                    logging.debug("save_file()"" File already exists! "+repr(filenamein))
+                if os.path.exists(file_path):
+                    logging.debug("save_file()"" File already exists! "+repr(file_path))
                     return
-            sanitizedpath = filenamein# sanitizepath(filenamein)
-            foldername = os.path.dirname(sanitizedpath)
+            foldername = os.path.dirname(file_path)
             if len(foldername) >= 1:
                 if not os.path.isdir(foldername):
                     os.makedirs(foldername)
-            file = open(sanitizedpath, "wb")
+            file = open(file_path, "wb")
             file.write(data)
             file.close()
             return
@@ -93,8 +92,11 @@ def save_file(filenamein,data,force_save=False):
             logging.error(repr(locals()))
             continue
     logging.critical("Too many failed write attempts!")
-    logging.critical(repr(locals()))
-    raise
+    if allow_fail:
+        return
+    else:
+        logging.critical(repr(locals()))
+        raise
 
 
 def read_file(path):
@@ -164,23 +166,38 @@ def getwithinfo(url):
             delay(retry_delay)
             logging.debug( "Attempt "+repr(attemptcount)+" for URL: "+repr(url) )
         try:
-            save_file(os.path.join("debug","get_last_url.txt"), url, True)
+            save_file(
+                file_path = os.path.join("debug","get_last_url.txt"),
+                data = url,
+                force_save = True,
+                allow_fail = True
+                )
             r = urllib2.urlopen(url)
             info = r.info()
             reply = r.read()
             delay(request_delay)
+
             # Save html responses for debugging
-            #print info
-            #print info["content-type"]
             if "html" in info["content-type"]:
-                save_file(os.path.join("debug","get_last_html.htm"), reply, True)
+                save_file(
+                    file_path = os.path.join("debug","get_last_html.htm"),
+                    data = reply,
+                    force_save = True,
+                    allow_fail = True
+                    )
             else:
-                save_file(os.path.join("debug","get_last_not_html.txt"), reply, True)
+                save_file(
+                    file_path = os.path.join("debug","get_last_not_html.txt"),
+                    data = reply,
+                    force_save = True,
+                    allow_fail = True
+                    )
             # Retry if empty response and not last attempt
             if (len(reply) < 1) and (attemptcount < max_attempts):
                 logging.error("Reply too short :"+repr(reply))
                 continue
             return reply,info
+
         except urllib2.HTTPError, err:
             logging.exception(err)
             logging.error(repr(err))
@@ -194,8 +211,14 @@ def getwithinfo(url):
                 logging.error("410 error, GONE")
                 return
             else:
-                save_file(os.path.join("debug","HTTPError.htm"), err.fp.read(), True)
+                save_file(
+                    file_path = os.path.join("debug","HTTPError.htm"),
+                    data = err.fp.read(),
+                    force_save = True,
+                    allow_fail = True
+                    )
                 continue
+
         except urllib2.URLError, err:
             logging.exception(err)
             logging.error(repr(err))
@@ -203,20 +226,24 @@ def getwithinfo(url):
                 return
             else:
                 continue
+
         except httplib.BadStatusLine, err:
             logging.exception(err)
             logging.error(repr(err))
             continue
+
         except httplib.IncompleteRead, err:
             logging.exception(err)
             logging.error(repr(err))
             logging.exception(err)
             continue
+
         except socket.timeout, err:
             logging.exception(err)
             logging.error(repr( type(err) ) )
             logging.error(repr(err))
             continue
+
         except Exception, err:
             logging.exception(err)
             # We have to do this because socket.py just uses "raise"
@@ -225,6 +252,7 @@ def getwithinfo(url):
             logging.error("getwithinfo() str(err):"+str(err))
             logging.error("getwithinfo() type(err):"+repr(type(err)))
             continue
+
     logging.error("Too many retries, failing.")
     return
 
