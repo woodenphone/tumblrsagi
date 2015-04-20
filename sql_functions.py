@@ -181,7 +181,6 @@ def add_post_to_db(session,raw_post_dict,processed_post_dict,info_dict,blog_url,
     # Insert new row
     post_row = Posts(**row_to_insert)
     session.add(post_row)
-    session.commit()
     return
 
 
