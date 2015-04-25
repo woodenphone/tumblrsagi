@@ -110,7 +110,7 @@ def handle_tumblr_audio(session,post_dict):
     https://github.com/atesh/XKit
     https://github.com/atesh/XKit/blob/master/Extensions/audio_downloader.js"""
     assert(post_dict["audio_type"] == u"tumblr")
-    logging.debug("post_dict: "+repr(post_dict))
+    logging.debug("handle_tumblr_audio() post_dict: "+repr(post_dict))
     # Generate a link to the audio file
     api_media_url = post_dict["audio_url"]
     # This is basically check if url starts with this string
@@ -119,7 +119,7 @@ def handle_tumblr_audio(session,post_dict):
         media_url = "http://a.tumblr.com/" + urllib.quote(api_media_url.split("/")[-1]) + "o1.mp3"
     else:
         media_url = api_media_url
-    logging.debug("media_url: "+repr(media_url))
+    logging.debug("handle_tumblr_audio() media_url: "+repr(media_url))
 
     # Check the DB to see if media is already saved
     url_check_row_dict = sql_functions.lookup_media_url(
@@ -131,7 +131,7 @@ def handle_tumblr_audio(session,post_dict):
         media_already_saved = True
         sha512base64_hash = row_dict["sha512base64_hash"]
         existing_filename = row_dict["local_filename"]
-        logging.debug("URL is already in DB, no need to save file.")
+        logging.debug("handle_tumblr_audio()  URL is already in DB, no need to save file.")
         return {"tumblr_audio":sha512base64_hash}
 
     # Load the media file
@@ -140,7 +140,7 @@ def handle_tumblr_audio(session,post_dict):
 
     # Check if file is saved already using file hash
     sha512base64_hash = hash_file_data(file_data)
-    logging.debug("sha512base64_hash: "+repr(sha512base64_hash))
+    logging.debug("handle_tumblr_audio() sha512base64_hash: "+repr(sha512base64_hash))
 
     # Check if hash is in DB
     hash_check_row_dict = sql_functions.lookup_media_hash(
@@ -152,7 +152,7 @@ def handle_tumblr_audio(session,post_dict):
         media_already_saved = True
         preexisting_filename = hash_check_row_dict["local_filename"]
     else:
-        logging.debug("Hash is already in DB, no need to save file.")
+        logging.debug("handle_tumblr_audio() Hash is already in DB, no need to save file.")
         return {"tumblr_audio":sha512base64_hash}
     if media_already_saved:
         # Use filename from DB
@@ -160,7 +160,7 @@ def handle_tumblr_audio(session,post_dict):
     else:
         # Generate filename
         local_filename = generate_filename(ext=".mp3",hash=sha512base64_hash)
-        logging.debug("local_filename: "+repr(local_filename))
+        logging.debug("handle_tumblr_audio() local_filename: "+repr(local_filename))
         file_path = generate_file_path(root_path=config.root_path,filename=local_filename)
         # Save media to disk
         save_file(filenamein=file_path,data=file_data,force_save=False)

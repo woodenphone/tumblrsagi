@@ -103,9 +103,10 @@ def process_one_new_posts_media(post_row):
 
 
 def list_new_posts(session,max_rows):
+    logging.debug("Getting list of new posts")
     # Select new posts
     # New posts don't have a processed JSON
-    posts_query = sqlalchemy.select([RawPosts]).where(RawPosts.processed_post_json == "null")# I expected "== None" to work, but apparently a string of "null" is the thing to do?
+    posts_query = sqlalchemy.select([RawPosts]).where(RawPosts.processed_post_json == "null").limit(max_rows)# I expected "== None" to work, but apparently a string of "null" is the thing to do?
     logging.debug("posts_query"": "+repr(posts_query))
     post_rows = session.execute(posts_query)
     logging.debug("post_rows"": "+repr(post_rows))
