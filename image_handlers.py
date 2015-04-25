@@ -84,7 +84,12 @@ def download_image_link(session,media_url):
     else:
         # Save file to disk, using the hash as a filename
         logging.debug("Hash was not in DB, saving file: "+repr(file_path))
-        save_file(filenamein=file_path,data=file_data,force_save=False)
+        save_file(
+            file_path=file_path,
+            data=file_data,
+            force_save=False,
+            allow_fail=False
+            )
     session.commit()
     return sha512base64_hash
 

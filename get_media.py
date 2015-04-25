@@ -20,6 +20,8 @@ from tables import *# Table definitions
 from sqlalchemy import update
 
 
+from multiprocessing.dummy import Pool as ThreadPool
+
 def check_if_there_are_new_posts_to_do_media_for(session):
     """Return true if one or more rows in raw_posts has "null" as the value
     for the processed_post_json column.
@@ -33,28 +35,23 @@ def check_if_there_are_new_posts_to_do_media_for(session):
 
 
 
-def process_one_new_posts_media(session):
+def process_one_new_posts_media(post_primary_key):
     """Return True if everything was fine.
     Return False if no more posts should be tried"""
-    # Select a new post from RawPosts table
-    # New posts don't have a processed JSON
-    posts_query = sqlalchemy.select([RawPosts]).where(RawPosts.processed_post_json == "null")# I expected "== None" to work, but apparently a string of "null" is the thing to do?
-    logging.debug("posts_query"": "+repr(posts_query))
-    post_rows = session.execute(posts_query)
-    logging.debug("post_rows"": "+repr(post_rows))
+    session = sql_functions.connect_to_db()
+    logging.debug("Processing post with primary_key: "+repr(post_primary_key))
+    #session = sql_functions.connect_to_db()
+    # Select the new post from RawPosts table by it's primary key
+    post_query = sqlalchemy.select([RawPosts]).where(RawPosts.primary_key == post_primary_key)
+    post_result = session.execute(post_query)
+    post_row = post_result.fetchone()
 
-    # Process posts
-    post_row = post_rows.fetchone()
-    # Stop if no rows
-    if post_row is None:
-        logging.info("No posts to check.")
-        return False
 
     logging.debug("post_row"": "+repr(post_row))
     raw_post_dict = json.loads(post_row["raw_post_json"])
     blog_url = post_row["blog_domain"]
     username = post_row["poster_username"]
-    primary_key = post_row["primary_key"]
+
 
     # Handle links for the post
     processed_post_dict = save_media(session,raw_post_dict)
@@ -75,7 +72,7 @@ def process_one_new_posts_media(session):
     logging.debug("About to update RawPosts")
     # Modify origin row
     processed_post_json = json.dumps(processed_post_dict)
-    update_statement = update(RawPosts).where(RawPosts.primary_key==primary_key).\
+    update_statement = update(RawPosts).where(RawPosts.primary_key==post_primary_key).\
         values(processed_post_json=processed_post_json)
     update_statement.execute()
     session.commit()
@@ -84,16 +81,61 @@ def process_one_new_posts_media(session):
     return True
 
 
+def list_new_post_primary_keys(session,number_of_posts):
+    # Select new posts
+    # New posts don't have a processed JSON
+    posts_query = sqlalchemy.select([RawPosts]).where(RawPosts.processed_post_json == "null")# I expected "== None" to work, but apparently a string of "null" is the thing to do?
+    logging.debug("posts_query"": "+repr(posts_query))
+    post_rows = session.execute(posts_query)
+    logging.debug("post_rows"": "+repr(post_rows))
+
+    # List rows to grab
+    logging.debug("Getting list of primary keys")
+    post_primary_keys = []
+    row_list_counter = 0
+    for post_row in post_rows:
+        row_list_counter += 1
+        if row_list_counter > number_of_posts:
+            break
+        post_primary_key = post_row["primary_key"]
+        post_primary_keys.append(post_primary_key)
+        continue
+    logging.debug("post_primary_keys: "+repr(post_primary_keys))
+    return post_primary_keys
+
+
+def process_all_posts_media(session,max_rows=10):
+    # Get primary keys for some new posts
+    post_primary_keys = list_new_post_primary_keys(session,number_of_posts=max_rows)
+
+    # Process posts
+    logging.debug("Processing primary keys")
 
 
 
-def process_all_posts_media(session):
+    # Make the Pool of workers
+    pool = ThreadPool(4)
+
+    results = pool.map(process_one_new_posts_media, post_primary_keys)
+
+    pool.close()
+    pool.join()
+
+
     counter = 0
     keep_going = True
     while keep_going:
         counter += 1
+        if counter > max_rows:
+            break
         logging.debug("Row "+repr(counter))
-        keep_going = process_one_new_posts_media(session)
+
+        post_primary_key = post_primary_keys.pop()
+
+        # Process that row
+        process_one_new_posts_media(post_primary_key)
+        continue
+
     logging.debug("Finished processing posts for media")
 
 
