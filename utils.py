@@ -28,6 +28,26 @@ import string
 import hashlib# Needed to hash file data
 import base64 # Needed to do base32 encoding of filenames
 
+
+
+
+
+
+
+
+
+class MediaGrabberFailed(Exception):
+    """Used to signal that media downloading failed for a post and it was skipped"""
+    pass
+
+
+
+
+
+
+
+
+
 def setup_logging(log_file_path,concise_log_file_path=None):
     """Setup logging (Before running any other code)
     http://inventwithpython.com/blog/2012/04/06/stop-using-print-for-debugging-a-5-minute-quickstart-guide-to-pythons-logging-module/

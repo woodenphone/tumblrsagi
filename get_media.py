@@ -13,6 +13,7 @@ from sqlalchemy import update
 
 from multiprocessing.dummy import Pool as ThreadPool
 
+import custom_exceptions
 from utils import * # General utility functions
 import sql_functions# Database interaction
 from media_handlers import *# Media finding, extractiong, ect
@@ -52,7 +53,11 @@ def process_one_new_posts_media(post_row):
 
 
     # Handle links for the post
-    processed_post_dict = save_media(session,raw_post_dict)
+    try:
+        processed_post_dict = save_media(session,raw_post_dict)
+    except custom_exceptions.MediaGrabberFailed, err:
+        logging.exception(err)
+        return False
     logging.debug("processed_post_dict"": "+repr(processed_post_dict))
 
     # Insert row to posts table
@@ -119,7 +124,9 @@ def list_new_posts(session,max_rows):
         row_list_counter += 1
         if row_list_counter > max_rows:
             break
-        post_dicts.append(post_row)
+        if post_row:
+            logging.debug("post_row: "+repr(post_row))
+            post_dicts.append(post_row)
         continue
     logging.debug("post_dicts: "+repr(post_dicts))
     return post_dicts
@@ -131,8 +138,11 @@ def process_all_posts_media(session,max_rows=1000):
     post_dicts = list_new_posts(session,max_rows)
 
     # Process posts
-    logging.debug("Processing primary keys")
+    logging.debug("Processing posts")
 
+    for post_dict in post_dicts:
+        process_one_new_posts_media(post_dict)
+    return
 
     # http://stackoverflow.com/questions/2846653/python-multithreading-for-dummies
     # Make the Pool of workers

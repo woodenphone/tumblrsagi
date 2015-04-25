@@ -24,7 +24,7 @@ from sql_functions import Media
 import sql_functions
 import config # User settings
 from tables import *# This module only has the table classes
-
+import custom_exceptions
 
 
 def handle_soundcloud_audio(session,post_dict):
@@ -135,7 +135,11 @@ def handle_tumblr_audio(session,post_dict):
         return {"tumblr_audio":sha512base64_hash}
 
     # Load the media file
-    file_data = get(media_url)
+    try:
+        file_data = get(media_url)
+    except urllib2.HTTPError, err:
+        # 403 skip hack
+        raise(custom_exceptions.MediaGrabberFailed)
     time_of_retreival = get_current_unix_time()
 
     # Check if file is saved already using file hash
