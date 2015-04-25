@@ -81,7 +81,7 @@ def process_one_new_posts_media(post_primary_key):
     return True
 
 
-def list_new_post_primary_keys(session,number_of_posts):
+def list_new_post_primary_keys(session,max_rows):
     # Select new posts
     # New posts don't have a processed JSON
     posts_query = sqlalchemy.select([RawPosts]).where(RawPosts.processed_post_json == "null")# I expected "== None" to work, but apparently a string of "null" is the thing to do?
@@ -95,7 +95,7 @@ def list_new_post_primary_keys(session,number_of_posts):
     row_list_counter = 0
     for post_row in post_rows:
         row_list_counter += 1
-        if row_list_counter > number_of_posts:
+        if row_list_counter > max_rows:
             break
         post_primary_key = post_row["primary_key"]
         post_primary_keys.append(post_primary_key)
@@ -106,35 +106,20 @@ def list_new_post_primary_keys(session,number_of_posts):
 
 def process_all_posts_media(session,max_rows=10):
     # Get primary keys for some new posts
-    post_primary_keys = list_new_post_primary_keys(session,number_of_posts=max_rows)
+    post_primary_keys = list_new_post_primary_keys(session,max_rows=max_rows)
 
     # Process posts
     logging.debug("Processing primary keys")
 
 
-
+    # http://stackoverflow.com/questions/2846653/python-multithreading-for-dummies
     # Make the Pool of workers
     pool = ThreadPool(4)
 
     results = pool.map(process_one_new_posts_media, post_primary_keys)
-
+    #close the pool and wait for the work to finish
     pool.close()
     pool.join()
-
-
-    counter = 0
-    keep_going = True
-    while keep_going:
-        counter += 1
-        if counter > max_rows:
-            break
-        logging.debug("Row "+repr(counter))
-
-        post_primary_key = post_primary_keys.pop()
-
-        # Process that row
-        process_one_new_posts_media(post_primary_key)
-        continue
 
     logging.debug("Finished processing posts for media")
 
