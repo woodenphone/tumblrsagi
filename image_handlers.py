@@ -98,9 +98,9 @@ def download_image_links(session,media_urls):
     # Save image links
     media_urls = uniquify(media_urls)
     link_hash_dict = {}# {link:hash}
-    for media_urls in media_urls:
-        sha512base64_hash =  download_image_link(session,media_urls)
-        link_hash_dict[media_urls] = sha512base64_hash# {link:hash}
+    for media_url in media_urls:
+        sha512base64_hash =  download_image_link(session,media_url)
+        link_hash_dict[media_url] = sha512base64_hash# {link:hash}
         continue
     return link_hash_dict# {link:hash}
 

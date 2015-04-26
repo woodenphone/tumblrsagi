@@ -36,9 +36,6 @@ import base64 # Needed to do base32 encoding of filenames
 
 
 
-class MediaGrabberFailed(Exception):
-    """Used to signal that media downloading failed for a post and it was skipped"""
-    pass
 
 
 

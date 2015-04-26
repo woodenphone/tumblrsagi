@@ -135,11 +135,8 @@ def handle_tumblr_audio(session,post_dict):
         return {"tumblr_audio":sha512base64_hash}
 
     # Load the media file
-    try:
-        file_data = get(media_url)
-    except urllib2.HTTPError, err:
-        # 403 skip hack
-        raise(custom_exceptions.MediaGrabberFailed)
+    file_data = get(media_url)
+
     time_of_retreival = get_current_unix_time()
 
     # Check if file is saved already using file hash
