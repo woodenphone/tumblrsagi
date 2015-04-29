@@ -21,6 +21,12 @@ import utils # General utility functions
 Base = declarative_base()
 
 
+
+
+
+
+
+
 # Twkr's new tables
 class twkr_blogs(Base):
     """Class Info, functionality, purpose"""

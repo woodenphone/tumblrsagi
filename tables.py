@@ -20,7 +20,6 @@ Base = declarative_base()
 # Blogs metadata table
 class _Blogs(Base):# Depricated, remove references
     """Class that defines the Blog meta table in the DB"""
-    #__table_args__ = {'useexisting': True}# Magic to fix some sort of import problem?
     __tablename__ = "blogs"
     # Columns
     # Locally generated
@@ -47,9 +46,8 @@ class _Blogs(Base):# Depricated, remove references
 
 
 # Media tables
-class Media(Base):
+class Media(Base):# Live DB on server uses this
     """Class that defines the media table in the DB"""
-    #__table_args__ = {'useexisting': True}# Magic to fix some sort of import problem?
     __tablename__ = "media"
     # Columns
     # Locally generated
@@ -71,11 +69,10 @@ class Media(Base):
 # /Media
 
 # Posts tables
-class Posts(Base):
+class _Posts(Base):# Depricated by Twkr's new design
     """The posts in a blog
     <type>_<api_field_name>
     https://www.tumblr.com/docs/en/api/v2"""
-    #__table_args__ = {'useexisting': True}# Magic to fix some sort of import problem?
     __tablename__ = "posts"
     # Columns
     # Local stuff
@@ -144,7 +141,7 @@ class Posts(Base):
     answer_question = sqlalchemy.Column(sqlalchemy.UnicodeText())
     answer_answer = sqlalchemy.Column(sqlalchemy.UnicodeText())
 
-class RawPosts(Base):
+class RawPosts(Base):# Live DB on server uses this
     """The raw post dicts for a blog
     Used to back up and stage posts
     Write-once Read-many"""
