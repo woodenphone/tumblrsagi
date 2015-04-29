@@ -18,7 +18,7 @@ from utils import * # General utility functions
 Base = declarative_base()
 
 # Blogs metadata table
-class Blogs(Base):
+class _Blogs(Base):# Depricated, remove references
     """Class that defines the Blog meta table in the DB"""
     #__table_args__ = {'useexisting': True}# Magic to fix some sort of import problem?
     __tablename__ = "blogs"
@@ -145,7 +145,9 @@ class Posts(Base):
     answer_answer = sqlalchemy.Column(sqlalchemy.UnicodeText())
 
 class RawPosts(Base):
-    """The raw post dicts for a blog"""
+    """The raw post dicts for a blog
+    Used to back up and stage posts
+    Write-once Read-many"""
     __tablename__ = "raw_posts"
     # Columns
     # Local stuff
@@ -162,6 +164,12 @@ class RawPosts(Base):
     # Full post API data
     raw_post_json = sqlalchemy.Column(sqlalchemy.UnicodeText())# The post's section of the API, reencoded into JSON
     processed_post_json = sqlalchemy.Column(sqlalchemy.UnicodeText())# The post's section of the API, reencoded into JSON, after we've fucked with it
+
+
+
+
+
+
 # /SQLAlchemy table setup
 
 
