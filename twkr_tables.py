@@ -9,11 +9,15 @@
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
 
+# http://docs.sqlalchemy.org/en/latest/dialects/postgresql.html
+# http://docs.sqlalchemy.org/en/latest/core/type_basics.html
 import sqlalchemy# Database library
 from sqlalchemy.ext.declarative import declarative_base# Magic for ORM
-from sqlalchemy.dialects.postgresql import JSON
+import sqlalchemy.dialects.postgresql # postgreSQL ORM (JSON, JSONB)
+
 import os
 import logging
+
 import utils # General utility functions
 
 
@@ -23,7 +27,7 @@ Base = declarative_base()
 
 
 
-
+#
 
 
 
@@ -150,7 +154,7 @@ class twkr_posts_chat(Base):
     title = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     body = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     dialogue_html = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    dialogue_json = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSON(none_as_null=False))#
+    dialogue_json = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB(none_as_null=False))#
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger) #
 
 
@@ -169,6 +173,7 @@ def create_example_db():
     http://www.pythoncentral.io/introductory-tutorial-python-sqlalchemy/"""
     logging.debug("Opening DB connection")
     # add "echo=True" to see SQL being run
+    # postgresql://username:password@host/database_name
     engine = sqlalchemy.create_engine("postgresql://postgres:postgres@localhost/test", echo=True)
     # Bind the engine to the metadata of the Base class so that the
     # declaratives can be accessed through a DBSession instance
@@ -191,7 +196,7 @@ def create_example_db():
 
 
 def main():
-    utils.setup_logging(log_file_path=os.path.join("debug","tables-log.txt"))
+    utils.setup_logging(log_file_path=os.path.join("debug","twkr_tables-log.txt"))
     create_example_db()
 
 if __name__ == '__main__':
