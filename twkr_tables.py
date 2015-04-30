@@ -15,10 +15,7 @@ import sqlalchemy# Database library
 from sqlalchemy.ext.declarative import declarative_base# Magic for ORM
 import sqlalchemy.dialects.postgresql # postgreSQL ORM (JSON, JSONB)
 
-import os
-import logging
-
-import utils # General utility functions
+from utils import * # General utility functions
 
 
 # SQLAlchemy table setup
@@ -196,7 +193,7 @@ def create_example_db():
 
 
 def main():
-    utils.setup_logging(log_file_path=os.path.join("debug","twkr_tables-log.txt"))
+    setup_logging(log_file_path=os.path.join("debug","twkr_tables-log.txt"))
     create_example_db()
 
 if __name__ == '__main__':
