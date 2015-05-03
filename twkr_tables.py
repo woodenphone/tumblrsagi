@@ -61,6 +61,7 @@ class twkr_posts(Base):
 
 
 
+
 class twkr_posts_photo(Base):
     """Class Info, functionality, purpose"""
     __tablename__ = "twkr_posts_photo"

@@ -10,6 +10,7 @@
 #-------------------------------------------------------------------------------
 
 import sqlalchemy
+from multiprocessing.dummy import Pool as ThreadPool
 
 from utils import * # General utility functions
 import sql_functions# Database interaction
@@ -100,26 +101,26 @@ class tumblr_blog:
             #logging.debug("page_dict: "+repr(page_dict))
             # Stop if bad response
             if page_dict["meta"]["status"] != 200:
-                logging.error("Bad response, stopping scan for posts.")
+                logging.error("Bad response, stopping scan for posts. "+repr(self.blog_url))
                 logging.debug(repr(locals()))
                 break
             # Check how many posts the blog says it has
             if page_counter == 1:
                 self.posts_post_count = page_dict["response"]["total_posts"]
-                logging.info("Blog /posts post_count: "+repr(self.posts_post_count))
+                logging.info("Blog "+repr(self.blog_url)+" /posts post_count: "+repr(self.posts_post_count))
             # Add posts
             this_page_posts_list = page_dict["response"]["posts"]
             #logging.debug("this_page_posts_list: "+repr(this_page_posts_list))
-            logging.debug("posts on this page: "+repr(len(this_page_posts_list)))
+            logging.debug("posts on page: "+repr(page_url)+" : "+repr(len(this_page_posts_list)))
 
             # Exit conditions
             # Stop if duplicate results
             if this_page_posts_list == prev_page_posts_list:
-                logging.info("Last pages post match this pages posts, stopping loading posts.")
+                logging.info("Last pages post match this pages posts, stopping loading posts. "+repr(self.blog_url))
                 break
             # Stop if no posts
             if len(this_page_posts_list) == 0:
-                logging.error("No posts found on this page, stopping loading posts.")
+                logging.error("No posts found on this page, stopping loading posts. "+repr(self.blog_url))
                 break
 
             # Add posts to post list
@@ -128,7 +129,7 @@ class tumblr_blog:
                 this_page_add_counter += 1# to figure out why post counts differed from number saved
                 added_posts_counter += 1
                 self.posts_list.append(current_post_dict)
-            logging.debug("Added "+repr(this_page_add_counter)+" posts from page "+repr(page_counter))
+            logging.debug("Added "+repr(this_page_add_counter)+" posts from page "+repr(page_counter)+" "+repr(self.blog_url))
 
             # Update duplicate check list
             prev_page_posts_list = this_page_posts_list
@@ -136,31 +137,33 @@ class tumblr_blog:
 
         # Make sure we got all posts
         number_of_posts_retrieved = len(self.posts_list)
-        logging.debug("Added "+repr(added_posts_counter)+" individual posts ")
-        logging.info("number_of_posts_retrieved: "+repr(number_of_posts_retrieved)+
-        ", self.posts_post_count: "+repr(self.posts_post_count)+", self.info_post_count: "+repr(self.info_post_count))
+        logging.info(
+            "number_of_posts_retrieved: "+repr(number_of_posts_retrieved)+
+            ", self.posts_post_count: "+repr(self.posts_post_count)+", self.info_post_count: "+
+            repr(self.info_post_count)+",added_posts_counter:"+repr(added_posts_counter)+" blog_url: "+repr(self.blog_url)
+            )
         # Only run these tests if max_pages option not used
         if max_pages is None:
             # If actual does not match /posts
             if number_of_posts_retrieved < self.posts_post_count:
-                logging.warning("Post count from /posts API was higher than the number of posts retrieved!")
+                logging.warning("Post count from /posts API was higher than the number of posts retrieved! "+repr(self.blog_url))
                 logging.warning(repr(locals()))
                 #assert(False)# Stop for easier debugging
 
             # If actual does not match /info
             if number_of_posts_retrieved < self.info_post_count:
-                logging.warning("Post count from /info API was higher than the number of posts retrieved!")
+                logging.warning("Post count from /info API was higher than the number of posts retrieved! "+repr(self.blog_url))
                 logging.warning(repr(locals()))
                 #assert(False)# Stop for easier debugging
 
             # If difference of post counts if more than 1
             retreived_to_info_difference = abs(number_of_posts_retrieved - self.info_post_count)
             if ( retreived_to_info_difference > 1 ) and (number_of_posts_retrieved < self.info_post_count):
-                logging.error("More than one post is missing!")
+                logging.error("More than one post is missing! "+repr(self.blog_url))
                 logging.error(repr(locals()))
                 assert(False)
 
-        logging.info("Finished loading posts.")
+        logging.info("Finished loading posts. "+repr(self.blog_url))
         return
 
     def get_posts(self,max_pages=None):
@@ -300,6 +303,7 @@ def save_blog(blog_url,max_pages=None):
 ##    # Save media for posts and insert them into the DB
 ##    blog.insert_posts_into_db()
     logging.info("Finished saving blog: "+repr(blog_url))
+    appendlist(blog_url,list_file_path=config.done_list_path,initial_text="# List of completed items.\n")
     return
 
 
@@ -308,12 +312,26 @@ def save_blogs(list_file_path="tumblr_todo_list.txt",max_pages=None):
     """Save tumblr blogs from a list"""
     logging.info("Saving list of blogs: "+repr(list_file_path))
     blog_url_list = import_blog_list(list_file_path)
-    counter = 0
-    for blog_url in blog_url_list:
-        counter += 1
-        logging.info("Now processing blog "+repr(counter)+"of "+repr(len(blog_url_list))+" "+repr(blog_url))
-        save_blog(blog_url,max_pages)
-        appendlist(blog_url,list_file_path=config.done_list_path,initial_text="# List of completed items.\n")
+
+
+##    # Generate argument dicts to pass to worker threads
+##    args_list = [] # [ {}, {}, {} ]
+##    for blog_url in blog_url_list:
+##        args_list.append({
+##            "blog_url":blog_url,
+##            "max_pages":max_pages,
+##            })
+
+    # Run workers
+    # http://stackoverflow.com/questions/2846653/python-multithreading-for-dummies
+    # Make the Pool of workers
+    pool = ThreadPool(2)# Set to one for debugging
+
+    results = pool.map(save_blog, blog_url_list)
+    #close the pool and wait for the work to finish
+    pool.close()
+    pool.join()
+
     logging.info("Finished downloading blogs list")
     return
 
