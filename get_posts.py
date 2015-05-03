@@ -279,7 +279,7 @@ class tumblr_blog:
         pass
 
 
-def save_blog(blog_url,max_pages=None):
+def save_blog(blog_url):
     """Save one tumblr blog"""
     logging.info("Saving blog: "+repr(blog_url))
     # Connect to DB
@@ -297,7 +297,10 @@ def save_blog(blog_url,max_pages=None):
         return
 
     # Collect posts for the blog
-    posts = blog.get_posts(max_pages)
+    posts = blog.get_posts(config.max_pages_to_check)
+
+    #blog.print_posts()
+
     # Insert only raw post for other code to process later TODO FIXME
     blog.insert_posts_into_db_no_media()
 ##    # Save media for posts and insert them into the DB
@@ -308,7 +311,7 @@ def save_blog(blog_url,max_pages=None):
 
 
 
-def save_blogs(list_file_path="tumblr_todo_list.txt",max_pages=None):
+def save_blogs(list_file_path="tumblr_todo_list.txt"):
     """Save tumblr blogs from a list"""
     logging.info("Saving list of blogs: "+repr(list_file_path))
     blog_url_list = import_blog_list(list_file_path)
@@ -325,7 +328,7 @@ def save_blogs(list_file_path="tumblr_todo_list.txt",max_pages=None):
     # Run workers
     # http://stackoverflow.com/questions/2846653/python-multithreading-for-dummies
     # Make the Pool of workers
-    pool = ThreadPool(2)# Set to one for debugging
+    pool = ThreadPool(1)# Set to one for debugging
 
     results = pool.map(save_blog, blog_url_list)
     #close the pool and wait for the work to finish
@@ -346,9 +349,7 @@ def main():
         )
         # Program
         #classy_play()
-        save_blogs(
-            list_file_path=config.blog_list_path,
-            max_pages=config.max_pages_to_check)
+        save_blogs(list_file_path=config.blog_list_path)
         # /Program
         logging.info("Finished, exiting.")
         return
