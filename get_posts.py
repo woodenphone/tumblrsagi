@@ -328,7 +328,7 @@ def save_blogs(list_file_path="tumblr_todo_list.txt"):
     # Run workers
     # http://stackoverflow.com/questions/2846653/python-multithreading-for-dummies
     # Make the Pool of workers
-    pool = ThreadPool(1)# Set to one for debugging
+    pool = ThreadPool(config.number_of_post_grab_workers)# Set to one for debugging
 
     results = pool.map(save_blog, blog_url_list)
     #close the pool and wait for the work to finish

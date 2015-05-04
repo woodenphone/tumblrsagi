@@ -111,6 +111,25 @@ def insert_one_post(session,post_dict,blog_id):# WIP
     session.commit()
     return True
 
+
+def add_blog(session,blog_url):
+    """Make sure a blog is in the twkr_blogs table
+    return the internal ID number assigned to that blog"""
+    logging.debug("making sure blog is in db: "+repr(blog_url))
+
+    # Check if blog is already in DB, if it is return the id
+    blog_id_query = sqlalchemy.select([twkr_blogs.blog_id]).where(twkr_blogs.blog_url == blog_url)
+    blog_id_rows = session.execute(blog_id_query)
+    blog_id_row = blog_id_rows.fetchone()
+    blog_id = blog_id_row["blog_id"]
+    logging.debug("blog_id: "+repr(blog_id))
+    return blog_id
+
+
+    # If blog is not in DB, create a record for it and return the ID
+
+    return blog_id
+
 # /for twkr's new tables
 
 
@@ -118,6 +137,8 @@ def insert_one_post(session,post_dict,blog_id):# WIP
 def debug():
     """Temp code for debug"""
     session = connect_to_db()
+
+    add_blog(session,blog_url="staff.tumblr.com")
 
     # Try each type of post to see what happens
 ##        u"text":1,
@@ -138,6 +159,8 @@ def debug():
         post_dict = text_post_dict,
         blog_id = dummy_blog_id
         )
+    logging.info("debug stop")
+    return
 
     # u"photo":2,
     photo_post_dict = {u'highlighted': [], u'image_permalink': u'http://staff.tumblr.com/image/81595826875', u'reblog_key': u'BU1z20aM', u'featured_in_tag': [u'Design'], u'format': u'html', u'timestamp': 1396544484, u'note_count': 23321, u'tags': [], u'trail': [], u'id': 81595826875L, u'post_url': u'http://staff.tumblr.com/post/81595826875', u'caption': u'', u'state': u'published', u'reblog': {u'tree_html': u''}, u'short_url': u'http://tmblr.co/ZE5Fby1B-VOAx', u'date': u'2014-04-03 17:01:24 GMT', u'photos': [{u'caption': u'', u'original_size': {u'url': u'http://38.media.tumblr.com/5f867e24acdf8365d34875acf489810a/tumblr_n3gr4l2Wtf1qz8q0ho1_500.gif', u'width': 500, u'height': 634}, u'alt_sizes': [{u'url': u'http://38.media.tumblr.com/5f867e24acdf8365d34875acf489810a/tumblr_n3gr4l2Wtf1qz8q0ho1_500.gif', u'width': 500, u'height': 634}, {u'url': u'http://38.media.tumblr.com/5f867e24acdf8365d34875acf489810a/tumblr_n3gr4l2Wtf1qz8q0ho1_400.gif', u'width': 400, u'height': 507}, {u'url': u'http://38.media.tumblr.com/5f867e24acdf8365d34875acf489810a/tumblr_n3gr4l2Wtf1qz8q0ho1_250.gif', u'width': 250, u'height': 317}, {u'url': u'http://38.media.tumblr.com/5f867e24acdf8365d34875acf489810a/tumblr_n3gr4l2Wtf1qz8q0ho1_100.gif', u'width': 100, u'height': 127}, {u'url': u'http://33.media.tumblr.com/5f867e24acdf8365d34875acf489810a/tumblr_n3gr4l2Wtf1qz8q0ho1_75sq.gif', u'width': 75, u'height': 75}]}], u'type': u'photo', u'slug': u'', u'blog_name': u'staff'}
