@@ -18,7 +18,39 @@ from utils import * # General utility functions
 Base = declarative_base()
 
 # Blogs metadata table
-class _Blogs(Base):# Depricated, remove references
+##class _Blogs(Base):# Depricated, remove references
+##    """Class that defines the Blog meta table in the DB"""
+##    __tablename__ = "blogs"
+##    # Columns
+##    # Locally generated
+##    primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Is used only as primary key
+##    date_added = sqlalchemy.Column(sqlalchemy.BigInteger)# Unix time of date first added to table
+##    date_last_saved = sqlalchemy.Column(sqlalchemy.BigInteger)# Unix time of date last saved
+##
+##    timestamp_of_last_post = sqlalchemy.Column(sqlalchemy.BigInteger)#timestamp of most recent post in the DB, as API gives it
+##
+##    # Posts table values
+##    poster_username = sqlalchemy.Column(sqlalchemy.UnicodeText())# username for a blog, as given by the API "tsitra360"
+##    blog_domain = sqlalchemy.Column(sqlalchemy.UnicodeText())# domain for the blog"tsitra360.tumblr.com"
+##    # From /info, documented
+##    info_title = sqlalchemy.Column(sqlalchemy.UnicodeText())#String	The display title of the blog	Compare name
+##    info_posts = sqlalchemy.Column(sqlalchemy.UnicodeText())#Number	The total number of posts to this blog
+##    info_name = sqlalchemy.Column(sqlalchemy.UnicodeText())#String	The short blog name that appears before tumblr.com in a standard blog hostname (and before the domain in a custom blog hostname)	Compare title
+##    info_updated = sqlalchemy.Column(sqlalchemy.UnicodeText())#	Number	The time of the most recent post, in seconds since the epoch
+##    info_description = sqlalchemy.Column(sqlalchemy.UnicodeText())#String	You guessed it! The blog's description
+##    info_ask = sqlalchemy.Column(sqlalchemy.Boolean())#Boolean	Indicates whether the blog allows questions
+##    info_ask_anon = sqlalchemy.Column(sqlalchemy.Boolean())#	Boolean	Indicates whether the blog allows anonymous questions	Returned only if ask is true
+##    info_likes = sqlalchemy.Column(sqlalchemy.UnicodeText())#Number	Number of likes for this user	Returned only if this is the user's primary blog and sharing of likes is enabled
+##    # From /info, undocumented
+##    info_is_nsfw = sqlalchemy.Column(sqlalchemy.Boolean())
+##    info_share_likes = sqlalchemy.Column(sqlalchemy.Boolean())
+##    info_url = sqlalchemy.Column(sqlalchemy.Boolean())
+##    info_ask_page_title = sqlalchemy.Column(sqlalchemy.UnicodeText())
+
+
+
+
+class Blogs(Base):# use this until twkr bugs us to change it
     """Class that defines the Blog meta table in the DB"""
     __tablename__ = "blogs"
     # Columns
@@ -26,23 +58,13 @@ class _Blogs(Base):# Depricated, remove references
     primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Is used only as primary key
     date_added = sqlalchemy.Column(sqlalchemy.BigInteger)# Unix time of date first added to table
     date_last_saved = sqlalchemy.Column(sqlalchemy.BigInteger)# Unix time of date last saved
+
+    timestamp_of_last_post = sqlalchemy.Column(sqlalchemy.BigInteger)#timestamp of most recent post in the DB, as API gives it
+
     # Posts table values
     poster_username = sqlalchemy.Column(sqlalchemy.UnicodeText())# username for a blog, as given by the API "tsitra360"
     blog_domain = sqlalchemy.Column(sqlalchemy.UnicodeText())# domain for the blog"tsitra360.tumblr.com"
-    # From /info, documented
-    info_title = sqlalchemy.Column(sqlalchemy.UnicodeText())#String	The display title of the blog	Compare name
-    info_posts = sqlalchemy.Column(sqlalchemy.UnicodeText())#Number	The total number of posts to this blog
-    info_name = sqlalchemy.Column(sqlalchemy.UnicodeText())#String	The short blog name that appears before tumblr.com in a standard blog hostname (and before the domain in a custom blog hostname)	Compare title
-    info_updated = sqlalchemy.Column(sqlalchemy.UnicodeText())#	Number	The time of the most recent post, in seconds since the epoch
-    info_description = sqlalchemy.Column(sqlalchemy.UnicodeText())#String	You guessed it! The blog's description
-    info_ask = sqlalchemy.Column(sqlalchemy.Boolean())#Boolean	Indicates whether the blog allows questions
-    info_ask_anon = sqlalchemy.Column(sqlalchemy.Boolean())#	Boolean	Indicates whether the blog allows anonymous questions	Returned only if ask is true
-    info_likes = sqlalchemy.Column(sqlalchemy.UnicodeText())#Number	Number of likes for this user	Returned only if this is the user's primary blog and sharing of likes is enabled
-    # From /info, undocumented
-    info_is_nsfw = sqlalchemy.Column(sqlalchemy.Boolean())
-    info_share_likes = sqlalchemy.Column(sqlalchemy.Boolean())
-    info_url = sqlalchemy.Column(sqlalchemy.Boolean())
-    info_ask_page_title = sqlalchemy.Column(sqlalchemy.UnicodeText())
+
 
 
 # Media tables
@@ -67,6 +89,8 @@ class Media(Base):# Live DB on server uses this
 
 
 # /Media
+
+
 
 # Posts tables
 class _Posts(Base):# Depricated by Twkr's new design

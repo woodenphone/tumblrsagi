@@ -223,6 +223,52 @@ def find_blog_posts(session,sanitized_username):
 
 
 # Blogs metadata table
+def get_timestamp_of_last_post(session,blog_domain):
+    """Get the timestamp (API-provided) of the most recent post saved for a blog from the blogs table
+    SELECT"""
+    # Read the entry, if nothing is there we will find out pretty quickly
+    post_query = sqlalchemy.select([Blogs]).where(Blogs.blog_domain == blog_domain)
+    post_row = session.execute(url_query).fetchone()
+    timestamp_of_last_post_in_db = post_row["timestamp_of_last_post"]
+    return timestamp_of_last_post_in_db
+
+
+def update_date_of_last_post(session,blog_domain,timestamp_of_last_post):
+    """Update the timestamp (API-provided) of the most recent post saved for a blog from the blogs table
+    UPDATE"""
+     # Make sure there is an entry
+
+     # UPDATE the entry
+    statement = sqlalchemy.update(Blogs).\
+        where(Blogs.c.blog_domain == blog_domain).\
+        values(timestamp_of_last_post = timestamp_of_last_post)
+    session.execute(statement)
+    session.commit()
+    return
+
+
+def create_blog_entry(session,poster_username,blog_domain):
+    """Create an entry in the blogs table for a blog
+    INSERT"""
+    # Validate new values
+    # Make sure there is no entry
+    # Create entry
+    row_to_insert = {}
+    row_to_insert["date_added"] = get_current_unix_time()
+    row_to_insert["date_last_saved"] = None
+    row_to_insert["timestamp_of_last_post"] = None
+    row_to_insert["poster_username"] = poster_username
+    row_to_insert["blog_domain"] = blog_domain
+
+    blogs_row = Blogs(**row_to_insert)
+    session.add(blogs_row)
+    session.commit()
+    return
+
+
+#
+
+
 def _insert_user_into_db(session,info_dict,sanitized_username,sanitized_blog_url):# depricated by twkr's new tables
         """Add blog information to blogs DB"""
         logging.debug("Adding blog metadata to DB")

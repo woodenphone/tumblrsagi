@@ -78,6 +78,8 @@ class tumblr_blog:
 
     def load_posts(self,max_pages=None):
         """Load posts for the blog"""
+
+        timestamp_of_last_post_in_db = get_timestamp_of_last_post(session,blog_domain)
         added_posts_counter = 0
         page_counter = -1 # -1 so we start at 0
         prev_page_posts_list = ["prev page"]# Dummy value
@@ -133,7 +135,14 @@ class tumblr_blog:
 
             # Update duplicate check list
             prev_page_posts_list = this_page_posts_list
+
+            # Stop loading posts if the last post on this page is older than the newest on in the DB
+            if this_page_posts_list[-1]["timestamp"] <= timestamp_of_last_post_in_db:
+                logging.info("newest post in db is newer than one of the posts on this page, stopping loading posts. "+repr(self.blog_url))
+                break
+
             continue
+
 
         # Make sure we got all posts
         number_of_posts_retrieved = len(self.posts_list)
