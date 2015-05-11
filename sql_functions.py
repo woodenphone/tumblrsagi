@@ -226,16 +226,19 @@ def find_blog_posts(session,sanitized_username):
 def get_timestamp_of_last_post(session,blog_domain):
     """Get the timestamp (API-provided) of the most recent post saved for a blog from the blogs table
     SELECT"""
+    logging.debug("get_timestamp_of_last_post() blog_domain: "+repr(blog_domain))
     # Read the entry, if nothing is there we will find out pretty quickly
     post_query = sqlalchemy.select([Blogs]).where(Blogs.blog_domain == blog_domain)
-    post_row = session.execute(url_query).fetchone()
+    post_row = session.execute(post_query).fetchone()
     timestamp_of_last_post_in_db = post_row["timestamp_of_last_post"]
+    logging.debug("timestamp_of_last_post_in_db: "+repr(timestamp_of_last_post_in_db))
     return timestamp_of_last_post_in_db
 
 
 def update_date_of_last_post(session,blog_domain,timestamp_of_last_post):
     """Update the timestamp (API-provided) of the most recent post saved for a blog from the blogs table
     UPDATE"""
+    logging.debug("update_date_of_last_post() blog_domain: "+repr(blog_domain)+" ,timestamp_of_last_post:"+repr(timestamp_of_last_post))
      # Make sure there is an entry
 
      # UPDATE the entry
@@ -250,6 +253,7 @@ def update_date_of_last_post(session,blog_domain,timestamp_of_last_post):
 def create_blog_entry(session,poster_username,blog_domain):
     """Create an entry in the blogs table for a blog
     INSERT"""
+    logging.debug("create_blog_entry() blog_domain: "+repr(blog_domain)+" ,blog_domain: "+repr(blog_domain))
     # Validate new values
     # Make sure there is no entry
     # Create entry

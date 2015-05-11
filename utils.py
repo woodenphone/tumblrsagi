@@ -91,15 +91,19 @@ def save_file(file_path,data,force_save=False,allow_fail=False):
     counter = 0
     while counter <= 10:
         counter += 1
-        try:
-            if not force_save:
-                if os.path.exists(file_path):
-                    logging.debug("save_file()"" File already exists! "+repr(file_path))
-                    return
-            foldername = os.path.dirname(file_path)
-            if len(foldername) >= 1:
-                if not os.path.isdir(foldername):
+
+        if not force_save:
+            if os.path.exists(file_path):
+                logging.debug("save_file()"" File already exists! "+repr(file_path))
+                return
+        foldername = os.path.dirname(file_path)
+        if len(foldername) >= 1:
+            if not os.path.isdir(foldername):
+                try:
                     os.makedirs(foldername)
+                except WindowsError, err:
+                    pass
+        try:
             file = open(file_path, "wb")
             file.write(data)
             file.close()
@@ -107,11 +111,13 @@ def save_file(file_path,data,force_save=False,allow_fail=False):
         except IOError, err:
             logging.exception(err)
             logging.error(repr(locals()))
+            time.sleep(0.1)
             continue
-    logging.critical("Too many failed write attempts!")
+    logging.warning("save_file() Too many failed write attempts! "+repr(file_path))
     if allow_fail:
         return
     else:
+        logging.critical("save_file() Passing on exception")
         logging.critical(repr(locals()))
         raise
 
@@ -183,32 +189,33 @@ def getwithinfo(url):
             delay(retry_delay)
             logging.debug( "Attempt "+repr(attemptcount)+" for URL: "+repr(url) )
         try:
-            save_file(
-                file_path = os.path.join("debug","get_last_url.txt"),
-                data = url,
-                force_save = True,
-                allow_fail = True
-                )
+##            save_file(
+##                file_path = os.path.join("debug","get_last_url.txt"),
+##                data = url,
+##                force_save = True,
+##                allow_fail = True
+##                )
             r = urllib2.urlopen(url)
             info = r.info()
             reply = r.read()
             delay(request_delay)
 
-            # Save html responses for debugging
-            if "html" in info["content-type"]:
-                save_file(
-                    file_path = os.path.join("debug","get_last_html.htm"),
-                    data = reply,
-                    force_save = True,
-                    allow_fail = True
-                    )
-            else:
-                save_file(
-                    file_path = os.path.join("debug","get_last_not_html.txt"),
-                    data = reply,
-                    force_save = True,
-                    allow_fail = True
-                    )
+##            # Save html responses for debugging
+##            if "html" in info["content-type"]:
+##                save_file(
+##                    file_path = os.path.join("debug","get_last_html.htm"),
+##                    data = reply,
+##                    force_save = True,
+##                    allow_fail = True
+##                    )
+##            else:
+##                pass
+##                save_file(
+##                    file_path = os.path.join("debug","get_last_not_html.txt"),
+##                    data = reply,
+##                    force_save = True,
+##                    allow_fail = True
+##                    )
             # Retry if empty response and not last attempt
             if (len(reply) < 1) and (attemptcount < max_attempts):
                 logging.error("Reply too short :"+repr(reply))

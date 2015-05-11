@@ -79,7 +79,7 @@ class tumblr_blog:
     def load_posts(self,max_pages=None):
         """Load posts for the blog"""
 
-        timestamp_of_last_post_in_db = get_timestamp_of_last_post(session,blog_domain)
+        timestamp_of_last_post_in_db = sql_functions.get_timestamp_of_last_post(session=self.session,blog_domain=self.blog_url)
         added_posts_counter = 0
         page_counter = -1 # -1 so we start at 0
         prev_page_posts_list = ["prev page"]# Dummy value
