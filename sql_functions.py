@@ -217,7 +217,7 @@ def find_blog_posts(session,sanitized_username):
     for row in posts_rows:
         post_ids.append(row["all_posts_id"])
          #logging.debug("find_blog_posts()"+"row"+": "+repr(row))
-    logging.debug("find_blog_posts()"+"post_ids"+": "+repr(post_ids))
+    logging.debug("find_blog_posts()"+"for "+repr(sanitized_username)+"post_ids"+": "+repr(post_ids))
     return post_ids
 
 
@@ -225,14 +225,18 @@ def find_blog_posts(session,sanitized_username):
 # Blogs metadata table
 def get_timestamp_of_last_post(session,blog_domain):
     """Get the timestamp (API-provided) of the most recent post saved for a blog from the blogs table
+    Return the timestamp integer if it exists, if not available return 0.
     SELECT"""
     logging.debug("get_timestamp_of_last_post() blog_domain: "+repr(blog_domain))
     # Read the entry, if nothing is there we will find out pretty quickly
     post_query = sqlalchemy.select([Blogs]).where(Blogs.blog_domain == blog_domain)
     post_row = session.execute(post_query).fetchone()
-    timestamp_of_last_post_in_db = post_row["timestamp_of_last_post"]
-    logging.debug("timestamp_of_last_post_in_db: "+repr(timestamp_of_last_post_in_db))
-    return timestamp_of_last_post_in_db
+    if post_row:
+        timestamp_of_last_post_in_db = post_row["timestamp_of_last_post"]
+        logging.debug("timestamp_of_last_post_in_db: "+repr(timestamp_of_last_post_in_db))
+        return timestamp_of_last_post_in_db
+    else:
+        return 0
 
 
 def update_date_of_last_post(session,blog_domain,timestamp_of_last_post):
