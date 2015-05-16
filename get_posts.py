@@ -16,7 +16,7 @@ from utils import * # General utility functions
 import sql_functions# Database interaction
 #from media_handlers import *# Media finding, extractiong, ect
 import config # Settings and configuration
-
+import twkr_sql_functions
 
 
 class tumblr_blog:
@@ -126,15 +126,7 @@ class tumblr_blog:
                 if not(post_id in preexisting_post_ids):
                     added_count += 1
                     #logging.debug("Adding post:"+repr(post_id)+" for: "+repr(self.blog_url))
-                    sql_functions.add_raw_post(
-                        session = self.session,
-                        raw_post_dict = post_dict,
-                        processed_post_dict = None,
-                        info_dict = self.info_dict,
-                        blog_url = self.sanitized_blog_url,
-                        username = self.sanitized_username,
-                        version = 0
-                        )
+                    self.save_post(post_dict)
 ##                else:
 ##                    logging.debug("Skipping post:"+repr(post_id)+" for: "+repr(self.blog_url))
             logging.info("Added "+repr(added_count)+" posts for "+repr(page_url))
@@ -160,6 +152,25 @@ class tumblr_blog:
 
         logging.info("Finished loading posts. "+repr(self.blog_url))
         return
+
+    def save_post(self,post_dict):
+        """Save a post for this blog, used by save_new_posts()"""
+        sql_functions.add_raw_post(
+            session = self.session,
+            raw_post_dict = post_dict,
+            processed_post_dict = None,
+            info_dict = self.info_dict,
+            blog_url = self.sanitized_blog_url,
+            username = self.sanitized_username,
+            version = 0
+            )
+
+        twkr_sql_functions.insert_one_post(
+            session = self.session,
+            post_dict = post_dict,
+            blog_id = 1# Dummy value
+            )
+
 
     def update_blog_record(self):# TODO
         """Add or update this blog's record in the blog metadata table"""

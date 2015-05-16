@@ -152,7 +152,7 @@ def create_example_db():
     logging.debug("Opening DB connection")
     # add "echo=True" to see SQL being run
     # postgresql://username:password@host/database_name
-    engine = sqlalchemy.create_engine("postgresql://postgres:postgres@localhost/test", echo=True)
+    engine = sqlalchemy.create_engine("postgresql://postgres:postgres@localhost/example", echo=True)
     # Bind the engine to the metadata of the Base class so that the
     # declaratives can be accessed through a DBSession instance
     Base.metadata.bind = engine

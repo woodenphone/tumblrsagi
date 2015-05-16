@@ -60,18 +60,13 @@ def insert_one_post(session,post_dict,blog_id):# WIP
     posts_dict["timestamp"] = post_dict["timestamp"] # using value the API gave us
 
     posts_row = twkr_posts(**posts_dict)
-    print "1"# DEBUG
-    print "2"# DEBUG
-    print "3"# DEBUG
     session.add(posts_row)
-    session.commit()
-    print "1"# DEBUG
-    print "2"# DEBUG
-    print "3"# DEBUG
+    session.commit()# We have to commit this first for some reason?
+
 
     # If photo, insert into posts_photo table
     if (post_dict["type"] == "photo"):
-        logging.debug("Photo post")
+        logging.debug("posts_photo")
         # Add each photo to a row in the photos table
         photos = post_dict["photos"]
         photo_num = 0
@@ -79,31 +74,50 @@ def insert_one_post(session,post_dict,blog_id):# WIP
             photo_num += 1
             photo_url = photo["original_size"]["url"]
             posts_photo_dict = {}
+
             posts_photo_dict["caption"] = photo["caption"]
-            posts_photo_dict["url"] =photo_url
+            posts_photo_dict["url"] = photo_url
             posts_photo_dict["order"] = photo_num
-            posts_photo_dict["sha512b64"] = post_dict["links"][photo_url]
+            posts_photo_dict["sha512b64"] = "FIXME"#post_dict["links"][photo_url]
             posts_photo_dict["post_id"] = post_id
 
-            posts_photo_row = twkr_posts(**posts_photo_dict)
+            posts_photo_row = twkr_posts_photo(**posts_photo_dict)
             session.add(posts_photo_row)
             #session.commit()
 
     # If link, insert into posts_link table
     if (post_dict["type"] == "link"):
+        logging.debug("posts_link")
         posts_link_dict = {}
-        posts_link_row = twkr_posts(**posts_link_dict)
+
+        posts_link_dict["source_url"] = post_dict["url"]
+        posts_link_dict["source_title"] = post_dict["title"]
+        posts_link_dict["description"] = post_dict["description"]
+        posts_link_dict["post_id"] = post_id
+
+        posts_link_row = twkr_posts_link(**posts_link_dict)
         session.add(posts_link_row)
 
     # If answer, insert into posts_answer table
     if (post_dict["type"] == "answer"):
+        logging.debug("posts_answer")
         posts_answer_dict = {}
-        posts_answer_row = twkr_posts(**posts_answer_dict)
+
+        posts_answer_dict["asking_name"] = post_dict["asking_name"]
+        posts_answer_dict["asking_url"] = post_dict["asking_url"]
+        posts_answer_dict["question"] = post_dict["question"]
+        posts_answer_dict["answer"] = post_dict["answer"]
+        posts_answer_dict["post_id"] = post_id
+
+        posts_answer_row = twkr_posts_answer(**posts_answer_dict)
         session.add(posts_answer_row)
 
     # If text, insert into posts_text table
     if (post_dict["type"] == "text"):
+        logging.debug("posts_text")
         posts_text_dict = {}
+
+        posts_text_dict["title"] = post_dict["title"]
         posts_text_dict["body"] = post_dict["body"]
         posts_text_dict["post_id"] = post_id
 
@@ -112,14 +126,29 @@ def insert_one_post(session,post_dict,blog_id):# WIP
 
     # If quote, insert into posts_quote table
     if (post_dict["type"] == "quote"):
+        logging.debug("posts_quote")
         posts_quote_dict = {}
-        posts_quote_row = twkr_posts(**posts_quote_dict)
+
+        posts_quote_dict["source_url"] = post_dict["source_url"]
+        posts_quote_dict["source_title"] = post_dict["source_title"]
+        posts_quote_dict["text"] = post_dict["text"]
+        posts_quote_dict["post_id"] = post_id
+
+        posts_quote_row = twkr_posts_quote(**posts_quote_dict)
         session.add(posts_quote_row)
 
     # If chat, insert into posts_chat table
     if (post_dict["type"] == "chat"):
+        logging.debug("posts_chat")
         posts_chat_dict = {}
-        posts_chat_row = twkr_posts(**posts_chat_dict)
+
+        posts_chat_dict["title"] = post_dict["title"]
+        posts_chat_dict["body"] = post_dict["body"]
+        posts_chat_dict["dialogue_html"] = None
+        posts_chat_dict["dialogue_json"] = json.dumps(post_dict["dialogue"])
+        posts_chat_dict["post_id"] = post_id
+
+        posts_chat_row = twkr_posts_chat(**posts_chat_dict)
         session.add(posts_chat_row)
 
     # Commit once ALL rows for this post are input
@@ -155,12 +184,11 @@ def add_blog(session,blog_url):
 # /for twkr's new tables
 
 
-
 def debug():
     """Temp code for debug"""
     session = connect_to_db()
 
-    add_blog(session,blog_url="staff.tumblr.com")
+    dummy_blog_id = add_blog(session,blog_url="staff.tumblr.com")
 
     # Try each type of post to see what happens
 ##        u"text":1,
@@ -171,9 +199,6 @@ def debug():
 ##        u"audio":6,
 ##        u"video":7,
 ##        u"answer":8,
-
-    dummy_blog_id = 1
-
     # u"text":1,
     text_post_dict = {u'body': u'<p>It\u2019s been almost two years since we <a href="http://staff.tumblr.com/post/19785116691/policy-update">last updated</a> Tumblr\u2019s terms and policies. A lot has happened since then!</p>\n<p>To make sure these documents fully reflect our product and philosophies, and are as understandable and up-to-date as they can be, our Legal and Policy teams have taken the last few weeks (and a tremendous amount of care) to update our <a href="http://www.tumblr.com/policy/drafts/terms_of_service">Terms of Service</a>, <a href="http://www.tumblr.com/policy/drafts/privacy">Privacy Policy</a>, and <a href="http://www.tumblr.com/policy/drafts/community">Community Guidelines</a>.</p>\n<p>There are a fair number of changes, so we insist you read them all for yourself. Some notable updates include:</p>\n<ul><li>Cleanup to make all of the documents more readable</li>\n<li>Updates to reflect changes to our products over the last two years</li>\n<li>Information about how we work with our new parent company, Yahoo</li>\n<li>Credits for open source projects</li>\n<li>Some language that makes it easier for U.S. government organizations to blog on Tumblr</li>\n<li>An attribution policy reminding people not to be jerks</li>\n<li>Updated annotations (!)</li>\n</ul><p>You can review the drafts via the links above. You can also see every change, letter for letter, on <a href="https://github.com/tumblr/policy/compare/2cfe3c8668...adfff367b5#files_bucket">GitHub</a> (minus the plain English annotations).</p>\n<p>We\u2019re planning to officially launch the new terms soon and we\u2019d really love to hear any questions or concerns. Please write to <a href="mailto:policy@tumblr.com">policy@tumblr.com</a>.</p>', u'highlighted': [], u'reblog_key': u'FejUhHDh', u'format': u'html', u'timestamp': 1390592400, u'note_count': 15210, u'tags': [], u'id': 74407154392L, u'post_url': u'http://staff.tumblr.com/post/74407154392/its-been-almost-two-years-since-we-last-updated', u'trail': [{u'blog': {u'theme': {u'title_font_weight': u'bold', u'title_color': u'#FFFFFF', u'header_bounds': 0, u'title_font': u'Gibson', u'link_color': u'#56BC8A', u'header_image_focused': u'http://static.tumblr.com/10e607f9b9b4c588d1cbd6c9f8b564d9/3hpyv0p/nFBnlgttl/tumblr_static_1sssiwavcjs0gs4cggwsok040_2048_v2.gif', u'show_description': True, u'show_header_image': True, u'header_stretch': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_image_scaled': u'http://static.tumblr.com/10e607f9b9b4c588d1cbd6c9f8b564d9/3hpyv0p/nFBnlgttl/tumblr_static_1sssiwavcjs0gs4cggwsok040_2048_v2.gif', u'avatar_shape': u'square', u'show_avatar': False, u'background_color': u'#37475c', u'header_image': u'http://static.tumblr.com/10e607f9b9b4c588d1cbd6c9f8b564d9/3hpyv0p/nFBnlgttl/tumblr_static_1sssiwavcjs0gs4cggwsok040.gif'}, u'name': u'staff'}, u'content': u'<p>It\u2019s been almost two years since we <a href="http://staff.tumblr.com/post/19785116691/policy-update">last updated</a> Tumblr\u2019s terms and policies. A lot has happened since then!</p>\n<p>To make sure these documents fully reflect our product and philosophies, and are as understandable and up-to-date as they can be, our Legal and Policy teams have taken the last few weeks (and a tremendous amount of care) to update our <a href="http://www.tumblr.com/policy/drafts/terms_of_service">Terms of Service</a>, <a href="http://www.tumblr.com/policy/drafts/privacy">Privacy Policy</a>, and <a href="http://www.tumblr.com/policy/drafts/community">Community Guidelines</a>.</p>\n<p>There are a fair number of changes, so we insist you read them all for yourself. Some notable updates include:</p>\n<ul><li>Cleanup to make all of the documents more readable</li>\n<li>Updates to reflect changes to our products over the last two years</li>\n<li>Information about how we work with our new parent company, Yahoo</li>\n<li>Credits for open source projects</li>\n<li>Some language that makes it easier for U.S. government organizations to blog on Tumblr</li>\n<li>An attribution policy reminding people not to be jerks</li>\n<li>Updated annotations (!)</li>\n</ul><p>You can review the drafts via the links above. You can also see every change, letter for letter, on <a href="https://github.com/tumblr/policy/compare/2cfe3c8668...adfff367b5#files_bucket">GitHub</a> (minus the plain English annotations).</p>\n<p>We\u2019re planning to officially launch the new terms soon and we\u2019d really love to hear any questions or concerns. Please write to <a href="mailto:policy@tumblr.com">policy@tumblr.com</a>.</p>', u'post': {u'id': u'74407154392'}, u'is_root_item': True, u'is_current_item': True}], u'state': u'published', u'reblog': {u'tree_html': u''}, u'short_url': u'http://tmblr.co/ZE5Fby15J0nBO', u'date': u'2014-01-24 19:40:00 GMT', u'title': None, u'type': u'text', u'slug': u'its-been-almost-two-years-since-we-last-updated', u'blog_name': u'staff'}
     insert_one_post(
@@ -181,8 +206,6 @@ def debug():
         post_dict = text_post_dict,
         blog_id = dummy_blog_id
         )
-    logging.info("debug stop")
-    return
 
     # u"photo":2,
     photo_post_dict = {u'highlighted': [], u'image_permalink': u'http://staff.tumblr.com/image/81595826875', u'reblog_key': u'BU1z20aM', u'featured_in_tag': [u'Design'], u'format': u'html', u'timestamp': 1396544484, u'note_count': 23321, u'tags': [], u'trail': [], u'id': 81595826875L, u'post_url': u'http://staff.tumblr.com/post/81595826875', u'caption': u'', u'state': u'published', u'reblog': {u'tree_html': u''}, u'short_url': u'http://tmblr.co/ZE5Fby1B-VOAx', u'date': u'2014-04-03 17:01:24 GMT', u'photos': [{u'caption': u'', u'original_size': {u'url': u'http://38.media.tumblr.com/5f867e24acdf8365d34875acf489810a/tumblr_n3gr4l2Wtf1qz8q0ho1_500.gif', u'width': 500, u'height': 634}, u'alt_sizes': [{u'url': u'http://38.media.tumblr.com/5f867e24acdf8365d34875acf489810a/tumblr_n3gr4l2Wtf1qz8q0ho1_500.gif', u'width': 500, u'height': 634}, {u'url': u'http://38.media.tumblr.com/5f867e24acdf8365d34875acf489810a/tumblr_n3gr4l2Wtf1qz8q0ho1_400.gif', u'width': 400, u'height': 507}, {u'url': u'http://38.media.tumblr.com/5f867e24acdf8365d34875acf489810a/tumblr_n3gr4l2Wtf1qz8q0ho1_250.gif', u'width': 250, u'height': 317}, {u'url': u'http://38.media.tumblr.com/5f867e24acdf8365d34875acf489810a/tumblr_n3gr4l2Wtf1qz8q0ho1_100.gif', u'width': 100, u'height': 127}, {u'url': u'http://33.media.tumblr.com/5f867e24acdf8365d34875acf489810a/tumblr_n3gr4l2Wtf1qz8q0ho1_75sq.gif', u'width': 75, u'height': 75}]}], u'type': u'photo', u'slug': u'', u'blog_name': u'staff'}
