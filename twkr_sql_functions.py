@@ -45,7 +45,8 @@ def insert_one_post(session,post_dict,blog_id):# WIP
     """
 
     # Generate a unique ID for the post
-    post_id = post_dict["id"]# I don't trust this but it's good enough for testing
+    post_id = get_current_unix_time()#post_dict["id"]# I don't trust this but it's good enough for testing
+    logging.warning("Fix post_id! Unsafe for primary key")
 
     # Insert into twkr_posts table
     posts_dict = {}
@@ -63,6 +64,7 @@ def insert_one_post(session,post_dict,blog_id):# WIP
     print "2"# DEBUG
     print "3"# DEBUG
     session.add(posts_row)
+    session.commit()
     print "1"# DEBUG
     print "2"# DEBUG
     print "3"# DEBUG
@@ -70,24 +72,37 @@ def insert_one_post(session,post_dict,blog_id):# WIP
     # If photo, insert into posts_photo table
     if (post_dict["type"] == "photo"):
         logging.debug("Photo post")
-        posts_photo_dict = {}
-        posts_photo_row = twkr_posts(**posts_photo_dict)
-        session.add(posts_photo_row)
+        # Add each photo to a row in the photos table
+        photos = post_dict["photos"]
+        photo_num = 0
+        for photo in photos:
+            photo_num += 1
+            photo_url = photo["original_size"]["url"]
+            posts_photo_dict = {}
+            posts_photo_dict["caption"] = photo["caption"]
+            posts_photo_dict["url"] =photo_url
+            posts_photo_dict["order"] = photo_num
+            posts_photo_dict["sha512b64"] = post_dict["links"][photo_url]
+            posts_photo_dict["post_id"] = post_id
+
+            posts_photo_row = twkr_posts(**posts_photo_dict)
+            session.add(posts_photo_row)
+            #session.commit()
 
     # If link, insert into posts_link table
-    if False:
+    if (post_dict["type"] == "link"):
         posts_link_dict = {}
         posts_link_row = twkr_posts(**posts_link_dict)
         session.add(posts_link_row)
 
     # If answer, insert into posts_answer table
-    if False:
+    if (post_dict["type"] == "answer"):
         posts_answer_dict = {}
         posts_answer_row = twkr_posts(**posts_answer_dict)
         session.add(posts_answer_row)
 
     # If text, insert into posts_text table
-    if True:
+    if (post_dict["type"] == "text"):
         posts_text_dict = {}
         posts_text_dict["body"] = post_dict["body"]
         posts_text_dict["post_id"] = post_id
@@ -96,13 +111,13 @@ def insert_one_post(session,post_dict,blog_id):# WIP
         session.add(posts_text_row)
 
     # If quote, insert into posts_quote table
-    if False:
+    if (post_dict["type"] == "quote"):
         posts_quote_dict = {}
         posts_quote_row = twkr_posts(**posts_quote_dict)
         session.add(posts_quote_row)
 
     # If chat, insert into posts_chat table
-    if False:
+    if (post_dict["type"] == "chat"):
         posts_chat_dict = {}
         posts_chat_row = twkr_posts(**posts_chat_dict)
         session.add(posts_chat_row)
@@ -121,14 +136,21 @@ def add_blog(session,blog_url):
     blog_id_query = sqlalchemy.select([twkr_blogs.blog_id]).where(twkr_blogs.blog_url == blog_url)
     blog_id_rows = session.execute(blog_id_query)
     blog_id_row = blog_id_rows.fetchone()
-    blog_id = blog_id_row["blog_id"]
-    logging.debug("blog_id: "+repr(blog_id))
-    return blog_id
+    if blog_id_row:
+        blog_id = blog_id_row["blog_id"]
+        logging.debug("blog_id: "+repr(blog_id))
+        return blog_id
+    else:
+        # If blog is not in DB, create a record for it and return the ID
+        # Create entry
+        blog_dict = {}
+        blog_dict["blog_url"] = blog_url
+        blogs_row = twkr_blogs(**blog_dict)
+        session.add(blogs_row)
+        session.commit()
 
-
-    # If blog is not in DB, create a record for it and return the ID
-
-    return blog_id
+        # Return blog entry
+        return add_blog(session,blog_url)
 
 # /for twkr's new tables
 

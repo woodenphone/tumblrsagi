@@ -51,14 +51,13 @@ class twkr_posts(Base):
     __tablename__ = "twkr_posts"
     # Columns
     # Local stuff
-    post_id = sqlalchemy.Column(sqlalchemy.BigInteger, primary_key=True)# referenced by sub-tables
-    date_saved = sqlalchemy.Column(sqlalchemy.BigInteger)# The unix time the post was saved
-    blog_id = sqlalchemy.Column(sqlalchemy.BigInteger) #
-    source_id = sqlalchemy.Column(sqlalchemy.BigInteger) # ID number tumblr gave us for the post
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# referenced by sub-tables
+    date_saved = sqlalchemy.Column(sqlalchemy.BigInteger())# The unix time the post was saved
+    blog_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_blogs.blog_id")) #
+    source_id = sqlalchemy.Column(sqlalchemy.BigInteger()) # ID number tumblr gave us for the post
     post_type = sqlalchemy.Column(sqlalchemy.SmallInteger()) #
     source_url = sqlalchemy.Column(sqlalchemy.UnicodeText()) #
-    timestamp = sqlalchemy.Column(sqlalchemy.BigInteger) # timestamp of post as given by API
-
+    timestamp = sqlalchemy.Column(sqlalchemy.BigInteger()) # timestamp of post as given by API
 
 
 
@@ -67,12 +66,12 @@ class twkr_posts_photo(Base):
     __tablename__ = "twkr_posts_photo"
     # Columns
     # Local stuff
-    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger, primary_key=True)# Is used only as primary key
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
     caption = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    order = sqlalchemy.Column(sqlalchemy.BigInteger) #
+    order = sqlalchemy.Column(sqlalchemy.BigInteger()) #
     sha512b64 = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    post_id = sqlalchemy.Column(sqlalchemy.BigInteger, sqlalchemy.ForeignKey("twkr_posts.post_id")) #
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
 
 
 
@@ -81,11 +80,11 @@ class twkr_posts_link(Base):
     __tablename__ = "twkr_posts_link"
     # Columns
     # Local stuff
-    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger, primary_key=True)# Is used only as primary key
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
     source_url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     source_title = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     description = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    post_id = sqlalchemy.Column(sqlalchemy.BigInteger, sqlalchemy.ForeignKey("twkr_posts.post_id")) #
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
 
 
 class twkr_posts_answer(Base):
@@ -93,12 +92,12 @@ class twkr_posts_answer(Base):
     __tablename__ = "twkr_posts_answer"
     # Columns
     # Local stuff
-    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger, primary_key=True)# Is used only as primary key
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
     asking_name = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     asking_url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     question = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     answer = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    post_id = sqlalchemy.Column(sqlalchemy.BigInteger, sqlalchemy.ForeignKey("twkr_posts.post_id")) #
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
 
 
 
@@ -107,10 +106,10 @@ class twkr_posts_text(Base):
     __tablename__ = "twkr_posts_text"
     # Columns
     # Local stuff
-    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger, primary_key=True)# Is used only as primary key
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
     title = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     body = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    post_id = sqlalchemy.Column(sqlalchemy.BigInteger, sqlalchemy.ForeignKey("twkr_posts.post_id")) #
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
 
 
 
@@ -119,11 +118,11 @@ class twkr_posts_quote(Base):
     __tablename__ = "twkr_posts_quote"
     # Columns
     # Local stuff
-    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger, primary_key=True)# Is used only as primary key
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
     source_url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     source_title = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     text = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    post_id = sqlalchemy.Column(sqlalchemy.BigInteger, sqlalchemy.ForeignKey("twkr_posts.post_id")) #
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
 
 
 
@@ -132,12 +131,12 @@ class twkr_posts_chat(Base):
     __tablename__ = "twkr_posts_chat"
     # Columns
     # Local stuff
-    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger, primary_key=True)# Is used only as primary key
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
     title = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     body = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     dialogue_html = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     dialogue_json = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB(none_as_null=False))#
-    post_id = sqlalchemy.Column(sqlalchemy.BigInteger, sqlalchemy.ForeignKey("twkr_posts.post_id")) #
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
 
 # /Twkr's new tables
 

@@ -107,7 +107,7 @@ class tumblr_blog:
 
             # Stop if bad response
             if page_dict["meta"]["status"] != 200:
-                logging.error("Bad response, stopping scan for posts. "+repr(self.blog_url))
+                logging.error("Bad response, stopping scan for posts. "+repr(page_url))
                 logging.debug(repr(locals()))
                 break
 
@@ -118,7 +118,7 @@ class tumblr_blog:
 
             # Add new posts to DB
             this_page_posts_list = page_dict["response"]["posts"]
-            logging.debug("Processing "++repr(len(this_page_posts_list)+" posts for: "+repr(self.blog_ur)+" : "))
+            logging.debug("Processing "+repr(len(this_page_posts_list))+" posts for: "+repr(page_url)+" : ")
             added_count = 0
             for post_dict in this_page_posts_list:
                 # If post is new, add it to the DB
@@ -137,15 +137,16 @@ class tumblr_blog:
                         )
 ##                else:
 ##                    logging.debug("Skipping post:"+repr(post_id)+" for: "+repr(self.blog_url))
+            logging.info("Added "+repr(added_count)+" posts for "+repr(page_url))
 
             # Exit conditions
             # Stop if duplicate results
             if this_page_posts_list == prev_page_posts_list:
-                logging.info("Last pages post match this pages posts, stopping loading posts. "+repr(self.blog_url))
+                logging.info("Last pages post match this pages posts, stopping loading posts. "+repr(page_url))
                 break
             # Stop if no posts
             if len(this_page_posts_list) == 0:
-                logging.error("No posts found on this page, stopping loading posts. "+repr(self.blog_url))
+                logging.error("No posts found on this page, stopping loading posts. "+repr(page_url))
                 break
             # Update duplicate check list
             prev_page_posts_list = this_page_posts_list
@@ -153,7 +154,7 @@ class tumblr_blog:
 
             # Stop loading posts if the last post on this page is older than the newest on in the DB
             if this_page_posts_list[-1]["timestamp"] <= timestamp_of_last_post_in_db:
-                logging.info("newest post in db is newer than one of the posts on this page, stopping loading posts. "+repr(self.blog_url))
+                logging.info("newest post in db is newer than one of the posts on this page, stopping loading posts. "+repr(page_url))
                 break
             continue
 

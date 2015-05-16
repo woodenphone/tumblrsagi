@@ -207,7 +207,7 @@ def add_raw_post(session,raw_post_dict,processed_post_dict,info_dict,blog_url,us
     return
 
 
-def find_blog_posts(session,sanitized_username):
+def find_blog_posts(session,sanitized_username):# TODO Replace this with one that gives timestamps as well
     """Lookup a blog's posts in the DB and return a list of the IDs"""
     logging.debug("find_blog_posts()"+"sanitized_username"+": "+repr(sanitized_username))
     # select all posts with field "poster_username" matching our value
