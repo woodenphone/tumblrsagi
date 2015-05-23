@@ -39,12 +39,10 @@ class tumblr_blog:
         self.sanitized_blog_url = self.blog_url# TODO FIXME!
         self.sanitized_username = self.info_blog_username# TODO FIXME!
 
-        # Make sure user is in blogs DB
-        #sql_functions.insert_user_into_db(self.session,self.info_dict,self.sanitized_username,self.sanitized_blog_url)
-        # DEBUG
-        #sql_functions.update_last_saved(self.session,self.info_dict,self.sanitized_blog_url)# REMOVEME FIXME DEBUG
-        #self.session.commit()
-        # /DEBUG
+        # Make sure user is in blogs DB and get blog_id integer
+        self.blog_id = twkr_sql_functions.add_blog
+
+
         return
 
     def clean_blog_url(self,raw_blog_url):
@@ -168,7 +166,7 @@ class tumblr_blog:
         twkr_sql_functions.insert_one_post(
             session = self.session,
             post_dict = post_dict,
-            blog_id = 1# Dummy value
+            blog_id = self.blog_id
             )
 
 

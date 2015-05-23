@@ -141,7 +141,15 @@ class twkr_posts_chat(Base):
 # /Twkr's new tables
 
 
+class media_associations(Base):
+    """Tell a post what media it has saved"""
+    __tablename__ = "media_associations"
+    # Columns
+    # Local stuff
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
 
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
+    sha512base64_hash = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("media.sha512base64_hash")) # SHA512 hash encoded into base64
 
 
 

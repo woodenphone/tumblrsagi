@@ -38,7 +38,7 @@ def map_post_type(post_type_string):
     return string_to_int_table[post_type_string]
 
 
-def insert_one_post(session,post_dict,blog_id):# WIP
+def insert_one_post(session,post_dict,blog_id,media_hash_list):# WIP
     """Insert a single post into Twkr's new postgres tables
     Only commit if all tables are set
     Return True if successful.
@@ -63,6 +63,14 @@ def insert_one_post(session,post_dict,blog_id):# WIP
     session.add(posts_row)
     session.commit()# We have to commit this first for some reason?
 
+    # Add entries to the post-media association table
+    for media_hash in media_hash_list:
+        media_association_row = media_associations(
+            post_id = post_id,
+            sha512base64_hash = media_hash
+            )
+        session.add(media_association_row)
+        continue
 
     # If photo, insert into posts_photo table
     if (post_dict["type"] == "photo"):
