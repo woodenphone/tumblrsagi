@@ -22,7 +22,7 @@ from utils import * # General utility functions
 Base = declarative_base()
 
 
-
+from tables import Media
 
 #
 
@@ -140,6 +140,25 @@ class twkr_posts_chat(Base):
 
 # /Twkr's new tables
 
+# Media tables
+class Media(Base):# Live DB on server uses this
+    """Class that defines the media table in the DB"""
+    __tablename__ = "media"
+    # Columns
+    # Locally generated
+    primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Only used as a primary key
+    date_added = sqlalchemy.Column(sqlalchemy.BigInteger)# The unix time the media was saved
+    media_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# Should have a constant length since it's a hash
+    sha512base64_hash = sqlalchemy.Column(sqlalchemy.String(88))
+    local_filename = sqlalchemy.Column(sqlalchemy.String(250))# Filename on local storage, file path is deterministically generated from this
+    remote_filename = sqlalchemy.Column(sqlalchemy.UnicodeText())# Filename from original location (If any)
+    file_extention = sqlalchemy.Column(sqlalchemy.String(25))# ex. png, jpeg
+    extractor_used = sqlalchemy.Column(sqlalchemy.String(250))# internal name of the extractor used (function name of extractor)
+    # Video and Audio use these
+    yt_dl_info_json = sqlalchemy.Column(sqlalchemy.UnicodeText())
+    video_id = sqlalchemy.Column(sqlalchemy.UnicodeText())# The ID of the video used by the originating site
+    audio_id = sqlalchemy.Column(sqlalchemy.UnicodeText())# The ID of the audio used by the originating site
+    annotations = sqlalchemy.Column(sqlalchemy.UnicodeText())
 
 class media_associations(Base):
     """Tell a post what media it has saved"""
@@ -149,7 +168,10 @@ class media_associations(Base):
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
 
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
-    sha512base64_hash = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("media.sha512base64_hash")) # SHA512 hash encoded into base64
+    sha512base64_hash = sqlalchemy.Column(sqlalchemy.UnicodeText()) # SHA512 hash encoded into base64
+# /Media
+
+
 
 
 

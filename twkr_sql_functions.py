@@ -43,7 +43,6 @@ def insert_one_post(session,post_dict,blog_id,media_hash_list):# WIP
     Only commit if all tables are set
     Return True if successful.
     """
-
     # Generate a unique ID for the post
     post_id = get_current_unix_time()#post_dict["id"]# I don't trust this but it's good enough for testing
     logging.warning("Fix post_id! Unsafe for primary key")
@@ -212,7 +211,8 @@ def debug():
     insert_one_post(
         session = session,
         post_dict = text_post_dict,
-        blog_id = dummy_blog_id
+        blog_id = dummy_blog_id,
+        media_hash_list = ["dummy"]
         )
 
     # u"photo":2,
@@ -220,7 +220,8 @@ def debug():
     insert_one_post(
         session = session,
         post_dict = photo_post_dict,
-        blog_id = dummy_blog_id
+        blog_id = dummy_blog_id,
+        media_hash_list = []
         )
 
     # u"quote":3,
@@ -228,7 +229,8 @@ def debug():
     insert_one_post(
         session = session,
         post_dict = quote_post_dict,
-        blog_id = dummy_blog_id
+        blog_id = dummy_blog_id,
+        media_hash_list = []
         )
 
     # u"link":4,
@@ -236,16 +238,17 @@ def debug():
     insert_one_post(
         session = session,
         post_dict = link_post_dict,
-        blog_id = dummy_blog_id
+        blog_id = dummy_blog_id,
+        media_hash_list = []
         )
-
 
     # u"chat":5,
     chat_post_dict = {u'body': u"Hair: What hair color looks best on you and what's your natural color?\nSkin: Do you tan easily?\nEyes: What is your favorite show to watch?\nNose: What is your favorite perfume/candle fragrance?\nMouth: Do you want to kiss anyone right now?\nTongue: What was in your last meal?\nWindpipe: Do you sing?\nNeck: Do you wear necklaces?\nEars: How many piercings do you have (if any)?\nCheeks: Do you blush easily?\nWrists: Have you ever broken a bone?\nHands: Are you an artist/writer?\nFingers: Do you play an instrument?\nHeart: Are you in love? If so, does the one you love know?\nLungs: Do you smoke cigarettes?\nChest: Are your maternal/parental instincts strong?\nStomach: Do you feel confident in your body image?\nBack: Are you a virgin?\nHips: Do you like to dance?\nThighs: Has anyone ever called you fat or ugly?\nKnees: Have you ever cheated on someone?\nAnkles: Have you ever been arrested?\nFeet: Favorite pair of shoes?\nBrain: Anything you want to ask", u'highlighted': [], u'dialogue': [{u'phrase': u"What hair color looks best on you and what's your natural color?", u'name': u'Hair', u'label': u'Hair:'}, {u'phrase': u'Do you tan easily?', u'name': u'Skin', u'label': u'Skin:'}, {u'phrase': u'What is your favorite show to watch?', u'name': u'Eyes', u'label': u'Eyes:'}, {u'phrase': u'What is your favorite perfume/candle fragrance?', u'name': u'Nose', u'label': u'Nose:'}, {u'phrase': u'Do you want to kiss anyone right now?', u'name': u'Mouth', u'label': u'Mouth:'}, {u'phrase': u'What was in your last meal?', u'name': u'Tongue', u'label': u'Tongue:'}, {u'phrase': u'Do you sing?', u'name': u'Windpipe', u'label': u'Windpipe:'}, {u'phrase': u'Do you wear necklaces?', u'name': u'Neck', u'label': u'Neck:'}, {u'phrase': u'How many piercings do you have (if any)?', u'name': u'Ears', u'label': u'Ears:'}, {u'phrase': u'Do you blush easily?', u'name': u'Cheeks', u'label': u'Cheeks:'}, {u'phrase': u'Have you ever broken a bone?', u'name': u'Wrists', u'label': u'Wrists:'}, {u'phrase': u'Are you an artist/writer?', u'name': u'Hands', u'label': u'Hands:'}, {u'phrase': u'Do you play an instrument?', u'name': u'Fingers', u'label': u'Fingers:'}, {u'phrase': u'Are you in love? If so, does the one you love know?', u'name': u'Heart', u'label': u'Heart:'}, {u'phrase': u'Do you smoke cigarettes?', u'name': u'Lungs', u'label': u'Lungs:'}, {u'phrase': u'Are your maternal/parental instincts strong?', u'name': u'Chest', u'label': u'Chest:'}, {u'phrase': u'Do you feel confident in your body image?', u'name': u'Stomach', u'label': u'Stomach:'}, {u'phrase': u'Are you a virgin?', u'name': u'Back', u'label': u'Back:'}, {u'phrase': u'Do you like to dance?', u'name': u'Hips', u'label': u'Hips:'}, {u'phrase': u'Has anyone ever called you fat or ugly?', u'name': u'Thighs', u'label': u'Thighs:'}, {u'phrase': u'Have you ever cheated on someone?', u'name': u'Knees', u'label': u'Knees:'}, {u'phrase': u'Have you ever been arrested?', u'name': u'Ankles', u'label': u'Ankles:'}, {u'phrase': u'Favorite pair of shoes?', u'name': u'Feet', u'label': u'Feet:'}, {u'phrase': u'Anything you want to ask', u'name': u'Brain', u'label': u'Brain:'}], u'source_title': u'goodbyebenedict', u'reblog_key': u'nkIanbaM', u'format': u'html', u'timestamp': 1426909760, u'note_count': 1148774, u'tags': [], u'id': 114188519623L, u'post_url': u'http://bigponiesinc.tumblr.com/post/114188519623/ask-me-about-my-body', u'state': u'published', u'short_url': u'http://tmblr.co/ZNohWm1gMAeZ7', u'date': u'2015-03-21 03:49:20 GMT', u'title': u'Ask me about my body. (\xac\u203f\xac)', u'source_url': u'http://goodbyebenedict.tumblr.com/post/47433081091', u'type': u'chat', u'slug': u'ask-me-about-my-body', u'blog_name': u'bigponiesinc'}
     insert_one_post(
         session = session,
         post_dict = chat_post_dict,
-        blog_id = dummy_blog_id
+        blog_id = dummy_blog_id,
+        media_hash_list = []
         )
 
     # audio 6
@@ -253,7 +256,8 @@ def debug():
     insert_one_post(
         session = session,
         post_dict = bandcamp_post_dict,
-        blog_id = dummy_blog_id
+        blog_id = dummy_blog_id,
+        media_hash_list = []
         )
 
     # video 7
@@ -261,7 +265,8 @@ def debug():
     insert_one_post(
         session = session,
         post_dict = video_post_dict,
-        blog_id = dummy_blog_id
+        blog_id = dummy_blog_id,
+        media_hash_list = []
         )
 
     # answer 8
@@ -269,7 +274,8 @@ def debug():
     insert_one_post(
         session = session,
         post_dict = answer_post_dict,
-        blog_id = dummy_blog_id
+        blog_id = dummy_blog_id,
+        media_hash_list = []
         )
 
     return
