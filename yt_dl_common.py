@@ -190,6 +190,14 @@ def debug():
         video_id=None
         )
     logging.debug("gfycat_result: "+repr(gfycat_result))
+    # youtube https://www.youtube.com/embed/JIQ_jjfDsw0
+    youtube_result = run_yt_dl_single(
+        session,
+        download_url = "https://www.youtube.com/embed/JIQ_jjfDsw0",
+        extractor_used = "DEBUG:youtube",
+        audio_id=None,
+        video_id=None
+        )
 
 
 

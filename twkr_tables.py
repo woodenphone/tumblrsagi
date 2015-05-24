@@ -22,7 +22,7 @@ from utils import * # General utility functions
 Base = declarative_base()
 
 
-from tables import Media
+#from tables import Media
 
 #
 

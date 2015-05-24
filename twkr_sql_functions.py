@@ -38,19 +38,50 @@ def map_post_type(post_type_string):
     return string_to_int_table[post_type_string]
 
 
+def insert_post_media_associations(session,post_id,media_hash_list):
+    # Find associations already in the db for this post and skip them
+    new_media_hashes = []
+    for media_hash in media_hash_list:
+        select_hash_query = sqlalchemy.select([media_associations]).\
+            where(media_associations.sha512base64_hash == media_hash).\
+            where(media_associations.post_id == post_id)
+        select_hash_rows = session.execute(select_hash_query)
+        select_hash_row = select_hash_rows.fetchone()
+        if select_hash_row:
+            logging.debug("Skipping duplicate: "+repr(media_hash))
+        else:
+            new_media_hashes.append(media_hash)
+
+
+    #assert(False)#code this stuff
+
+    # Add entries to the post-media association table
+    for media_hash in media_hash_list:
+        #assert(len(media_hash) == 88)# Hash is constant length
+        media_association_row = media_associations(
+            post_id = post_id,
+            sha512base64_hash = media_hash
+            )
+        session.add(media_association_row)
+        continue
+
+
 def insert_one_post(session,post_dict,blog_id,media_hash_list):# WIP
     """Insert a single post into Twkr's new postgres tables
     Only commit if all tables are set
     Return True if successful.
     """
+    assert(type(post_dict) is type({}))
+    #assert(type(blog_id) is type(1))
+    assert(type(media_hash_list) is type([]))
     # Generate a unique ID for the post
-    post_id = get_current_unix_time()#post_dict["id"]# I don't trust this but it's good enough for testing
+    #post_id = get_current_unix_time()#post_dict["id"]# I don't trust this but it's good enough for testing
     logging.warning("Fix post_id! Unsafe for primary key")
 
     # Insert into twkr_posts table
     posts_dict = {}
     #posts_dict["field"] = "value" # Example of setting a field
-    posts_dict["post_id"] = post_id
+    #posts_dict["post_id"] = post_id
     posts_dict["date_saved"] = get_current_unix_time() # Unix time to millisecond precision
     posts_dict["blog_id"] = blog_id # local ID number of the blog
     posts_dict["source_id"] = post_dict["id"] # ID number tumblr gave us for the post
@@ -60,16 +91,15 @@ def insert_one_post(session,post_dict,blog_id,media_hash_list):# WIP
 
     posts_row = twkr_posts(**posts_dict)
     session.add(posts_row)
+
+    logging.debug("committing post row")
     session.commit()# We have to commit this first for some reason?
+    post_id = posts_row.post_id
+    print post_id
 
     # Add entries to the post-media association table
-    for media_hash in media_hash_list:
-        media_association_row = media_associations(
-            post_id = post_id,
-            sha512base64_hash = media_hash
-            )
-        session.add(media_association_row)
-        continue
+    logging.debug("adding media associations")
+    insert_post_media_associations(session,post_id,media_hash_list)
 
     # If photo, insert into posts_photo table
     if (post_dict["type"] == "photo"):
@@ -196,6 +226,7 @@ def debug():
     session = connect_to_db()
 
     dummy_blog_id = add_blog(session,blog_url="staff.tumblr.com")
+    logging.debug("dummy_blog_id: "+repr(dummy_blog_id))
 
     # Try each type of post to see what happens
 ##        u"text":1,
@@ -212,7 +243,7 @@ def debug():
         session = session,
         post_dict = text_post_dict,
         blog_id = dummy_blog_id,
-        media_hash_list = ["dummy"]
+        media_hash_list = ["dummy_text_sha512base64_hash"]
         )
 
     # u"photo":2,
@@ -221,7 +252,7 @@ def debug():
         session = session,
         post_dict = photo_post_dict,
         blog_id = dummy_blog_id,
-        media_hash_list = []
+        media_hash_list = ["dummy_photo_sha512base64_hash"]
         )
 
     # u"quote":3,
@@ -230,7 +261,7 @@ def debug():
         session = session,
         post_dict = quote_post_dict,
         blog_id = dummy_blog_id,
-        media_hash_list = []
+        media_hash_list = ["dummy_quote_sha512base64_hash"]
         )
 
     # u"link":4,
@@ -239,7 +270,7 @@ def debug():
         session = session,
         post_dict = link_post_dict,
         blog_id = dummy_blog_id,
-        media_hash_list = []
+        media_hash_list = ["dummy_link_sha512base64_hash"]
         )
 
     # u"chat":5,

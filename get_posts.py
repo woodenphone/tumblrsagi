@@ -163,11 +163,11 @@ class tumblr_blog:
             version = 0
             )
 
-        twkr_sql_functions.insert_one_post(
-            session = self.session,
-            post_dict = post_dict,
-            blog_id = self.blog_id
-            )
+##        twkr_sql_functions.insert_one_post(
+##            session = self.session,
+##            post_dict = post_dict,
+##            blog_id = self.blog_id
+##            )
 
 
     def update_blog_record(self):# TODO

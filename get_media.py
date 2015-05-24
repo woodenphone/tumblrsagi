@@ -19,6 +19,7 @@ import sql_functions# Database interaction
 from media_handlers import *# Media finding, extractiong, ect
 import config # Settings and configuration
 from tables import *# Table definitions
+import twkr_sql_functions
 
 
 
@@ -36,53 +37,70 @@ def check_if_there_are_new_posts_to_do_media_for(session):
 def process_one_new_posts_media(post_row):
     """Return True if everything was fine.
     Return False if no more posts should be tried"""
-    session = sql_functions.connect_to_db()
-    post_primary_key = post_row["primary_key"]
-    logging.debug("Processing post with primary_key: "+repr(post_primary_key))
-##    #session = sql_functions.connect_to_db()
-##    # Select the new post from RawPosts table by it's primary key
-##    post_query = sqlalchemy.select([RawPosts]).where(RawPosts.primary_key == post_primary_key)
-##    post_result = session.execute(post_query)
-##    post_row = post_result.fetchone()
-
-
-    logging.debug("post_row"": "+repr(post_row))
-    raw_post_dict = json.loads(post_row["raw_post_json"])
-    blog_url = post_row["blog_domain"]
-    username = post_row["poster_username"]
-
-
-    # Handle links for the post
     try:
-        processed_post_dict = save_media(session,raw_post_dict)
-    except custom_exceptions.MediaGrabberFailed, err:
-        logging.error("Post media download failed!")
-        logging.exception(err)
-        return False
-    logging.debug("processed_post_dict"": "+repr(processed_post_dict))
+        session = sql_functions.connect_to_db()
+        post_primary_key = post_row["primary_key"]
+        logging.debug("Processing post with primary_key: "+repr(post_primary_key))
+    ##    #session = sql_functions.connect_to_db()
+    ##    # Select the new post from RawPosts table by it's primary key
+    ##    post_query = sqlalchemy.select([RawPosts]).where(RawPosts.primary_key == post_primary_key)
+    ##    post_result = session.execute(post_query)
+    ##    post_row = post_result.fetchone()
 
-    # Insert row to posts table
-    # Insert post into the DB
-    sql_functions.add_post_to_db(
-        session=session,
-        raw_post_dict=raw_post_dict,
-        processed_post_dict=processed_post_dict,
-        info_dict=None,
-        blog_url=blog_url,
-        username=username
-        )
-    session.commit()
 
-    logging.debug("About to update RawPosts")
-    # Modify origin row
-    processed_post_json = json.dumps(processed_post_dict)
-    update_statement = update(RawPosts).where(RawPosts.primary_key==post_primary_key).\
-        values(processed_post_json=processed_post_json)
-    update_statement.execute()
-    session.commit()
+        logging.debug("post_row"": "+repr(post_row))
+        raw_post_dict = json.loads(post_row["raw_post_json"])
+        blog_url = post_row["blog_domain"]
+        username = post_row["poster_username"]
 
-    logging.debug("Finished processing new post media")
-    return True
+
+        # Handle links for the post
+        try:
+            processed_post_dict = save_media(session,raw_post_dict)
+        except custom_exceptions.MediaGrabberFailed, err:
+            logging.error("Post media download failed!")
+            logging.exception(err)
+            return False
+        logging.debug("processed_post_dict"": "+repr(processed_post_dict))
+
+        # Insert row to posts table
+        # Insert post into the DB
+##        sql_functions.add_post_to_db(
+##            session=session,
+##            raw_post_dict=raw_post_dict,
+##            processed_post_dict=processed_post_dict,
+##            info_dict=None,
+##            blog_url=blog_url,
+##            username=username
+##            )
+        session.commit()
+
+        media_hashes = []
+        for media_hash_key in processed_post_dict["link_to_hash_dict"].keys():
+            media_hashes.append(processed_post_dict["link_to_hash_dict"][media_hash_key])
+
+        twkr_sql_functions.insert_one_post(
+                session = session,
+                post_dict = processed_post_dict,
+                blog_id = 1,
+                media_hash_list = media_hashes
+                )
+        session.commit()
+
+        logging.debug("About to update RawPosts")
+        # Modify origin row
+        processed_post_json = json.dumps(processed_post_dict)
+        update_statement = update(RawPosts).where(RawPosts.primary_key==post_primary_key).\
+            values(processed_post_json=processed_post_json)
+        update_statement.execute()
+        session.commit()
+
+        logging.debug("Finished processing new post media")
+    except Exception, e:# Log exceptions and pass them on
+        logging.critical("Unhandled exception in save_blog()!")
+        logging.exception(e)
+        raise
+    return
 
 
 ##def list_new_post_primary_keys(session,max_rows):
