@@ -227,6 +227,7 @@ def debug():
 
     dummy_blog_id = add_blog(session,blog_url="staff.tumblr.com")
     logging.debug("dummy_blog_id: "+repr(dummy_blog_id))
+    return
 
     # Try each type of post to see what happens
 ##        u"text":1,

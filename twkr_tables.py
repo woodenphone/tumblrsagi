@@ -141,7 +141,7 @@ class twkr_posts_chat(Base):
 # /Twkr's new tables
 
 # Media tables
-class Media(Base):# Live DB on server uses this
+class Media(Base):
     """Class that defines the media table in the DB"""
     __tablename__ = "media"
     # Columns
@@ -149,7 +149,7 @@ class Media(Base):# Live DB on server uses this
     primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Only used as a primary key
     date_added = sqlalchemy.Column(sqlalchemy.BigInteger)# The unix time the media was saved
     media_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# Should have a constant length since it's a hash
-    sha512base64_hash = sqlalchemy.Column(sqlalchemy.String(88))
+    sha512base64_hash = sqlalchemy.Column(sqlalchemy.dialects.postgresql.CHAR(88))
     local_filename = sqlalchemy.Column(sqlalchemy.String(250))# Filename on local storage, file path is deterministically generated from this
     remote_filename = sqlalchemy.Column(sqlalchemy.UnicodeText())# Filename from original location (If any)
     file_extention = sqlalchemy.Column(sqlalchemy.String(25))# ex. png, jpeg
@@ -163,14 +163,10 @@ class Media(Base):# Live DB on server uses this
 class media_associations(Base):
     """Tell a post what media it has saved"""
     __tablename__ = "media_associations"
-    # Columns
-    # Local stuff
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
-
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
     sha512base64_hash = sqlalchemy.Column(sqlalchemy.UnicodeText()) # SHA512 hash encoded into base64
 # /Media
-
 
 
 

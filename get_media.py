@@ -18,7 +18,7 @@ from utils import * # General utility functions
 import sql_functions# Database interaction
 from media_handlers import *# Media finding, extractiong, ect
 import config # Settings and configuration
-from tables import *# Table definitions
+#from tables import *# Table definitions
 import twkr_sql_functions
 
 
