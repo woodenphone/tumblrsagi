@@ -17,7 +17,7 @@ from utils import * # General utility functions
 import sql_functions# Database interaction
 from media_handlers import *# Media finding, extractiong, ect
 import config # Settings and configuration
-
+from tables import RawPosts
 
 
 def check_if_there_are_new_posts_to_do_media_for(session):
@@ -42,6 +42,8 @@ def process_one_new_posts_media(post_row):
         raw_post_dict = json.loads(post_row["raw_post_json"])
         blog_url = post_row["blog_domain"]
         username = post_row["poster_username"]
+        # Get blog_id
+        blog_id = sql_functions.add_blog(session,blog_url)
 
         # Handle links for the post
         try:
@@ -57,10 +59,10 @@ def process_one_new_posts_media(post_row):
         for media_hash_key in processed_post_dict["link_to_hash_dict"].keys():
             media_hashes.append(processed_post_dict["link_to_hash_dict"][media_hash_key])
 
-        twkr_sql_functions.insert_one_post(
+        sql_functions.insert_one_post(
                 session = session,
                 post_dict = processed_post_dict,
-                blog_id = 1,
+                blog_id = blog_id,
                 media_hash_list = media_hashes
                 )
         session.commit()

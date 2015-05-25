@@ -133,11 +133,11 @@ class twkr_posts_chat(Base):
 
 
 # Raw API data archive table
-class _RawPosts(Base):# Remove underscore after fixing all references
+class RawPosts(Base):# Remove underscore after fixing all references
     """The raw post dicts for a blog
     Used to back up and stage posts
     Write-once Read-many"""
-    __tablename__ = "_raw_posts"
+    __tablename__ = "raw_posts"
     # Columns
     # Local stuff
     primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Is used only as primary key
@@ -290,7 +290,7 @@ def create_example_db_postgres():
 
 def main():
     setup_logging(log_file_path=os.path.join("debug","tables-log.txt"))
-    create_example_db()
+    create_example_db_postgres()
 
 if __name__ == '__main__':
     main()

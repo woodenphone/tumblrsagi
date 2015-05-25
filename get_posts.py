@@ -16,7 +16,6 @@ from utils import * # General utility functions
 import sql_functions# Database interaction
 from media_handlers import *# Media finding, extractiong, ect
 import config # Settings and configuration
-import twkr_sql_functions
 
 
 class tumblr_blog:
@@ -40,7 +39,7 @@ class tumblr_blog:
         self.sanitized_username = self.info_blog_username# TODO FIXME!
 
         # Make sure user is in blogs DB and get blog_id integer
-        self.blog_id = twkr_sql_functions.add_blog
+        self.blog_id = sql_functions.add_blog(self.session,self.sanitized_blog_url)
         return
 
     def clean_blog_url(self,raw_blog_url):
@@ -74,7 +73,6 @@ class tumblr_blog:
 
     def save_new_posts(self,max_pages=None):
         """Load posts for the blog"""
-
         timestamp_of_last_post_in_db = sql_functions.get_timestamp_of_last_post(session=self.session,blog_domain=self.blog_url)
         preexisting_post_ids = sql_functions.find_blog_posts(self.session,self.sanitized_username)
         added_posts_counter = 0

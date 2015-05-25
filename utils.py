@@ -30,21 +30,6 @@ import base64 # Needed to do base32 encoding of filenames
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def setup_logging(log_file_path,concise_log_file_path=None):
     """Setup logging (Before running any other code)
     http://inventwithpython.com/blog/2012/04/06/stop-using-print-for-debugging-a-5-minute-quickstart-guide-to-pythons-logging-module/
@@ -97,8 +82,8 @@ def save_file(file_path,data,force_save=False,allow_fail=False):
                 logging.debug("save_file()"" File already exists! "+repr(file_path))
                 return
         foldername = os.path.dirname(file_path)
-        if len(foldername) >= 1:
-            if not os.path.isdir(foldername):
+        if len(foldername) != 0:
+            if not os.path.exists(foldername):
                 try:
                     os.makedirs(foldername)
                 except WindowsError, err:
