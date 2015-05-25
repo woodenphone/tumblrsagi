@@ -11,6 +11,7 @@
 
 
 import time
+import datetime
 import os
 import sys
 import re
@@ -502,6 +503,12 @@ def get_file_extention(file_path):
         return file_extention
 
 
+def parse_tumblr_timsetamp_string(date_string):
+    """Parse tumblr datestring to unix time
+    u'date': u'2014-01-24 19:40:00 GMT'"""
+    return datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S %Z")
+
+
 def main():
     pass
     # Test get_file_extention
@@ -509,6 +516,8 @@ def main():
     print get_file_extention(u'https://www.tumblr.com/explore/links')# None
     print get_file_extention("gLdiLePCFaV6t1x56uokkwMvcuTNwhFYksCfR6h4zk3gU2bvGjnIprjtcKaLNUW8Snxl9iFutq51hjgO2DLB9A==")# None
     print get_file_extention("http://www.papermag.com/2014/11/arabelle_sicardi.php")# php
+
+    print parse_tumblr_timsetamp_string("2014-01-24 19:40:00 GMT")
 
 if __name__ == '__main__':
     main()

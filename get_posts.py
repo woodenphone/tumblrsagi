@@ -152,7 +152,7 @@ class tumblr_blog:
         sql_functions.add_raw_post(
             session = self.session,
             raw_post_dict = post_dict,
-            processed_post_dict = None,
+            processed_post_dict = "N/A",
             info_dict = self.info_dict,
             blog_url = self.sanitized_blog_url,
             username = self.sanitized_username,

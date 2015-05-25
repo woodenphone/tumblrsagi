@@ -148,8 +148,9 @@ class RawPosts(Base):# Remove underscore after fixing all references
     poster_username = sqlalchemy.Column(sqlalchemy.UnicodeText())# username for a blog, as given by the API "tsitra360"
     blog_domain = sqlalchemy.Column(sqlalchemy.UnicodeText())# domain for the blog"tsitra360.tumblr.com"
     # Post identity from the post
-    all_posts_id = sqlalchemy.Column(sqlalchemy.BigInteger)# Number	The post's unique ID
+    all_posts_id = sqlalchemy.Column(sqlalchemy.BigInteger)# Number	The post's non-unique ID
     all_posts_post_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# String	The location of the post
+    all_posts_timestamp  = sqlalchemy.Column(sqlalchemy.BigInteger)# The API given timestamp
     # Full post API data
     raw_post_json = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB)# The post's section of the API, reencoded into JSON
     processed_post_json = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB)# The post's section of the API, reencoded into JSON, after we've fucked with it
