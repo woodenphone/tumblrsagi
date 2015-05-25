@@ -41,8 +41,6 @@ class tumblr_blog:
 
         # Make sure user is in blogs DB and get blog_id integer
         self.blog_id = twkr_sql_functions.add_blog
-
-
         return
 
     def clean_blog_url(self,raw_blog_url):
@@ -163,13 +161,6 @@ class tumblr_blog:
             version = 0
             )
 
-##        twkr_sql_functions.insert_one_post(
-##            session = self.session,
-##            post_dict = post_dict,
-##            blog_id = self.blog_id
-##            )
-
-
     def update_blog_record(self):# TODO
         """Add or update this blog's record in the blog metadata table"""
         logging.warning("update_blog_record() not implimented!")
@@ -179,7 +170,6 @@ class tumblr_blog:
 def save_blog(blog_url):
     """Save one tumblr blog"""
     logging.info("Saving blog: "+repr(blog_url))
-
     try:
         # Connect to DB
         session = sql_functions.connect_to_db()
@@ -202,7 +192,6 @@ def save_blog(blog_url):
 
         logging.info("Finished saving blog: "+repr(blog_url))
         appendlist(blog_url,list_file_path=config.done_list_path,initial_text="# List of completed items.\n")
-
     except Exception, e:# Log exceptions and pass them on
         logging.critical("Unhandled exception in save_blog()!")
         logging.exception(e)
@@ -210,26 +199,20 @@ def save_blog(blog_url):
     return
 
 
-
 def save_blogs(list_file_path="tumblr_todo_list.txt"):
     """Save tumblr blogs from a list"""
     logging.info("Saving list of blogs: "+repr(list_file_path))
     blog_url_list = import_blog_list(list_file_path)
-
     # Run workers
     # http://stackoverflow.com/questions/2846653/python-multithreading-for-dummies
     # Make the Pool of workers
     pool = ThreadPool(config.number_of_post_grab_workers)# Set to one for debugging
-
     results = pool.map(save_blog, blog_url_list)
     #close the pool and wait for the work to finish
     pool.close()
     pool.join()
-
     logging.info("Finished downloading blogs list")
     return
-
-
 
 
 def main():

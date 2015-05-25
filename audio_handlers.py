@@ -24,7 +24,6 @@ from sql_functions import Media
 import sql_functions
 import config # User settings
 from tables import *# This module only has the table classes
-import custom_exceptions
 
 
 def handle_soundcloud_audio(session,post_dict):

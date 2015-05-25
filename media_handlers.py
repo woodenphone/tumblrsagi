@@ -81,12 +81,6 @@ def handle_tumblr_photos(session,post_dict):
     return link_hash_dict# {link:hash}
 
 
-
-
-
-
-
-
 def save_media(session,post_dict):
     """ Main function for saving a posts media
     return post dict with links replaced by pointers to saved file in the database"""

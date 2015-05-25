@@ -10,6 +10,7 @@
 #-------------------------------------------------------------------------------
 import sqlalchemy# Database library
 from sqlalchemy.ext.declarative import declarative_base# Magic for ORM
+import sqlalchemy.dialects.postgresql # postgreSQL ORM (JSON, JSONB)
 
 from utils import * # General utility functions
 
@@ -17,58 +18,146 @@ from utils import * # General utility functions
 # SQLAlchemy table setup
 Base = declarative_base()
 
-# Blogs metadata table
-##class _Blogs(Base):# Depricated, remove references
-##    """Class that defines the Blog meta table in the DB"""
-##    __tablename__ = "blogs"
-##    # Columns
-##    # Locally generated
-##    primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Is used only as primary key
-##    date_added = sqlalchemy.Column(sqlalchemy.BigInteger)# Unix time of date first added to table
-##    date_last_saved = sqlalchemy.Column(sqlalchemy.BigInteger)# Unix time of date last saved
-##
-##    timestamp_of_last_post = sqlalchemy.Column(sqlalchemy.BigInteger)#timestamp of most recent post in the DB, as API gives it
-##
-##    # Posts table values
-##    poster_username = sqlalchemy.Column(sqlalchemy.UnicodeText())# username for a blog, as given by the API "tsitra360"
-##    blog_domain = sqlalchemy.Column(sqlalchemy.UnicodeText())# domain for the blog"tsitra360.tumblr.com"
-##    # From /info, documented
-##    info_title = sqlalchemy.Column(sqlalchemy.UnicodeText())#String	The display title of the blog	Compare name
-##    info_posts = sqlalchemy.Column(sqlalchemy.UnicodeText())#Number	The total number of posts to this blog
-##    info_name = sqlalchemy.Column(sqlalchemy.UnicodeText())#String	The short blog name that appears before tumblr.com in a standard blog hostname (and before the domain in a custom blog hostname)	Compare title
-##    info_updated = sqlalchemy.Column(sqlalchemy.UnicodeText())#	Number	The time of the most recent post, in seconds since the epoch
-##    info_description = sqlalchemy.Column(sqlalchemy.UnicodeText())#String	You guessed it! The blog's description
-##    info_ask = sqlalchemy.Column(sqlalchemy.Boolean())#Boolean	Indicates whether the blog allows questions
-##    info_ask_anon = sqlalchemy.Column(sqlalchemy.Boolean())#	Boolean	Indicates whether the blog allows anonymous questions	Returned only if ask is true
-##    info_likes = sqlalchemy.Column(sqlalchemy.UnicodeText())#Number	Number of likes for this user	Returned only if this is the user's primary blog and sharing of likes is enabled
-##    # From /info, undocumented
-##    info_is_nsfw = sqlalchemy.Column(sqlalchemy.Boolean())
-##    info_share_likes = sqlalchemy.Column(sqlalchemy.Boolean())
-##    info_url = sqlalchemy.Column(sqlalchemy.Boolean())
-##    info_ask_page_title = sqlalchemy.Column(sqlalchemy.UnicodeText())
 
-
-
-
-class Blogs(Base):# use this until twkr bugs us to change it
-    """Class that defines the Blog meta table in the DB"""
-    __tablename__ = "blogs"
+# Twkr's new tables
+class twkr_blogs(Base):
+    """Class Info, functionality, purpose"""
+    __tablename__ = "twkr_blogs"
     # Columns
-    # Locally generated
+    blog_id = sqlalchemy.Column(sqlalchemy.BigInteger, primary_key=True)# referenced by sub-tables
+    blog_username = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    blog_url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    title = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    postcount = sqlalchemy.Column(sqlalchemy.BigInteger) #
+    name = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    updated = sqlalchemy.Column(sqlalchemy.BigInteger) #
+    description = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    ask = sqlalchemy.Column(sqlalchemy.Boolean())
+    alive = sqlalchemy.Column(sqlalchemy.Boolean())
+
+
+
+class twkr_posts(Base):
+    """Class Info, functionality, purpose"""
+    __tablename__ = "twkr_posts"
+    # Columns
+    # Local stuff
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# referenced by sub-tables
+    date_saved = sqlalchemy.Column(sqlalchemy.BigInteger())# The unix time the post was saved
+    blog_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_blogs.blog_id")) #
+    source_id = sqlalchemy.Column(sqlalchemy.BigInteger()) # ID number tumblr gave us for the post
+    post_type = sqlalchemy.Column(sqlalchemy.SmallInteger()) #
+    source_url = sqlalchemy.Column(sqlalchemy.UnicodeText()) #
+    timestamp = sqlalchemy.Column(sqlalchemy.BigInteger()) # timestamp of post as given by API
+
+
+
+class twkr_posts_photo(Base):
+    """Class Info, functionality, purpose"""
+    __tablename__ = "twkr_posts_photo"
+    # Columns
+    # Local stuff
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
+    caption = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    order = sqlalchemy.Column(sqlalchemy.BigInteger()) #
+    sha512b64 = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
+
+
+
+class twkr_posts_link(Base):
+    """Class Info, functionality, purpose"""
+    __tablename__ = "twkr_posts_link"
+    # Columns
+    # Local stuff
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
+    source_url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    source_title = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    description = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
+
+
+class twkr_posts_answer(Base):
+    """Class Info, functionality, purpose"""
+    __tablename__ = "twkr_posts_answer"
+    # Columns
+    # Local stuff
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
+    asking_name = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    asking_url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    question = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    answer = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
+
+
+
+class twkr_posts_text(Base):
+    """Class Info, functionality, purpose"""
+    __tablename__ = "twkr_posts_text"
+    # Columns
+    # Local stuff
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
+    title = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    body = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
+
+
+
+class twkr_posts_quote(Base):
+    """Class Info, functionality, purpose"""
+    __tablename__ = "twkr_posts_quote"
+    # Columns
+    # Local stuff
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
+    source_url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    source_title = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    text = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
+
+
+
+class twkr_posts_chat(Base):
+    """Class Info, functionality, purpose"""
+    __tablename__ = "twkr_posts_chat"
+    # Columns
+    # Local stuff
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
+    title = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    body = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    dialogue_html = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    dialogue_json = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB(none_as_null=False))#
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
+# /Twkr's new tables
+
+
+
+# Raw API data archive table
+class _RawPosts(Base):# Remove underscore after fixing all references
+    """The raw post dicts for a blog
+    Used to back up and stage posts
+    Write-once Read-many"""
+    __tablename__ = "_raw_posts"
+    # Columns
+    # Local stuff
     primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Is used only as primary key
-    date_added = sqlalchemy.Column(sqlalchemy.BigInteger)# Unix time of date first added to table
-    date_last_saved = sqlalchemy.Column(sqlalchemy.BigInteger)# Unix time of date last saved
-
-    timestamp_of_last_post = sqlalchemy.Column(sqlalchemy.BigInteger)#timestamp of most recent post in the DB, as API gives it
-
-    # Posts table values
+    version = sqlalchemy.Column(sqlalchemy.BigInteger) # The version of this post this row is associated with
+    date_saved = sqlalchemy.Column(sqlalchemy.BigInteger)# The unix time the post was saved
+    link_to_hash_dict = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB)# mapping of links in the post to hashes of associated media
+    # Who does this post belong to?
     poster_username = sqlalchemy.Column(sqlalchemy.UnicodeText())# username for a blog, as given by the API "tsitra360"
     blog_domain = sqlalchemy.Column(sqlalchemy.UnicodeText())# domain for the blog"tsitra360.tumblr.com"
+    # Post identity from the post
+    all_posts_id = sqlalchemy.Column(sqlalchemy.BigInteger)# Number	The post's unique ID
+    all_posts_post_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# String	The location of the post
+    # Full post API data
+    raw_post_json = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB)# The post's section of the API, reencoded into JSON
+    processed_post_json = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB)# The post's section of the API, reencoded into JSON, after we've fucked with it
 
 
 
 # Media tables
-class Media(Base):# Live DB on server uses this
+class Media(Base):
     """Class that defines the media table in the DB"""
     __tablename__ = "media"
     # Columns
@@ -76,7 +165,7 @@ class Media(Base):# Live DB on server uses this
     primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Only used as a primary key
     date_added = sqlalchemy.Column(sqlalchemy.BigInteger)# The unix time the media was saved
     media_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# Should have a constant length since it's a hash
-    sha512base64_hash = sqlalchemy.Column(sqlalchemy.String(88))
+    sha512base64_hash = sqlalchemy.Column(sqlalchemy.dialects.postgresql.CHAR(88))
     local_filename = sqlalchemy.Column(sqlalchemy.String(250))# Filename on local storage, file path is deterministically generated from this
     remote_filename = sqlalchemy.Column(sqlalchemy.UnicodeText())# Filename from original location (If any)
     file_extention = sqlalchemy.Column(sqlalchemy.String(25))# ex. png, jpeg
@@ -88,88 +177,23 @@ class Media(Base):# Live DB on server uses this
     annotations = sqlalchemy.Column(sqlalchemy.UnicodeText())
 
 
+
+class media_associations(Base):
+    """Tell a post what media it has saved"""
+    __tablename__ = "media_associations"
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
+    sha512base64_hash = sqlalchemy.Column(sqlalchemy.UnicodeText()) # SHA512 hash encoded into base64
 # /Media
 
 
 
-# Posts tables
-class _Posts(Base):# Depricated by Twkr's new design
-    """The posts in a blog
-    <type>_<api_field_name>
-    https://www.tumblr.com/docs/en/api/v2"""
-    __tablename__ = "posts"
-    # Columns
-    # Local stuff
-    primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Is used only as primary key
-    version = sqlalchemy.Column(sqlalchemy.BigInteger) # The version of this post this row is associated with
-    date_saved = sqlalchemy.Column(sqlalchemy.BigInteger)# The unix time the post was saved
-    link_to_hash_dict = sqlalchemy.Column(sqlalchemy.UnicodeText())# mapping of links in the post to hashes of associated media
-    # Who does this post belong to?
-    poster_username = sqlalchemy.Column(sqlalchemy.UnicodeText())# username for a blog, as given by the API "tsitra360"
-    blog_domain = sqlalchemy.Column(sqlalchemy.UnicodeText())# domain for the blog"tsitra360.tumblr.com"
-    # Missing from API docs
-    misc_slug = sqlalchemy.Column(sqlalchemy.UnicodeText())
-    misc_short_url = sqlalchemy.Column(sqlalchemy.UnicodeText())
-    # From API
-    # All Post Types
-    all_posts_blog_name = sqlalchemy.Column(sqlalchemy.UnicodeText())# String	The short name used to uniquely identify a blog
-    all_posts_id = sqlalchemy.Column(sqlalchemy.BigInteger)# Number	The post's unique ID
-    all_posts_post_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# String	The location of the post
-    all_posts_type = sqlalchemy.Column(sqlalchemy.UnicodeText())#String	The type of post	See the type request parameter
-    all_posts_timestamp = sqlalchemy.Column(sqlalchemy.UnicodeText())#	Number	The time of the post, in seconds since the epoch
-    all_posts_date = sqlalchemy.Column(sqlalchemy.UnicodeText())#	String	The GMT date and time of the post, as a string
-    all_posts_format = sqlalchemy.Column(sqlalchemy.UnicodeText())#String	The post format: html or markdown
-    all_posts_reblog_key = sqlalchemy.Column(sqlalchemy.UnicodeText())#	String	The key used to reblog this post	See the /post/reblog method
-    all_posts_tags = sqlalchemy.Column(sqlalchemy.UnicodeText())#Array (string)	Tags applied to the post
-    all_posts_bookmarklet = sqlalchemy.Column(sqlalchemy.Boolean())#	Boolean	Indicates whether the post was created via the Tumblr bookmarklet	Exists only if true
-    all_posts_mobile = sqlalchemy.Column(sqlalchemy.Boolean())#Boolean	Indicates whether the post was created via mobile/email publishing	Exists only if true
-    all_posts_source_url = sqlalchemy.Column(sqlalchemy.UnicodeText())#String	The URL for the source of the content (for quotes, reblogs, etc.)	Exists only if there's a content source
-    all_posts_source_title = sqlalchemy.Column(sqlalchemy.UnicodeText())#String	The title of the source site	Exists only if there's a content source
-    all_posts_liked = sqlalchemy.Column(sqlalchemy.Boolean())#Boolean	Indicates if a user has already liked a post or not	Exists only if the request is fully authenticated with OAuth.
-    all_posts_state = sqlalchemy.Column(sqlalchemy.UnicodeText())# String	Indicates the current state of the post	States are published, queued, draft and private
-    # Text Posts
-    text_title = sqlalchemy.Column(sqlalchemy.UnicodeText())#String	The optional title of the post
-    text_body = sqlalchemy.Column(sqlalchemy.UnicodeText())#String	The full post body
-    # Photo posts
-    photo_photos = sqlalchemy.Column(sqlalchemy.UnicodeText())# Array	Photo objects with properties:
-    photo_caption = sqlalchemy.Column(sqlalchemy.UnicodeText())#	String	The user-supplied caption
-    photo_width = sqlalchemy.Column(sqlalchemy.BigInteger)#	Number	The width of the photo or photoset
-    photo_height = sqlalchemy.Column(sqlalchemy.BigInteger)#	Number	The height of the photo or photoset
-    # Quote Posts
-    quote_text = sqlalchemy.Column(sqlalchemy.UnicodeText())# 	String	The text of the quote (can be modified by the user when posting)
-    quote_source = sqlalchemy.Column(sqlalchemy.UnicodeText())# 	String	Full HTML for the source of the quote
-    # Link Posts
-    link_title = sqlalchemy.Column(sqlalchemy.UnicodeText())#	String	The title of the page the link points to
-    link_url = sqlalchemy.Column(sqlalchemy.UnicodeText())#	String	The link
-    link_description = sqlalchemy.Column(sqlalchemy.UnicodeText())#	String	A user-supplied description
-    # Chat Posts
-    chat_title = sqlalchemy.Column(sqlalchemy.UnicodeText())
-    chat_body = sqlalchemy.Column(sqlalchemy.UnicodeText())
-    chat_dialogue = sqlalchemy.Column(sqlalchemy.UnicodeText())
-    # Audio Posts
-    audio_caption = sqlalchemy.Column(sqlalchemy.UnicodeText())
-    audio_player = sqlalchemy.Column(sqlalchemy.UnicodeText())
-    audio_plays = sqlalchemy.Column(sqlalchemy.BigInteger)
-    audio_album_art = sqlalchemy.Column(sqlalchemy.UnicodeText())
-    audio_artist = sqlalchemy.Column(sqlalchemy.UnicodeText())
-    audio_album = sqlalchemy.Column(sqlalchemy.UnicodeText())
-    audio_track_name = sqlalchemy.Column(sqlalchemy.UnicodeText())
-    audio_track_number = sqlalchemy.Column(sqlalchemy.BigInteger)
-    audio_year = sqlalchemy.Column(sqlalchemy.BigInteger)
-    # Video Posts
-    video_caption = sqlalchemy.Column(sqlalchemy.UnicodeText())
-    video_player = sqlalchemy.Column(sqlalchemy.UnicodeText())
-    # Answer Posts
-    answer_asking_name = sqlalchemy.Column(sqlalchemy.UnicodeText())
-    answer_asking_url = sqlalchemy.Column(sqlalchemy.UnicodeText())
-    answer_question = sqlalchemy.Column(sqlalchemy.UnicodeText())
-    answer_answer = sqlalchemy.Column(sqlalchemy.UnicodeText())
-
-class RawPosts(Base):# Live DB on server uses this
+# Tables on the server we need to be able to handle
+class vm_RawPosts(Base):# Live DB on server uses this
     """The raw post dicts for a blog
     Used to back up and stage posts
     Write-once Read-many"""
-    __tablename__ = "raw_posts"
+    __tablename__ = "vm_raw_posts"
     # Columns
     # Local stuff
     primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Is used only as primary key
@@ -188,18 +212,62 @@ class RawPosts(Base):# Live DB on server uses this
 
 
 
-
-
-
+class vm_Media(Base):# Live DB on server uses this
+     """Class that defines the media table in the DB"""
+     __tablename__ = "vm_media"
+     # Columns
+     # Locally generated
+     primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Only used as a primary key
+     date_added = sqlalchemy.Column(sqlalchemy.BigInteger)# The unix time the media was saved
+     media_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# Should have a constant length since it's a hash
+     sha512base64_hash = sqlalchemy.Column(sqlalchemy.String(88))
+     sha512base64_hash = sqlalchemy.Column(sqlalchemy.dialects.postgresql.CHAR(88))
+     local_filename = sqlalchemy.Column(sqlalchemy.String(250))# Filename on local storage, file path is deterministically generated from this
+     remote_filename = sqlalchemy.Column(sqlalchemy.UnicodeText())# Filename from original location (If any)
+     file_extention = sqlalchemy.Column(sqlalchemy.String(25))# ex. png, jpeg
+     extractor_used = sqlalchemy.Column(sqlalchemy.String(250))# internal name of the extractor used (function name of extractor)
+     # Video and Audio use these
+     yt_dl_info_json = sqlalchemy.Column(sqlalchemy.UnicodeText())
+     video_id = sqlalchemy.Column(sqlalchemy.UnicodeText())# The ID of the video used by the originating site
+     audio_id = sqlalchemy.Column(sqlalchemy.UnicodeText())# The ID of the audio used by the originating site
+     annotations = sqlalchemy.Column(sqlalchemy.UnicodeText())
+# /live server tables
 # /SQLAlchemy table setup
 
 
-def create_example_db():
+
+def create_example_db_sqllite():
     """Provide a DB session
     http://www.pythoncentral.io/introductory-tutorial-python-sqlalchemy/"""
     logging.debug("Opening DB connection")
     # add "echo=True" to see SQL being run
     engine = sqlalchemy.create_engine("sqlite:///tables_example.sqllite", echo=True)
+    # Bind the engine to the metadata of the Base class so that the
+    # declaratives can be accessed through a DBSession instance
+    Base.metadata.bind = engine
+    Base.metadata.create_all(engine)
+
+    DBSession = sqlalchemy.orm.sessionmaker(bind=engine)
+    # A DBSession() instance establishes all conversations with the database
+    # and represents a "staging zone" for all the objects loaded into the
+    # database session object. Any change made against the objects in the
+    # session won't be persisted into the database until you call
+    # session.commit(). If you're not happy about the changes, you can
+    # revert all of them back to the last commit by calling
+    # session.rollback()
+    session = DBSession()
+    session.commit()
+
+    logging.debug("Example DB created")
+    return
+
+def create_example_db_postgres():
+    """Provide a DB session
+    http://www.pythoncentral.io/introductory-tutorial-python-sqlalchemy/"""
+    logging.debug("Opening DB connection")
+    # add "echo=True" to see SQL being run
+    # postgresql://username:password@host/database_name
+    engine = sqlalchemy.create_engine("postgresql://postgres:postgres@localhost/example", echo=True)
     # Bind the engine to the metadata of the Base class so that the
     # declaratives can be accessed through a DBSession instance
     Base.metadata.bind = engine
