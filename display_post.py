@@ -63,17 +63,20 @@ def display_post(session,source_id,output_path="debug\\post.txt"):
     hash_query = sqlalchemy.select([media_associations]).\
         where(media_associations.post_id == post_row.post_id)
     hash_rows = session.execute(hash_query)
+
     for hash_row in hash_rows:
         # Add hash info to page
         page +="hash_row:"+repr(hash_row)+"\r\n"
 
         # Load media info for the hash
+        media_records_reached = False# Stop if mismatch
         media_query = sqlalchemy.select([Media]).\
             where(Media.sha512base64_hash == hash_row.sha512base64_hash)
         media_rows = session.execute(media_query)
         for media_row in media_rows:
             page += "media_row:"+repr(media_row)+"\r\n"
-
+            media_records_reached = True# Stop if mismatch
+        assert(media_records_reached)# Stop if mismatch
         page += "\r\n"
 
     # Show the raw_post data for comparison
@@ -143,6 +146,26 @@ def list_blogs(session,output_path="debug\\blog_list.txt"):
     return
 
 
+def list_all_media(session,output_path="debug\\media_list.txt"):
+    """Generate a list of all media in the DB"""
+    page = "Media:\r\n"
+
+    # Load media info for the hash
+    media_query = sqlalchemy.select([Media])
+    media_rows = session.execute(media_query)
+    for media_row in media_rows:
+        page += "media_row:"+repr(media_row)+"\r\n"
+
+    # Save page to disk
+    save_file(
+        file_path=output_path,
+        data=page,
+        force_save=True,
+        allow_fail=False
+        )
+    return
+
+
 def main():
     try:
         setup_logging(
@@ -152,12 +175,7 @@ def main():
         # Program
         session = sql_functions.connect_to_db()
 
-        display_post(
-            session,
-            source_id = 118863575131,
-            output_path="debug\\post.txt"
-            )
-
+        # Generate lists of what we have
         list_domain_posts(
             session,
             blog_domain = "askbuttonsmom.tumblr.com",
@@ -165,9 +183,38 @@ def main():
             )
 
         list_blogs(
-        session,
-        output_path="debug\\blog_list.txt"
-        )
+            session,
+            output_path="debug\\blog_list.txt"
+            )
+
+        list_all_media(
+            session,
+            output_path="debug\\media_list.txt"
+            )
+
+        # Test generating posts for display
+
+        display_post(
+            session,
+            source_id = 117088487878L,
+            output_path="debug\\post_117088487878L.txt",
+            )
+
+        display_post(
+            session,
+            source_id = 118863575131L,
+            output_path="debug\\post_118863575131L.txt",
+            )
+
+        display_post(
+            session,
+            source_id = 118863575131,
+            output_path="debug\\post_118863575131.txt",
+            )
+
+
+
+
         # /Program
         logging.info("Finished, exiting.")
         return
