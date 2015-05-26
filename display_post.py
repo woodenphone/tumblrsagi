@@ -84,8 +84,6 @@ def display_post(session,source_id,output_path="debug\\post.txt"):
     raw_post_row = raw_post_rows.fetchone()
     page +="raw_post_row:"+repr(raw_post_row)+"\r\n"
 
-
-
     # Save page to disk
     save_file(
         file_path=output_path,
@@ -93,10 +91,35 @@ def display_post(session,source_id,output_path="debug\\post.txt"):
         force_save=True,
         allow_fail=False
         )
+    return
 
 
-def list_domain_posts(session,blog_domain):
+def list_domain_posts(session,blog_domain,output_path="debug\\list_posts.txt"):
     """List all posts for a given domain"""
+    page = "Posts for blog:"+repr(blog_domain)+"\r\n"
+
+    # Get blog id
+    blog_query = sqlalchemy.select([twkr_blogs]).\
+        where(twkr_blogs.blog_url == blog_domain)
+    blog_rows = session.execute(blog_query)
+    blog_row = blog_rows.fetchone()
+    page +="blog_row:"+repr(blog_row)+"\r\n"
+
+    # Find all posts for this blog
+    post_query = sqlalchemy.select([twkr_posts]).\
+        where(twkr_posts.blog_id == blog_row.blog_id)
+    post_rows = session.execute(post_query)
+    for post_row in post_rows:
+        # Add hash info to page
+        page +="post_row:"+repr(post_row)+"\r\n"
+    # Save page to disk
+    save_file(
+        file_path=output_path,
+        data=page,
+        force_save=True,
+        allow_fail=False
+        )
+    return
 
 def bah():
     string_to_int_table = {
@@ -124,13 +147,17 @@ def main():
         concise_log_file_path=os.path.join("debug","short-display_post-log.txt")
         )
         # Program
-        bah()
         session = sql_functions.connect_to_db()
+
         display_post(
             session,
             source_id = 118863575131
             )
 
+        list_domain_posts(
+            session,
+            blog_domain = "askbuttonsmom.tumblr.com"
+            )
         # /Program
         logging.info("Finished, exiting.")
         return
