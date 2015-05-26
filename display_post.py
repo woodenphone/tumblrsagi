@@ -109,9 +109,11 @@ def list_domain_posts(session,blog_domain,output_path="debug\\list_posts.txt"):
     post_query = sqlalchemy.select([twkr_posts]).\
         where(twkr_posts.blog_id == blog_row.blog_id)
     post_rows = session.execute(post_query)
+
     for post_row in post_rows:
         # Add hash info to page
         page +="post_row:"+repr(post_row)+"\r\n"
+
     # Save page to disk
     save_file(
         file_path=output_path,
@@ -120,6 +122,28 @@ def list_domain_posts(session,blog_domain,output_path="debug\\list_posts.txt"):
         allow_fail=False
         )
     return
+
+
+def list_blogs(session,output_path="debug\\blog_list.txt"):
+    """Generate a list of blogs in the DB"""
+    page = "Blogs:"+"\r\n"
+
+    # Find blogs
+    blog_query = sqlalchemy.select([twkr_blogs])
+    blog_rows = session.execute(blog_query)
+    for blog_row in blog_rows:
+        # Add hash info to page
+        page +="blog_row:"+repr(blog_row)+"\r\n"
+
+    # Save page to disk
+    save_file(
+        file_path=output_path,
+        data=page,
+        force_save=True,
+        allow_fail=False
+        )
+    return
+
 
 def bah():
     string_to_int_table = {
@@ -151,13 +175,20 @@ def main():
 
         display_post(
             session,
-            source_id = 118863575131
+            source_id = 118863575131,
+            output_path="debug\\post.txt"
             )
 
         list_domain_posts(
             session,
-            blog_domain = "askbuttonsmom.tumblr.com"
+            blog_domain = "askbuttonsmom.tumblr.com",
+            output_path="debug\\list_posts.txt"
             )
+
+        list_blogs(
+        session,
+        output_path="debug\\blog_list.txt"
+        )
         # /Program
         logging.info("Finished, exiting.")
         return
