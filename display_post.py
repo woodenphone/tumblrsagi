@@ -31,6 +31,7 @@ def display_post(session,source_id,output_path="debug\\post.txt"):
 
     # Get post subrows
     logging.debug("Post type is: "+sql_functions.reverse_map_post_type(post_row.post_type))
+
     # 1: u'text',
     if post_row.post_type == 1:
         text_query = sqlalchemy.select([twkr_posts_text]).\
@@ -39,6 +40,7 @@ def display_post(session,source_id,output_path="debug\\post.txt"):
         text_row = text_rows.fetchone()
         logging.debug("text_row:"+repr(text_row))
         page += "text_row:"+repr(text_row)+"\r\n"
+
     # 2: u'photo',
     # 3: u'quote',
     # 4: u'link',
@@ -46,7 +48,6 @@ def display_post(session,source_id,output_path="debug\\post.txt"):
     # 6: u'audio',
     # 7: u'video',
     # 8: u'answer'
-
 
     # Get blog row
     blog_query = sqlalchemy.select([twkr_blogs]).\
@@ -62,7 +63,6 @@ def display_post(session,source_id,output_path="debug\\post.txt"):
     hash_query = sqlalchemy.select([media_associations]).\
         where(media_associations.post_id == post_row.post_id)
     hash_rows = session.execute(hash_query)
-
     for hash_row in hash_rows:
         # Add hash info to page
         page +="hash_row:"+repr(hash_row)+"\r\n"
@@ -71,7 +71,6 @@ def display_post(session,source_id,output_path="debug\\post.txt"):
         media_query = sqlalchemy.select([Media]).\
             where(Media.sha512base64_hash == hash_row.sha512base64_hash)
         media_rows = session.execute(media_query)
-
         for media_row in media_rows:
             page += "media_row:"+repr(media_row)+"\r\n"
 
@@ -109,7 +108,6 @@ def list_domain_posts(session,blog_domain,output_path="debug\\list_posts.txt"):
     post_query = sqlalchemy.select([twkr_posts]).\
         where(twkr_posts.blog_id == blog_row.blog_id)
     post_rows = session.execute(post_query)
-
     for post_row in post_rows:
         # Add hash info to page
         page +="post_row:"+repr(post_row)+"\r\n"
@@ -143,25 +141,6 @@ def list_blogs(session,output_path="debug\\blog_list.txt"):
         allow_fail=False
         )
     return
-
-
-def bah():
-    string_to_int_table = {
-        u"text":1,
-        u"photo":2,
-        u"quote":3,
-        u"link":4,
-        u"chat":5,
-        u"audio":6,
-        u"video":7,
-        u"answer":8,
-        }
-    int_to_string_table = {}
-    for key in string_to_int_table.keys():
-        int_to_string_table[string_to_int_table[key]] = key
-    logging.debug(repr(int_to_string_table))
-
-
 
 
 def main():
