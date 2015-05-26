@@ -39,7 +39,7 @@ def process_one_new_posts_media(post_row):
         post_primary_key = post_row["primary_key"]
         logging.debug("Processing post with primary_key: "+repr(post_primary_key))
         logging.debug("post_row"": "+repr(post_row))
-        raw_post_dict = json.loads(post_row["raw_post_json"])
+        raw_post_dict = post_row["raw_post_json"]
         blog_url = post_row["blog_domain"]
         username = post_row["poster_username"]
         # Get blog_id
@@ -90,7 +90,7 @@ def list_new_posts(session,max_rows):
     # Select new posts
     # New posts don't have a processed JSON
     posts_query = sqlalchemy.select([RawPosts]).\
-        where(RawPosts.processed_post_json == json.dumps("N/A")).\
+        where(RawPosts.processed_post_json == json.dumps("N/A") ).\
         limit(max_rows)# I expected "== None" to work, but apparently a string of "null" is the thing to do?
     #logging.debug("posts_query"": "+repr(posts_query))
     post_rows = session.execute(posts_query)
