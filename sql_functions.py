@@ -176,6 +176,19 @@ def map_post_type(post_type_string):
         }
     return string_to_int_table[post_type_string]
 
+def reverse_map_post_type(type_id):
+    int_to_string_table = {
+        1: u'text',
+        2: u'photo',
+        3: u'quote',
+        4: u'link',
+        5: u'chat',
+        6: u'audio',
+        7: u'video',
+        8: u'answer'
+         }
+    return int_to_string_table[type_id]
+
 
 def insert_post_media_associations(session,post_id,media_hash_list):
     # Find associations already in the db for this post and skip them
