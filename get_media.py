@@ -55,15 +55,11 @@ def process_one_new_posts_media(post_row):
         logging.debug("processed_post_dict"": "+repr(processed_post_dict))
 
         # Insert row to posts tables
-        media_hashes = []
-        for media_hash_key in processed_post_dict["link_to_hash_dict"].keys():
-            media_hashes.append(processed_post_dict["link_to_hash_dict"][media_hash_key])
-
         sql_functions.insert_one_post(
                 session = session,
                 post_dict = processed_post_dict,
                 blog_id = blog_id,
-                media_hash_list = media_hashes
+                media_hash_dict = processed_post_dict["link_to_hash_dict"]
                 )
         session.commit()
 
