@@ -45,10 +45,10 @@ def connect_to_db():
 
 
 # Media
-def check_if_hash_in_db(session,sha512base64_hash):
+def check_if_hash_in_db(session,sha512base16_hash):
     """Check if a hash is in the media DB
     Return a dict of the first found row if it is, otherwise return None"""
-    hash_query = sqlalchemy.select([Media]).where(Media.sha512base64_hash == sha512base64_hash)
+    hash_query = sqlalchemy.select([Media]).where(Media.sha512base16_hash == sha512base16_hash)
     hash_rows = session.execute(hash_query)
     hash_row = hash_rows.fetchone()
     if hash_row:
@@ -68,30 +68,6 @@ def check_if_media_url_in_DB(session,media_url):
     else:
         return None
 
-
-def lookup_media_url(session,table_class,media_url):# New and obsolete
-    """Check if a URL is in the given table
-    Return a dict of the first found row if it is, otherwise return None"""
-    media_url_query = sqlalchemy.select([table_class]).where(table_class.media_url == media_url)
-    media_url_rows = session.execute(media_url_query)
-    media_url_row = media_url_rows.fetchone()
-    if media_url_row:
-        return media_url_row
-    else:
-        return None
-
-
-def lookup_media_hash(session,table_class,sha512base64_hash):# New and obsolete
-    """Check if a sha512base64_hash is in the given table
-    Return a dict of the first found row if it is, otherwise return None"""
-    media_url_query = sqlalchemy.select([table_class]).where(table_class.sha512base64_hash == sha512base64_hash)
-    media_url_rows = session.execute(media_url_query)
-    media_url_row = media_url_rows.fetchone()
-    logging.debug("sql_functions.lookup_media_hash() media_url_row:"+repr(media_url_row))
-    if media_url_row:
-        return media_url_row
-    else:
-        return None
 
 
 # Raw Posts
@@ -191,60 +167,55 @@ def reverse_map_post_type(type_id):
     return int_to_string_table[type_id]
 
 
-def insert_post_media_associations(session,post_id,media_hash_dict):
+def insert_post_media_associations(session,post_id,media_id_list):
+    logging.debug("insert_post_media_associations() media_id_list:"+repr(media_id_list))
+
     # Find associations already in the db for this post and skip them
-    new_media_hashes = {}# {link:hash}
-    for media_url in media_hash_dict.keys():# {link:hash}
-        media_hash = media_hash_dict[media_url]
-        select_hash_query = sqlalchemy.select([media_associations]).\
-            where(media_associations.sha512base64_hash == media_hash).\
+    new_media_ids = []
+    for media_id in media_id_list:
+        select_id_query = sqlalchemy.select([media_associations]).\
+            where(media_associations.media_id == media_id).\
             where(media_associations.post_id == post_id)
-        select_hash_rows = session.execute(select_hash_query)
-        select_hash_row = select_hash_rows.fetchone()
-        if select_hash_row:
-            logging.debug("Skipping duplicate association: "+repr(media_hash))
+
+        select_id_rows = session.execute(select_id_query)
+        select_id_row = select_id_rows.fetchone()
+        if select_id_row:
+            logging.debug("Skipping duplicate association: "+str(select_id_row))
         else:
-            new_media_hashes[media_url] = media_hash
+            new_media_ids += [media_id]
         continue
+    logging.debug("insert_post_media_associations() new_media_ids:"+repr(new_media_ids))
 
     # Add entries to the post-media association table
-    for new_media_url in new_media_hashes:
-        new_media_hash = new_media_hashes[new_media_url]
-        # Ensure hash is valid
-        assert(len(new_media_hash) == 88)# Hash is constant length
+    for new_media_id in new_media_ids:
+        # Ensure media row exists
+        verify_id_query = sqlalchemy.select([Media]).\
+            where(Media.media_id == new_media_id)
+        verify_id_rows = session.execute(verify_id_query)
+        verify_id_row = verify_id_rows.fetchone()
 
-        # Ensure the hash is actually in the Media table
-        verify_hash_query = sqlalchemy.select([Media]).\
-            where(Media.sha512base64_hash == new_media_hash)
-        verify_hash_rows = session.execute(verify_hash_query)
-        verify_hash_row = verify_hash_rows.fetchone()
-        logging.debug("Media row associated with this hash:"+repr(verify_hash_row))
-        verify_hash = verify_hash_row["sha512base64_hash"]
-        if verify_hash:
-            # Insert hash
-            media_association_row = media_associations(
-                post_id = post_id,
-                sha512base64_hash = new_media_hash
-                )
-            session.add(media_association_row)
-            continue
-        else:
-            # The hash we were given is not in the Media table!
-            # Make a fuss if the value is not in the media DB
-            logging.error("Hash was not found in the Media table! Somethign is wrong!")
-            logging.error(repr(locals()))
+        if not verify_id_row:# This should never be called becasue media ids are generated from existing rows
+            logging.error("No media row found for media_id:"+repr(media_id))
+            logging.error(rer(locals()))
             raise ValueError
+        # Insert association row
+        media_association_row = media_associations(
+            post_id = post_id,
+            media_id = new_media_id
+            )
+        session.add(media_association_row)
+        session.commit()
     return
 
 
-def insert_one_post(session,post_dict,blog_id,media_hash_dict):# WIP
+def insert_one_post(session,post_dict,blog_id,media_id_list):# WIP
     """Insert a single post into Twkr's new postgres tables
     Only commit if all tables are set
     Return True if successful.
     """
-    assert(type(post_dict) is type({}))
+    assert( type(post_dict) is type({}) )
     #assert(type(blog_id) is type(1))
-    assert(type(media_hash_dict) is type({}))
+    assert( type(media_id_list) is type([]) )
     # Generate a unique ID for the post
     #post_id = get_current_unix_time()#post_dict["id"]# I don't trust this but it's good enough for testing
     logging.warning("Fix post_id! Unsafe for primary key")
@@ -270,7 +241,7 @@ def insert_one_post(session,post_dict,blog_id,media_hash_dict):# WIP
 
     # Add entries to the post-media association table
     logging.debug("adding media associations")
-    insert_post_media_associations(session,post_id,media_hash_dict)
+    insert_post_media_associations(session,post_id,media_id_list)
 
     # If photo, insert into posts_photo table
     if (post_dict["type"] == "photo"):

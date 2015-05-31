@@ -47,6 +47,7 @@ def handle_youtube_video(session,post_dict):# NEW TABLES
     logging.debug("Processing youtube video")
     video_page = post_dict["post_url"]
     post_id = str(post_dict["id"])
+    media_id_list = []
     logging.debug("video_page: "+repr(video_page))
     logging.debug("post_id: "+repr(post_id))
 
@@ -77,9 +78,7 @@ def handle_youtube_video(session,post_dict):# NEW TABLES
         video_page_row = video_page_rows.fetchone()
         if video_page_row:
             logging.debug("Skipping previously saved video: "+repr(video_page_row))
-            video_dicts.append(
-                {video_page_row["media_url"] : video_page_row["sha512base64_hash"]}
-                )
+            media_id_list += [video_page_row["media_id"]]
         else:
             download_urls.append(youtube_url)
         continue
@@ -87,20 +86,16 @@ def handle_youtube_video(session,post_dict):# NEW TABLES
     # Download videos if there are any
 
     for download_url in download_urls:
-        video_dict = run_yt_dl_single(
+        media_id = run_yt_dl_single(
             session,
             download_url = download_url,
             extractor_used="video_handlers.handle_youtube_video()",
             video_id = crop_youtube_id(download_url),
             )
-        video_dicts.append(video_dict)
+        media_id_list+=media_id
         continue
 
-    # Join the info dicts together
-    combined_video_dict =  merge_dicts(*video_dicts)# Join the dicts for different videos togather
-    assert(type(combined_video_dict) is type({}))# Must be a dict
-
-    return combined_video_dict
+    return media_id_list
 
 
 def handle_vimeo_videos(session,post_dict):# New table
@@ -127,13 +122,13 @@ def handle_vimeo_videos(session,post_dict):# New table
     logging.debug("vimeo_urls: "+repr(vimeo_urls))
 
     # Download videos if there are any
-    combined_video_dict = run_yt_dl_multiple(
+    media_id_list = run_yt_dl_multiple(
         session = session,
         download_urls = vimeo_urls,
         extractor_used="video_handlers.handle_vimeo_videos()",
         )
     logging.debug("Finished downloading vimeo embeds")
-    return combined_video_dict
+    return media_id_list
 
 
 def handle_imgur_videos(session,post_dict):# NEW TABLES
@@ -161,13 +156,13 @@ def handle_imgur_videos(session,post_dict):# NEW TABLES
     logging.debug("imgur_urls: "+repr(imgur_urls))
 
     # Download videos if there are any
-    combined_video_dict = run_yt_dl_multiple(
+    media_id_list = run_yt_dl_multiple(
         session = session,
         download_urls = imgur_urls,
         extractor_used="video_handlers.handle_imgur_videos()",
         )
     logging.debug("Finished downloading imgur_video embeds")
-    return combined_video_dict
+    return media_id_list
 
 
 def handle_vine_videos(session,post_dict):# New table
@@ -217,13 +212,13 @@ def handle_vine_videos(session,post_dict):# New table
     logging.debug("download_urls: "+repr(download_urls))
 
     # Download videos if there are any
-    combined_video_dict = run_yt_dl_multiple(
+    media_id_list = run_yt_dl_multiple(
         session = session,
         download_urls = download_urls,
         extractor_used="video_handlers.handle_vine_videos()",
         )
     logging.debug("Finished downloading Vine embeds")
-    return combined_video_dict
+    return media_id_list
 
 
 def handle_tumblr_videos(session,post_dict):
@@ -238,13 +233,13 @@ def handle_tumblr_videos(session,post_dict):
 
     download_urls = [video_page]
     # Download videos if there are any
-    combined_video_dict = run_yt_dl_multiple(
+    media_id_list = run_yt_dl_multiple(
         session = session,
         download_urls = download_urls,
         extractor_used="video_handlers.handle_tumblr_videos()",
         )
     logging.debug("Finished downloading Tumblr embeds")
-    return combined_video_dict
+    return media_id_list
 
 
 def handle_livestream_videos(session,post_dict):
@@ -271,14 +266,14 @@ def handle_livestream_videos(session,post_dict):
     logging.debug("livestream_urls: "+repr(livestream_urls))
 
     # Download videos if there are any
-    combined_video_dict = run_yt_dl_multiple(
+    media_id_list = run_yt_dl_multiple(
         session = session,
         download_urls = livestream_urls,
         extractor_used="video_handlers.handle_livestream_videos()",
         )
 
     logging.debug("Finished downloading livestream embeds")
-    return combined_video_dict
+    return media_id_list
 
 
 def handle_yahoo_videos(session,post_dict):
@@ -305,14 +300,14 @@ def handle_yahoo_videos(session,post_dict):
     logging.debug("yahoo_urls: "+repr(yahoo_urls))
 
     # Download videos if there are any
-    combined_video_dict = run_yt_dl_multiple(
+    media_id_list = run_yt_dl_multiple(
         session = session,
         download_urls = yahoo_urls,
         extractor_used="video_handlers.handle_yahoo_videos()",
         )
 
     logging.debug("Finished downloading yahoo embeds")
-    return combined_video_dict
+    return media_id_list
 
 
 def handle_dailymotion_videos(session,post_dict):
@@ -339,14 +334,14 @@ def handle_dailymotion_videos(session,post_dict):
     logging.debug("video_urls: "+repr(video_urls))
 
     # Download videos if there are any
-    combined_video_dict = run_yt_dl_multiple(
+    media_id_list = run_yt_dl_multiple(
         session = session,
         download_urls = video_urls,
         extractor_used="video_handlers.handle_dailymotion_videos()",
         )
 
     logging.debug("Finished downloading dailymotion embeds")
-    return combined_video_dict
+    return media_id_list
 
 
 def handle_instagram_videos(session,post_dict):
@@ -363,14 +358,14 @@ def handle_instagram_videos(session,post_dict):
         assert(Fasle)
 
     # Download videos if there are any
-    combined_video_dict = run_yt_dl_multiple(
+    media_id_list = run_yt_dl_multiple(
         session = session,
         download_urls = video_urls,
         extractor_used="video_handlers.handle_instagram_videos()",
         )
 
     logging.debug("Finished downloading instagram embeds")
-    return combined_video_dict
+    return media_id_list
 
 
 

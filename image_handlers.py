@@ -34,7 +34,7 @@ def download_image_link(session,media_url):
     url_check_row_dict = sql_functions.check_if_media_url_in_DB(session,media_url)
     if url_check_row_dict:
         media_already_saved = True
-        return url_check_row_dict["sha512base64_hash"]
+        return [url_check_row_dict["media_id"]]
 
     # Load URL
     file_data = get(media_url)
@@ -44,7 +44,7 @@ def download_image_link(session,media_url):
     time_of_retreival = get_current_unix_time()
 
     # Generate hash
-    sha512base64_hash = hash_file_data(file_data)
+    sha512base16_hash = hash_file_data(file_data)
 
     # Generate filename for output file (With extention)
     cropped_full_image_url = media_url.split("?")[0]# Remove after ?
@@ -54,13 +54,13 @@ def download_image_link(session,media_url):
         logging.error("download_image_link() No file extention!")
         logging.error(repr(locals()))
         assert(False)# Something broke and then called this
-    local_filename = generate_filename(ext=file_extention,hash=sha512base64_hash)
+    local_filename = generate_filename(ext=file_extention,sha512base16_hash=sha512base16_hash)
     logging.debug("download_image_link() ""local_filename: "+repr(local_filename))
     file_path = generate_path(root_path=config.root_path,filename=local_filename)
     logging.debug("download_image_link() ""file_path: "+repr(file_path))
 
     # Compare hash with database and add new entry for this URL
-    hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
+    hash_check_row_dict = sql_functions.check_if_hash_in_db(session,sha512base16_hash)
     if hash_check_row_dict:
         media_already_saved = True
         local_filename = hash_check_row_dict["local_filename"]
@@ -68,7 +68,7 @@ def download_image_link(session,media_url):
     # Add new row
     new_media_row = Media(
         media_url=media_url,
-        sha512base64_hash=sha512base64_hash,
+        sha512base16_hash=sha512base16_hash,
         local_filename=local_filename,
         remote_filename = remote_filename,
         file_extention=file_extention,
@@ -91,21 +91,25 @@ def download_image_link(session,media_url):
             allow_fail=False
             )
     session.commit()
-    return sha512base64_hash
+
+    # Get the id back
+    get_id_row = sql_functions.check_if_hash_in_db(session,sha512base16_hash)
+    media_id = get_id_row["media_id"]
+    media_id_list = [media_id]
+    return media_id_list
 
 
 def download_image_links(session,media_urls):
     # Save image links
     media_urls = uniquify(media_urls)
-    link_hash_dict = {}# {link:hash}
+    media_id_list = []
     for media_url in media_urls:
-        sha512base64_hash =  download_image_link(session,media_url)
-        if sha512base64_hash:
-            link_hash_dict[media_url] = sha512base64_hash# {link:hash}
+        found_ids =  download_image_link(session,media_url)
+        if found_ids:
+            media_id_list += found_ids
         continue
-    return link_hash_dict# {link:hash}
-
-
+    logging.debug("download_image_links() media_id_list:"+repr(media_id_list))
+    return media_id_list
 
 
 

@@ -98,7 +98,7 @@ def extract_post_links(post_dict):
 
 def handle_image_links(session,all_post_links):
     """Check and save images linked to by a post
-    return link_hash_dict = {}# {link:hash}"""
+    return media_id_list = {}"""
     logging.debug("handle_image_links() all_post_links"+repr(all_post_links))
     # Find all links in post dict
     # Select whick links are image links
@@ -118,15 +118,15 @@ def handle_image_links(session,all_post_links):
             image_links.append(link)
     #logging.debug("handle_image_links() image_links: "+repr(image_links))
     # Save image links
-    link_hash_dict = download_image_links(session,image_links)
-    return link_hash_dict# {link:hash}
+    media_id_list = download_image_links(session,image_links)
+    return media_id_list
 
 
 
 
 def handle_video_file_links(session,all_post_links):# WIP
     """Check and save video files linked to by a post
-    return link_hash_dict = {}# {link:hash}"""
+    return media_id_list"""
     logging.debug("handle_video_file_links() all_post_links"+repr(all_post_links))
     # Find all links in post dict
     # Select whick links are image links
@@ -149,30 +149,29 @@ def handle_video_file_links(session,all_post_links):# WIP
             video_links.append(link)
     logging.debug("handle_video_file_links() video_links: "+repr(video_links))
     # Save image links
-    link_hash_dict = download_image_links(session,video_links)
-    return link_hash_dict# {link:hash}
+    media_id_list = download_image_links(session,video_links)
+    return media_id_list
 
 
 def handle_video_links(session,all_post_links):# WIP
-    video_dicts = []
+    media_id_list = []
     for link in all_post_links:
         # Site handlers
         # Youtube
         if ("youtube.com" in link[0:100]) or ("youtu.be" in link[0:100]):
             continue
             logging.debug("Link is youtube video: "+repr(link))
-            video_dict = run_yt_dl_single(
+            media_id_list += run_yt_dl_single(
             session=session,
             download_url=download_url,
             extractor_used="link_handlers.handle_video_links:youtube.com",
             video_id=video_id,
             )
-            video_dicts.append(video_dict)
 
         # gfycat.com
         elif "gfycat.com/" in link[0:20]:
             logging.debug("Link is gfycat video: "+repr(link))
-            video_dict = run_yt_dl_single(
+            media_id_list += run_yt_dl_single(
             session=session,
             download_url=download_url,
             extractor_used="link_handlers.handle_video_links:gfycat.com",
@@ -184,7 +183,7 @@ def handle_video_links(session,all_post_links):# WIP
         # http://webmshare.com
         elif "webmshare.com" in link[0:20]:
             logging.debug("Link is webmshare video: "+repr(link))
-            video_dict = run_yt_dl_single(
+            media_id_list += run_yt_dl_single(
             session=session,
             download_url=download_url,
             extractor_used="link_handlers.handle_video_links:webmshare.com",
@@ -193,10 +192,7 @@ def handle_video_links(session,all_post_links):# WIP
             )
             video_dicts.append(video_dict)
 
-
-    combined_video_dict =  merge_dicts(*video_dicts)# Join the dicts for different videos togather
-    assert(type(combined_video_dict) is type({}))# Must be a dict
-    return combined_video_dict
+    return media_id_list
 
 
 
@@ -238,16 +234,14 @@ def handle_links(session,post_dict):# TODO FIXME
             new_links.append(post_link)
     new_links = uniquify(new_links)
     logging.debug("new_links: "+repr(new_links))
-    link_info_dicts = []
+    media_id_list = []
     # Saved linked images
     # TODO FIXME
-    remote_images_dict = handle_image_links(session,new_links)# {link:hash}
-    link_info_dicts.append(remote_images_dict)
+    media_id_list += handle_image_links(session,new_links)# {link:hash}
 
     # Saved linked videos
     # TODO FIXME
-    remote_videos_dict = handle_video_links(session,all_post_links)
-    link_info_dicts.append(remote_videos_dict)
+    media_id_list += handle_video_links(session,all_post_links)
 
     # Saved linked audio
     # TODO FIXME
@@ -262,11 +256,7 @@ def handle_links(session,post_dict):# TODO FIXME
     # https://e621.net/post/show/599802
     # TODO FIXME
 
-    # Join mapping dicts # {link:hash}
-    remote_link_to_hash_dict = combined_video_dict =  merge_dicts(*link_info_dicts)
-    logging.debug("handle_links() Finished processing external links.")
-    logging.debug("handle_links() remote_link_to_hash_dict:"+repr(remote_link_to_hash_dict))
-    return remote_link_to_hash_dict# {link:hash}
+    return media_id_list
 
 
 

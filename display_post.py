@@ -18,15 +18,26 @@ from tables import *# Table definitions
 
 
 
-def display_post(session,source_id,output_path="debug\\post.txt"):
+def display_post(session,source_id=None,post_id=None,output_path="debug\\post.txt"):
     """Display a single post"""
-    page = "Tumblr post number:"+repr(source_id)+"\r\n"
     # Get post row
-    post_query = sqlalchemy.select([twkr_posts]).\
-        where(twkr_posts.source_id == source_id)
+    if source_id:
+        page = "Tumblr post number:"+repr(source_id)+"\r\n"
+
+        post_query = sqlalchemy.select([twkr_posts]).\
+            where(twkr_posts.source_id == source_id)
+    else:
+        page = "local postid number:"+repr(source_id)+"\r\n"
+        post_query = sqlalchemy.select([twkr_posts]).\
+            where(twkr_posts.post_id == post_id)
+
     post_rows = session.execute(post_query)
     post_row = post_rows.fetchone()
     logging.debug("post_row:"+repr(post_row))
+    if not post_row:
+        logging.error("No post row found!")
+        return
+
     page += "post_row:"+repr(post_row)+"\r\n"
 
     # Get post subrows
@@ -60,18 +71,18 @@ def display_post(session,source_id,output_path="debug\\post.txt"):
     page += "\r\nMedia associated with this post:\r\n"
 
     # Get media hashes
-    hash_query = sqlalchemy.select([media_associations]).\
+    media_id_query = sqlalchemy.select([media_associations]).\
         where(media_associations.post_id == post_row.post_id)
-    hash_rows = session.execute(hash_query)
+    media_id_rows = session.execute(media_id_query)
 
-    for hash_row in hash_rows:
+    for media_id_row in media_id_rows:
         # Add hash info to page
-        page +="hash_row:"+repr(hash_row)+"\r\n"
+        page +="media_id_row:"+repr(media_id_row)+"\r\n"
 
         # Load media info for the hash
         media_records_reached = False# Stop if mismatch
         media_query = sqlalchemy.select([Media]).\
-            where(Media.sha512base64_hash == hash_row.sha512base64_hash)
+            where(Media.media_id == media_id_row.media_id)
         media_rows = session.execute(media_query)
         for media_row in media_rows:
             page += "media_row:"+repr(media_row)+"\r\n"
@@ -166,6 +177,34 @@ def list_all_media(session,output_path="debug\\media_list.txt"):
     return
 
 
+def build_all_posts(session):
+    # Find blogs
+    blog_query = sqlalchemy.select([twkr_blogs])
+    blog_rows = session.execute(blog_query)
+    for blog_row in blog_rows:
+        # Get blog id
+        blog_id = blog_row["blog_id"]
+        blog_url = blog_row["blog_url"]
+        logging.debug("blog_url:"+repr(blog_url))
+        # Find all posts for this blog
+        post_query = sqlalchemy.select([twkr_posts]).\
+            where(twkr_posts.blog_id == blog_row.blog_id)
+        post_rows = session.execute(post_query)
+        for post_row in post_rows:
+            post_id = post_row["post_id"]
+            logging.debug("post_id:"+repr(post_id))
+            display_post(
+                session,
+                source_id=None,
+                post_id=post_id,
+                output_path="debug\\"+str(blog_url)+"\\"+str(post_id)+".txt"
+                )
+            continue
+        continue
+    return
+
+
+
 def main():
     try:
         setup_logging(
@@ -174,6 +213,8 @@ def main():
         )
         # Program
         session = sql_functions.connect_to_db()
+
+        build_all_posts(session)
 
         # Generate lists of what we have
         list_domain_posts(

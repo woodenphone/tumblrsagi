@@ -363,18 +363,18 @@ def move_file(original_path,final_path):
 
 def hash_file_data(file_data):
     """Take the data from a file and hash it for deduplication
-    Return a base64 encoded hash of the data"""
+    Return a base16 encoded hash of the data"""
     m = hashlib.sha512()
     m.update(file_data)
     raw_hash = m.digest()
     #logging.debug("raw_hash: "+repr(raw_hash))
-    sha512base64_hash = base64.b64encode(raw_hash)
+    #sha512base64_hash = base64.b64encode(raw_hash)
     #sha512base32_hash = base64.b32encode(raw_hash)
-    #sha512base16_hash = base64.b16encode(raw_hash)
+    sha512base16_hash = base64.b16encode(raw_hash)
     #logging.debug("sha512base64_hash: "+repr(sha512base64_hash))
     #logging.debug("sha512base32_hash: "+repr(sha512base32_hash))
     #logging.debug("sha512base16_hash: "+repr(sha512base16_hash))
-    return sha512base64_hash
+    return sha512base16_hash
 
 
 def _generate_media_file_path_hash(root_path,filename):
@@ -391,7 +391,7 @@ def _generate_media_file_path_timestamp(root_path,filename):
     return file_path
 
 
-def generate_filename(ext,hash=None):# WIP
+def generate_filename(ext,sha512base16_hash=None):# WIP
     """Abstraction for generating filenames, this is so only one function needs to care about it
     Take the file extention and maybe some other info and return a filename"""
     # Timestamp filename

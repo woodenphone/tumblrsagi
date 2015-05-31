@@ -50,8 +50,8 @@ def handle_thumbnail(session,post_dict):
     if "thumbnail_url" in post_dict.keys():
         logging.debug("Saving thumbnail")
         thumbnail_link = [post_dict["thumbnail_url"]]
-        link_hash_dict = download_image_links(session,thumbnail_link)
-    return link_hash_dict# {link:hash}
+        media_id_list = download_image_links(session,thumbnail_link)
+    return media_id_list
 
 
 def handle_tumblr_photos(session,post_dict):
@@ -77,8 +77,8 @@ def handle_tumblr_photos(session,post_dict):
                 photo_url_list.append(alt_size_url)
     logging.debug("photo_url_list: "+repr(photo_url_list))
     # Save new photo links
-    link_hash_dict = download_image_links(session,photo_url_list)
-    return link_hash_dict# {link:hash}
+    media_id_list = download_image_links(session,photo_url_list)
+    return media_id_list
 
 
 def save_media(session,post_dict):
@@ -88,38 +88,28 @@ def save_media(session,post_dict):
     #logging.debug("post_dict"+repr(post_dict))
     # Save anything not provided directly through the tumblr API (Remote) ex. http://foo.com/image.jpg
     # I.E. Links (<a href = "http://example.com/image.png">blah</a>)
+    media_id_list = []
     if config.save_external_links:
-        remote_link_dict = link_handlers.handle_links(session,post_dict)# TODO FIXME
-    else:
-        remote_link_dict = {}
+        remote_link_id_list = link_handlers.handle_links(session,post_dict)# TODO FIXME
+        media_id_list += remote_link_id_list
+
     # Save photos sections (Tumblr)
     if config.save_photos:
-        tumblr_photos_link_dict = handle_tumblr_photos(session,post_dict)# {link:hash}
-    else:
-        tumblr_photos_link_dict = {}
+        tumblr_photos_link_id_list = handle_tumblr_photos(session,post_dict)# {link:hash}
+        media_id_list += tumblr_photos_link_id_list
+
     # Save videos, both tumblr and youtube (Tumblr & Youtube)
     if config.save_videos:
-        video_embed_dict = video_handlers.handle_video_posts(session,post_dict)
-    else:
-        video_embed_dict = {}
+        video_embed_id_list = video_handlers.handle_video_posts(session,post_dict)
+        media_id_list += video_embed_id_list
+
     # Save audio
     if config.save_audio:
-        audio_embed_dict = audio_handlers.handle_audio_posts(session,post_dict)
-    else:
-        audio_embed_dict = {}
-    # Join mapping dicts # {link:hash}
-    link_to_hash_dict = merge_dicts(
-        remote_link_dict,
-        tumblr_photos_link_dict,
-        video_embed_dict,
-        audio_embed_dict,
-        )
-    # Replace links with marker string
-    logging.debug("link_to_hash_dict: "+repr(link_to_hash_dict))
-    new_post_dict = replace_links(link_to_hash_dict,post_dict)
-    new_post_dict["link_to_hash_dict"] = link_to_hash_dict
-    #logging.debug("new_post_dict: "+repr(new_post_dict))
-    return new_post_dict
+        audio_embed_id_list = audio_handlers.handle_audio_posts(session,post_dict)
+        media_id_list += audio_embed_id_list
+
+    logging.debug("media_id_list: "+repr(media_id_list))
+    return media_id_list
 
 
 def debug():

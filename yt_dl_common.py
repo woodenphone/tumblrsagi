@@ -29,24 +29,17 @@ def run_yt_dl_multiple(session,download_urls,extractor_used,audio_id=None,video_
     # Prevent duplicate downloads
     download_urls = uniquify(download_urls)
     # Download videos if there are any
-    video_dicts = []
+    media_id_list = []
     for download_url in download_urls:
-        video_dict = run_yt_dl_single(
+        media_id_list += run_yt_dl_single(
             session=session,
             download_url=download_url,
             extractor_used=extractor_used,
             audio_id=audio_id,
             video_id=video_id,
             )
-        assert(type(video_dict) is type({}))# Must be a dict
-        video_dicts.append(video_dict)
         continue
-
-    # Join the info dicts together
-    combined_video_dict =  merge_dicts(*video_dicts)# Join the dicts for different videos togather
-    assert(type(combined_video_dict) is type({}))# Must be a dict
-
-    return combined_video_dict
+    return media_id_list
 
 
 def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=None):
@@ -63,7 +56,7 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
         )
     if video_page_row:
         logging.debug("Skipping previously saved video: "+repr(video_page_row))
-        return {download_url : video_page_row["sha512base64_hash"]}
+        return [video_page_row["media_id"]]
 
     # Form command to run
     # Define arguments. see this url for help
@@ -119,11 +112,11 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
 
     # Generate hash for media file
     file_data = read_file(media_temp_filepath)
-    sha512base64_hash = hash_file_data(file_data)
+    sha512base16_hash = hash_file_data(file_data)
     # Decide where to put the file
 
     # Check if hash is in media DB
-    video_page_row = sql_functions.check_if_hash_in_db(session,sha512base64_hash)
+    video_page_row = sql_functions.check_if_hash_in_db(session,sha512base16_hash)
     if video_page_row:
         # If media already saved, delete temp file and use old entry's data
         filename = video_page_row["local_filename"]
@@ -136,7 +129,7 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
         # Move file to media DL location
         logging.info("Moving video to final location")
         # Generate output filepath
-        filename = generate_filename(ext=file_ext,hash=sha512base64_hash)
+        filename = generate_filename(ext=file_ext,sha512base16_hash=sha512base16_hash)
         final_media_filepath = generate_path(root_path=config.root_path,filename=filename)
         # Move file to final location
         move_file(media_temp_filepath,final_media_filepath)
@@ -150,7 +143,7 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
     row_dict = {}
     # Mandantory values
     row_dict["media_url"] = download_url
-    row_dict["sha512base64_hash"] = sha512base64_hash
+    row_dict["sha512base16_hash"] = sha512base16_hash
     row_dict["local_filename"] = filename
     row_dict["file_extention"] = file_ext
     row_dict["date_added"] = time_of_retreival
@@ -167,9 +160,11 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
     session.commit()
 
     logging.debug("Finished downloading "+repr(download_url)+" using yt-dl")
-    return {
-        download_url:sha512base64_hash,
-        }
+    # Get the id back
+    get_id_row = sql_functions.check_if_hash_in_db(session,sha512base16_hash)
+    media_id = get_id_row["media_id"]
+    media_id_list = [media_id]
+    return media_id_list
 
 
 def update_yt_dl():# TODO

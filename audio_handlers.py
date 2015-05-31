@@ -49,21 +49,22 @@ def handle_soundcloud_audio(session,post_dict):
     logging.debug("id_row: "+repr(id_row))
     if id_row:
         logging.debug("Soundcloud audio with this ID has already been saved, skipping")
-        sha512base64_hash = id_row["sha512base64_hash"]
-        return {cleaned_soundcloud_link:sha512base64_hash}# URL:Hash
+        media_id = id_row["media_id"]
+        media_id_list = [media_id]
+        return media_id_list
+    else:
+        # Grab url to send to youtube-dl
+        download_urls = [cleaned_soundcloud_link]
 
-    # Grab url to send to youtube-dl
-    download_urls = [cleaned_soundcloud_link]
-
-    # Download videos if there are any
-    combined_audio_dict = run_yt_dl_multiple(
-        session = session,
-        download_urls = download_urls,
-        extractor_used="audio_handlers.handle_soundcloud_audio()",
-        audio_id = soundcloud_id
-        )
-    logging.debug("Finished downloading soundcloud embeds")
-    return combined_audio_dict
+        # Download videos if there are any
+        media_id_list = run_yt_dl_multiple(
+            session = session,
+            download_urls = download_urls,
+            extractor_used="audio_handlers.handle_soundcloud_audio()",
+            audio_id = soundcloud_id
+            )
+        logging.debug("Finished downloading soundcloud embeds")
+        return media_id_list
 
 
 def handle_bandcamp_audio(session,post_dict):#WIP
@@ -88,18 +89,19 @@ def handle_bandcamp_audio(session,post_dict):#WIP
     logging.debug("id_row: "+repr(id_row))
     if id_row:
         logging.debug("bandcamp audio with this ID has already been saved, skipping")
-        sha512base64_hash = id_row["sha512base64_hash"]
-        return {bandcamp_link:sha512base64_hash}# URL:Hash
+        media_id = id_row["media_id"]
+        media_id_list = [media_id]
+        return media_id_list
 
     # Download videos if there are any
-    combined_audio_dict = run_yt_dl_multiple(
+    media_id_list = run_yt_dl_multiple(
         session = session,
         download_urls = [bandcamp_link],
         extractor_used="audio_handlers.handle_bandcamp_audio()",
         audio_id = bandcamp_id
         )
     logging.debug("Finished downloading bandcamp embeds")
-    return combined_audio_dict
+    return media_id_list
 
 
 
@@ -108,6 +110,7 @@ def handle_tumblr_audio(session,post_dict):
     see this link for a reference implimentation
     https://github.com/atesh/XKit
     https://github.com/atesh/XKit/blob/master/Extensions/audio_downloader.js"""
+    media_already_saved = None
     assert(post_dict["audio_type"] == u"tumblr")
     logging.debug("handle_tumblr_audio() post_dict: "+repr(post_dict))
     # Generate a link to the audio file
@@ -121,17 +124,15 @@ def handle_tumblr_audio(session,post_dict):
     logging.debug("handle_tumblr_audio() media_url: "+repr(media_url))
 
     # Check the DB to see if media is already saved
-    url_check_row_dict = sql_functions.lookup_media_url(
+    url_check_row_dict = sql_functions.check_if_media_url_in_DB(
         session,
-        table_class=Media,
         media_url=media_url
         )
     if url_check_row_dict:
         media_already_saved = True
-        sha512base64_hash = row_dict["sha512base64_hash"]
-        existing_filename = row_dict["local_filename"]
+        media_id = url_check_row_dict["media_id"]
         logging.debug("handle_tumblr_audio()  URL is already in DB, no need to save file.")
-        return {"tumblr_audio":sha512base64_hash}
+        return [media_id]
 
     # Load the media file
     file_data = get(media_url)
@@ -139,36 +140,44 @@ def handle_tumblr_audio(session,post_dict):
     time_of_retreival = get_current_unix_time()
 
     # Check if file is saved already using file hash
-    sha512base64_hash = hash_file_data(file_data)
-    logging.debug("handle_tumblr_audio() sha512base64_hash: "+repr(sha512base64_hash))
+    sha512base16_hash = hash_file_data(file_data)
+    logging.debug("handle_tumblr_audio() sha512base16_hash: "+repr(sha512base16_hash))
 
     # Check if hash is in DB
-    hash_check_row_dict = sql_functions.lookup_media_hash(
+    hash_check_row_dict = sql_functions.check_if_hash_in_db(
         session,
-        table_class=Media,
-        sha512base64_hash=sha512base64_hash
+        sha512base16_hash=sha512base16_hash
         )
     if hash_check_row_dict:
         media_already_saved = True
-        preexisting_filename = hash_check_row_dict["local_filename"]
+        media_id = hash_check_row_dict["media_id"]
     else:
         logging.debug("handle_tumblr_audio() Hash is already in DB, no need to save file.")
-        return {"tumblr_audio":sha512base64_hash}
     if media_already_saved:
         # Use filename from DB
         local_filename = existing_filename
     else:
         # Generate filename
-        local_filename = generate_filename(ext=".mp3",hash=sha512base64_hash)
+        local_filename = generate_filename(
+            ext=".mp3",
+            sha512base16_hash=sha512base16_hash
+            )
         logging.debug("handle_tumblr_audio() local_filename: "+repr(local_filename))
-        file_path = generate_file_path(root_path=config.root_path,filename=local_filename)
+        file_path = generate_path(
+            root_path=config.root_path,
+            filename=local_filename
+            )
         # Save media to disk
-        save_file(filenamein=file_path,data=file_data,force_save=False)
+        save_file(
+            file_path=file_path,
+            data=file_data,
+            force_save=False
+            )
 
     # Add new row to DB
     new_media_row = Media(
         media_url = media_url,
-        sha512base64_hash = sha512base64_hash,
+        sha512base16_hash = sha512base16_hash,
         local_filename = local_filename,
         date_added = time_of_retreival,
         file_extention = "mp3",
@@ -176,7 +185,12 @@ def handle_tumblr_audio(session,post_dict):
         )
     session.add(new_media_row)
     session.commit()
-    return {"tumblr_audio":sha512base64_hash}
+
+    # Get the id back
+    get_id_row = sql_functions.check_if_hash_in_db(session,sha512base16_hash)
+    media_id = get_id_row["media_id"]
+    media_id_list = [media_id]
+    return media_id_list
 
 
 def handle_audio_posts(session,post_dict):

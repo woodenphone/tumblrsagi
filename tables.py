@@ -163,10 +163,10 @@ class Media(Base):
     __tablename__ = "media"
     # Columns
     # Locally generated
-    primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Only used as a primary key
+    media_id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# associated with posts via association table
     date_added = sqlalchemy.Column(sqlalchemy.BigInteger)# The unix time the media was saved
     media_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# Should have a constant length since it's a hash
-    sha512base64_hash = sqlalchemy.Column(sqlalchemy.dialects.postgresql.CHAR(88))
+    sha512base16_hash = sqlalchemy.Column(sqlalchemy.dialects.postgresql.CHAR(128))
     local_filename = sqlalchemy.Column(sqlalchemy.String(250))# Filename on local storage, file path is deterministically generated from this
     remote_filename = sqlalchemy.Column(sqlalchemy.UnicodeText())# Filename from original location (If any)
     file_extention = sqlalchemy.Column(sqlalchemy.String(25))# ex. png, jpeg
@@ -184,7 +184,7 @@ class media_associations(Base):
     __tablename__ = "media_associations"
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
-    sha512base64_hash = sqlalchemy.Column(sqlalchemy.UnicodeText()) # SHA512 hash encoded into base64
+    media_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("media.media_id")) # Local media ID
 # /Media
 
 

@@ -46,30 +46,24 @@ def process_one_new_posts_media(post_row):
         blog_id = sql_functions.add_blog(session,blog_url)
 
         # Handle links for the post
-        try:
-            processed_post_dict = save_media(session,raw_post_dict)
-        except custom_exceptions.MediaGrabberFailed, err:
-            logging.error("Post media download failed!")
-            logging.exception(err)
-            return False
-        logging.debug("processed_post_dict"": "+repr(processed_post_dict))
+        media_id_list = save_media(session,raw_post_dict)
+        logging.debug("media_id_list"": "+repr(media_id_list))
 
         # Insert row to posts tables
         sql_functions.insert_one_post(
                 session = session,
-                post_dict = processed_post_dict,
+                post_dict = raw_post_dict,
                 blog_id = blog_id,
-                media_hash_dict = processed_post_dict["link_to_hash_dict"]
+                media_id_list = media_id_list
                 )
         session.commit()
 
         # Modify origin row
-        logging.debug("About to update RawPosts")
-        processed_post_json = json.dumps(processed_post_dict)
-        update_statement = update(RawPosts).where(RawPosts.primary_key==post_primary_key).\
-            values(processed_post_json=processed_post_json)
-        update_statement.execute()
-        session.commit()
+##        logging.debug("About to update RawPosts")
+##        update_statement = update(RawPosts).where(RawPosts.primary_key==post_primary_key).\
+##            values(processed_post_json=processed_post_dict)
+##        update_statement.execute()
+##        session.commit()
 
         logging.debug("Finished processing new post media")
         return
