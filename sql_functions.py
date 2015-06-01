@@ -87,7 +87,7 @@ def add_raw_post(session,raw_post_dict,processed_post_dict,info_dict,blog_url,us
     row_to_insert["all_posts_timestamp"] = raw_post_dict["timestamp"]
     # Full post reencoded into JSON
     row_to_insert["raw_post_json"] = raw_post_dict
-    row_to_insert["processed_post_json"] = processed_post_dict
+    row_to_insert["media_processed"] = False
     logging.debug("row_to_insert:"+repr(row_to_insert))
 
     post_row = RawPosts(**row_to_insert)
@@ -214,11 +214,19 @@ def insert_one_post(session,post_dict,blog_id,media_id_list):# WIP
     Return True if successful.
     """
     assert( type(post_dict) is type({}) )
-    #assert(type(blog_id) is type(1))
     assert( type(media_id_list) is type([]) )
-    # Generate a unique ID for the post
-    #post_id = get_current_unix_time()#post_dict["id"]# I don't trust this but it's good enough for testing
-    logging.warning("Fix post_id! Unsafe for primary key")
+
+    # Ensure post is not already in DB
+    pre_insert_check_query = sqlalchemy.select([twkr_posts]).\
+        where(twkr_posts.blog_id == blog_id).\
+        where(twkr_posts.source_id == post_dict["id"]).\
+        where(twkr_posts.timestamp == post_dict["timestamp"])
+    pre_insert_check_rows = session.execute(pre_insert_check_query)
+    pre_insert_check_row = pre_insert_check_rows.fetchone()
+    if pre_insert_check_row:
+        logging.error("This post is already in the DB!")
+        logging.error("pre_insert_check_row:"+repr(pre_insert_check_row))
+        raise ValueError
 
     # Insert into twkr_posts table
     posts_dict = {}

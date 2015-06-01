@@ -58,12 +58,12 @@ def process_one_new_posts_media(post_row):
                 )
         session.commit()
 
-        # Modify origin row
-##        logging.debug("About to update RawPosts")
-##        update_statement = update(RawPosts).where(RawPosts.primary_key==post_primary_key).\
-##            values(processed_post_json=processed_post_dict)
-##        update_statement.execute()
-##        session.commit()
+        # Modify origin row to show media has been processed
+        logging.debug("About to update RawPosts")
+        update_statement = update(RawPosts).where(RawPosts.primary_key == post_primary_key).\
+            values(media_processed = True)
+        update_statement.execute()
+        session.commit()
 
         logging.debug("Finished processing new post media")
         return
@@ -80,8 +80,8 @@ def list_new_posts(session,max_rows):
     # Select new posts
     # New posts don't have a processed JSON
     posts_query = sqlalchemy.select([RawPosts]).\
-        where(RawPosts.processed_post_json == json.dumps("N/A") ).\
-        limit(max_rows)# I expected "== None" to work, but apparently a string of "null" is the thing to do?
+        where(RawPosts.media_processed != True ).\
+        limit(max_rows)
     #logging.debug("posts_query"": "+repr(posts_query))
     post_rows = session.execute(posts_query)
     logging.debug("post_rows"": "+repr(post_rows))

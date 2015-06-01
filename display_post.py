@@ -37,6 +37,8 @@ def display_post(session,source_id=None,post_id=None,output_path="debug\\post.tx
     if not post_row:
         logging.error("No post row found!")
         return
+    if source_id == None:
+        source_id = post_row.source_id
 
     page += "post_row:"+repr(post_row)+"\r\n"
 

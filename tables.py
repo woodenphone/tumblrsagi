@@ -153,8 +153,7 @@ class RawPosts(Base):# Remove underscore after fixing all references
     all_posts_timestamp  = sqlalchemy.Column(sqlalchemy.BigInteger)# The API given timestamp
     # Full post API data
     raw_post_json = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB)# The post's section of the API, reencoded into JSON
-    processed_post_json = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB)# The post's section of the API, reencoded into JSON, after we've fucked with it
-
+    media_processed = sqlalchemy.Column(sqlalchemy.Boolean)# has media been processed for this post?
 
 
 # Media tables
