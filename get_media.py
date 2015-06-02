@@ -67,7 +67,6 @@ def process_one_new_posts_media(post_row):
 
         logging.debug("Finished processing new post media")
         return
-
     except Exception, e:# Log exceptions and pass them on
         logging.critical("Unhandled exception in save_blog()!")
         logging.exception(e)
@@ -105,19 +104,15 @@ def list_new_posts(session,max_rows):
 def process_all_posts_media(session,max_rows=1000):
     # Get primary keys for some new posts
     post_dicts = list_new_posts(session,max_rows)
-
     # Process posts
     logging.debug("Processing posts")
-
     # http://stackoverflow.com/questions/2846653/python-multithreading-for-dummies
     # Make the Pool of workers
     pool = ThreadPool(1)# Set to one for debugging
-
     results = pool.map(process_one_new_posts_media, post_dicts)
     #close the pool and wait for the work to finish
     pool.close()
     pool.join()
-
     logging.debug("Finished processing posts for media")
     return
 

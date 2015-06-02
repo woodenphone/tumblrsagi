@@ -140,7 +140,7 @@ class RawPosts(Base):# Remove underscore after fixing all references
     __tablename__ = "raw_posts"
     # Columns
     # Local stuff
-    primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Is used only as primary key
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger, primary_key=True)# Is used only as primary key
     version = sqlalchemy.Column(sqlalchemy.BigInteger) # The version of this post this row is associated with
     date_saved = sqlalchemy.Column(sqlalchemy.BigInteger)# The unix time the post was saved
     link_to_hash_dict = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB)# mapping of links in the post to hashes of associated media
@@ -162,7 +162,7 @@ class Media(Base):
     __tablename__ = "media"
     # Columns
     # Locally generated
-    media_id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# associated with posts via association table
+    media_id = sqlalchemy.Column(sqlalchemy.BigInteger, primary_key=True)# associated with posts via association table
     date_added = sqlalchemy.Column(sqlalchemy.BigInteger)# The unix time the media was saved
     media_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# Should have a constant length since it's a hash
     sha512base16_hash = sqlalchemy.Column(sqlalchemy.dialects.postgresql.CHAR(128))
@@ -185,7 +185,16 @@ class media_associations(Base):
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
     media_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("media.media_id")) # Local media ID
 # /Media
+# Media Extractors
 
+class handler_api_youtube(Base):
+    """Record which posts have been checked against which versions
+    of the API youtube emebed media handler"""
+    __tablename__ = "handler_api_youtube"
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)
+    blog_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_blogs.blog_id")) #
+    extractor_version = sqlalchemy.Column(sqlalchemy.BigInteger)# Which is the highest version of the extractor that has been used on this post?
+# /Media Extractors
 
 
 # Tables on the server we need to be able to handle

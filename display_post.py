@@ -18,7 +18,7 @@ from tables import *# Table definitions
 
 
 
-def display_post(session,source_id=None,post_id=None,output_path="debug\\post.txt"):
+def display_post(session,source_id=None,post_id=None,output_path=os.path.join("debug","post.txt")):
     """Display a single post"""
     # Get post row
     if source_id:
@@ -109,7 +109,7 @@ def display_post(session,source_id=None,post_id=None,output_path="debug\\post.tx
     return
 
 
-def list_domain_posts(session,blog_domain,output_path="debug\\list_posts.txt"):
+def list_domain_posts(session,blog_domain,output_path=os.path.join("debug","list_posts.txt")):
     """List all posts for a given domain"""
     page = "Posts for blog:"+repr(blog_domain)+"\r\n"
 
@@ -138,7 +138,7 @@ def list_domain_posts(session,blog_domain,output_path="debug\\list_posts.txt"):
     return
 
 
-def list_blogs(session,output_path="debug\\blog_list.txt"):
+def list_blogs(session,output_path=os.path.join("debug","blog_list.txt")):
     """Generate a list of blogs in the DB"""
     page = "Blogs:"+"\r\n"
 
@@ -159,7 +159,7 @@ def list_blogs(session,output_path="debug\\blog_list.txt"):
     return
 
 
-def list_all_media(session,output_path="debug\\media_list.txt"):
+def list_all_media(session,output_path=os.path.join("debug","media_list.txt")):
     """Generate a list of all media in the DB"""
     page = "Media:\r\n"
 
@@ -199,7 +199,7 @@ def build_all_posts(session):
                 session,
                 source_id=None,
                 post_id=post_id,
-                output_path="debug\\"+str(blog_url)+"\\"+str(post_id)+".txt"
+                output_path=os.path.join("debug", str(blog_url), str(post_id)+".txt")
                 )
             continue
         continue
@@ -218,42 +218,42 @@ def main():
 
         build_all_posts(session)
 
-        # Generate lists of what we have
-        list_domain_posts(
-            session,
-            blog_domain = "askbuttonsmom.tumblr.com",
-            output_path="debug\\list_posts.txt"
-            )
-
-        list_blogs(
-            session,
-            output_path="debug\\blog_list.txt"
-            )
-
-        list_all_media(
-            session,
-            output_path="debug\\media_list.txt"
-            )
-
-        # Test generating posts for display
-
-        display_post(
-            session,
-            source_id = 117088487878L,
-            output_path="debug\\post_117088487878L.txt",
-            )
-
-        display_post(
-            session,
-            source_id = 118863575131L,
-            output_path="debug\\post_118863575131L.txt",
-            )
-
-        display_post(
-            session,
-            source_id = 118863575131,
-            output_path="debug\\post_118863575131.txt",
-            )
+##        # Generate lists of what we have
+##        list_domain_posts(
+##            session,
+##            blog_domain = "askbuttonsmom.tumblr.com",
+##            output_path="debug\\list_posts.txt"
+##            )
+##
+##        list_blogs(
+##            session,
+##            output_path="debug\\blog_list.txt"
+##            )
+##
+##        list_all_media(
+##            session,
+##            output_path="debug\\media_list.txt"
+##            )
+##
+##        # Test generating posts for display
+##
+##        display_post(
+##            session,
+##            source_id = 117088487878L,
+##            output_path="debug\\post_117088487878L.txt",
+##            )
+##
+##        display_post(
+##            session,
+##            source_id = 118863575131L,
+##            output_path="debug\\post_118863575131L.txt",
+##            )
+##
+##        display_post(
+##            session,
+##            source_id = 118863575131,
+##            output_path="debug\\post_118863575131.txt",
+##            )
 
 
 
