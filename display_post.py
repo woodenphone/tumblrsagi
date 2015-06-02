@@ -10,6 +10,7 @@
 #-------------------------------------------------------------------------------
 #External
 import sqlalchemy# Database  library
+import os
 # Project-local
 from utils import * # General utility functions
 import sql_functions# Database interaction
