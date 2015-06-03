@@ -62,7 +62,7 @@ def process_one_new_posts_media(post_row):
         logging.debug("About to update RawPosts")
         update_statement = update(RawPosts).where(RawPosts.primary_key == post_primary_key).\
             values(media_processed = True)
-        update_statement.execute()
+        session.execute(update_statement)
         session.commit()
 
         logging.debug("Finished processing new post media")

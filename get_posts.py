@@ -15,6 +15,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 from utils import * # General utility functions
 import sql_functions# Database interaction
 from media_handlers import *# Media finding, extractiong, ect
+from tables import *# Table definitions
 import config # Settings and configuration
 
 
@@ -40,6 +41,9 @@ class tumblr_blog:
 
         # Make sure user is in blogs DB and get blog_id integer
         self.blog_id = sql_functions.add_blog(self.session,self.sanitized_blog_url)
+        # Add info to blogs table
+        if self.blog_exists:
+            self.update_blog_row()
         return
 
     def clean_blog_url(self,raw_blog_url):
@@ -68,7 +72,29 @@ class tumblr_blog:
         self.info_name = info_dict["response"]["blog"]["name"]
         self.info_post_count = info_dict["response"]["blog"]["posts"]
         self.info_blog_username = info_dict["response"]["blog"]["name"]
+        self.info_title = info_dict["response"]["blog"]["title"]
+        self.info_updated = info_dict["response"]["blog"]["updated"]
+        self.info_description = info_dict["response"]["blog"]["description"]
+        self.info_ask = info_dict["response"]["blog"]["ask"]
         logging.debug("self.info_post_count: "+repr(self.info_post_count))
+        return
+
+    def update_blog_row(self):
+        """Update this blog's row in the blogs table"""
+        logging.debug("About to update blog metadata for: "+repr(self.blog_url))
+        update_statement = sqlalchemy.update(twkr_blogs).where(twkr_blogs.blog_id == self.blog_id).\
+            values(
+                blog_username = self.blog_username,
+                title = self.info_title,
+                updated = self.info_updated,
+                postcount = self.info_post_count,
+                name = self.info_name,
+                description = self.info_description,
+                ask = self.info_ask,
+                )
+        self.session.execute(update_statement)
+        self.session.commit()
+        logging.debug("Finsihed updating blog metadata for: "+repr(self.blog_url))
         return
 
     def save_new_posts(self,max_pages=None):
@@ -121,8 +147,7 @@ class tumblr_blog:
                     added_count += 1
                     #logging.debug("Adding post:"+repr(post_id)+" for: "+repr(self.blog_url))
                     self.save_post(post_dict)
-##                else:
-##                    logging.debug("Skipping post:"+repr(post_id)+" for: "+repr(self.blog_url))
+
             logging.info("Added "+repr(added_count)+" posts for "+repr(page_url))
 
             # Exit conditions
@@ -136,7 +161,6 @@ class tumblr_blog:
                 break
             # Update duplicate check list
             prev_page_posts_list = this_page_posts_list
-
 
             # Stop loading posts if the last post on this page is older than the newest on in the DB
             if this_page_posts_list[-1]["timestamp"] <= timestamp_of_last_post_in_db:
@@ -158,11 +182,8 @@ class tumblr_blog:
             username = self.sanitized_username,
             version = 0
             )
+        return
 
-    def update_blog_record(self):# TODO
-        """Add or update this blog's record in the blog metadata table"""
-        logging.warning("update_blog_record() not implimented!")
-        pass
 
 
 def save_blog(blog_url):
