@@ -394,9 +394,11 @@ def _generate_media_file_path_timestamp(root_path,filename):
 def generate_filename(ext,sha512base16_hash=None):# WIP
     """Abstraction for generating filenames, this is so only one function needs to care about it
     Take the file extention and maybe some other info and return a filename"""
-    # Timestamp filename
-    timestamp = str(get_current_unix_time())
-    filename = timestamp+"."+ext
+##    # Timestamp filename
+##    timestamp = str(get_current_unix_time())
+##    filename = timestamp+"."+ext
+    # Base16 hash filename
+    filename = sha512base16_hash+"."+ext
     return filename
 
 
