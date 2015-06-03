@@ -131,7 +131,7 @@ def handle_tumblr_audio(session,post_dict):
     if url_check_row_dict:
         media_already_saved = True
         media_id = url_check_row_dict["media_id"]
-        logging.debug("handle_tumblr_audio()  URL is already in DB, no need to save file.")
+        logging.debug("audio_handlers.handle_tumblr_audio()  URL is already in DB, no need to save file.")
         return [media_id]
 
     # Load the media file
@@ -159,7 +159,7 @@ def handle_tumblr_audio(session,post_dict):
     else:
         # Generate filename
         local_filename = generate_filename(
-            ext=".mp3",
+            ext="mp3",
             sha512base16_hash=sha512base16_hash
             )
         logging.debug("handle_tumblr_audio() local_filename: "+repr(local_filename))
