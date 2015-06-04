@@ -208,7 +208,7 @@ def insert_post_media_associations(session,post_id,media_id_list):
     return
 
 
-def insert_one_post(session,post_dict,blog_id,media_id_list):# WIP
+def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=True):# WIP
     """Insert a single post into Twkr's new postgres tables
     Only commit if all tables are set
     Return True if successful.
@@ -216,17 +216,20 @@ def insert_one_post(session,post_dict,blog_id,media_id_list):# WIP
     assert( type(post_dict) is type({}) )
     assert( type(media_id_list) is type([]) )
 
-    # Ensure post is not already in DB
-    pre_insert_check_query = sqlalchemy.select([twkr_posts]).\
-        where(twkr_posts.blog_id == blog_id).\
-        where(twkr_posts.source_id == post_dict["id"]).\
-        where(twkr_posts.timestamp == post_dict["timestamp"])
-    pre_insert_check_rows = session.execute(pre_insert_check_query)
-    pre_insert_check_row = pre_insert_check_rows.fetchone()
-    if pre_insert_check_row:
-        logging.error("This post is already in the DB!")
-        logging.error("pre_insert_check_row:"+repr(pre_insert_check_row))
-        raise ValueError
+    if prevent_duplicates:
+        # Ensure post is not already in DB
+        pre_insert_check_query = sqlalchemy.select([twkr_posts]).\
+            where(twkr_posts.blog_id == blog_id).\
+            where(twkr_posts.source_id == post_dict["id"]).\
+            where(twkr_posts.timestamp == post_dict["timestamp"])
+        pre_insert_check_rows = session.execute(pre_insert_check_query)
+        pre_insert_check_row = pre_insert_check_rows.fetchone()
+        if pre_insert_check_row:
+            logging.error("This post is already in the DB!")
+            logging.error("pre_insert_check_row:"+repr(pre_insert_check_row))
+            raise ValueError
+    else:
+        logging.warning("insert_one_post() duplicate check disabled!")
 
     # Insert into twkr_posts table
     posts_dict = {}
@@ -254,12 +257,14 @@ def insert_one_post(session,post_dict,blog_id,media_id_list):# WIP
     # If photo, insert into posts_photo table
     if (post_dict["type"] == "photo"):
         logging.debug("posts_photo")
-        # store photoset comment
-        twkr_post_photo_text_row = twkr_post_photo_text(
-            post_id = post_id,
-            content_raw = post_dict["trail"]["content_raw"],
-            )
-        session.add(twkr_post_photo_text_row)
+        # store comment for whole photoset
+        if len(post_dict["trail"]) > 0:
+            assert( len(post_dict["trail"]) == 1 )# I am worried that it might be possible for this to have more than one element, and that would be bad
+            twkr_post_photo_text_row = twkr_post_photo_text(
+                post_id = post_id,
+                content_raw = post_dict["trail"][0]["content_raw"],
+                )
+            session.add(twkr_post_photo_text_row)
 
         # Add each photo to a row in the photos table
         photos = post_dict["photos"]
@@ -385,7 +390,7 @@ def debug():
 
     dummy_blog_id = add_blog(session,blog_url="staff.tumblr.com")
     logging.debug("dummy_blog_id: "+repr(dummy_blog_id))
-    return
+    #return
 
     # Try each type of post to see what happens
 ##        u"text":1,
@@ -402,7 +407,8 @@ def debug():
         session = session,
         post_dict = text_post_dict,
         blog_id = dummy_blog_id,
-        media_hash_list = ["dummy_text_sha512base64_hash"]
+        media_id_list = [],
+        prevent_duplicates = False
         )
 
     # u"photo":2,
@@ -411,7 +417,8 @@ def debug():
         session = session,
         post_dict = photo_post_dict,
         blog_id = dummy_blog_id,
-        media_hash_list = ["dummy_photo_sha512base64_hash"]
+        media_id_list = [],
+        prevent_duplicates = False
         )
 
     # u"quote":3,
@@ -420,7 +427,8 @@ def debug():
         session = session,
         post_dict = quote_post_dict,
         blog_id = dummy_blog_id,
-        media_hash_list = ["dummy_quote_sha512base64_hash"]
+        media_id_list = [],
+        prevent_duplicates = False
         )
 
     # u"link":4,
@@ -429,7 +437,8 @@ def debug():
         session = session,
         post_dict = link_post_dict,
         blog_id = dummy_blog_id,
-        media_hash_list = ["dummy_link_sha512base64_hash"]
+        media_id_list = [],
+        prevent_duplicates = False
         )
 
     # u"chat":5,
@@ -438,7 +447,8 @@ def debug():
         session = session,
         post_dict = chat_post_dict,
         blog_id = dummy_blog_id,
-        media_hash_list = []
+        media_id_list = [],
+        prevent_duplicates = False
         )
 
     # audio 6
@@ -447,7 +457,8 @@ def debug():
         session = session,
         post_dict = bandcamp_post_dict,
         blog_id = dummy_blog_id,
-        media_hash_list = []
+        media_id_list = [],
+        prevent_duplicates = False
         )
 
     # video 7
@@ -456,7 +467,8 @@ def debug():
         session = session,
         post_dict = video_post_dict,
         blog_id = dummy_blog_id,
-        media_hash_list = []
+        media_id_list = [],
+        prevent_duplicates = False
         )
 
     # answer 8
@@ -465,7 +477,18 @@ def debug():
         session = session,
         post_dict = answer_post_dict,
         blog_id = dummy_blog_id,
-        media_hash_list = []
+        media_id_list = [],
+        prevent_duplicates = False
+        )
+
+    #
+    photoset_comment_post_dict = {u'reblog_key': u'BNYQKHhT', u'reblog': {u'comment': u'<h2><b>Tumblr Tuesday: Extremely Literal Blogs</b></h2><p><b>Sad Dinosaur Facts </b>(<a href="http://tmblr.co/m5wPOikY2afr5YDl8AhWKBg">saddinosaurfacts</a>)<br>This is a blog about sad dinosaur facts.</p><p><b>Google Sheep View </b>(<a href="http://tmblr.co/mjA7Kkgp6i0a80pSi9wlsYw">googlesheepview</a>)<br>This is blog about sheep on Google Street View.</p><p><b>Serious Baby </b>(<a href="http://tmblr.co/mXCujD9Cncw9b600nnOE06w">seriousbaby</a>)<br>This is one serious baby.</p><p><b>A Study in Bee Movie</b> (<a href="http://tmblr.co/mb1nalG3ZmAq6qK7s7CT3Yw">astudyinbeemovie</a>)<br>This is a study in Bee Movie.</p><p><b>Epic Conducting Photos </b>(<a href="http://tmblr.co/mwrJHhEsRZ0xfyhswAJ7PsQ">epicconductingphotos</a>)<br>These are some epic conducting photos.</p><p><i>Bernstein bouncing via <a href="http://tmblr.co/mwrJHhEsRZ0xfyhswAJ7PsQ">epicconductingphotos</a>&nbsp;</i></p>', u'tree_html': u''}, u'id': 120560915667L, u'post_url': u'http://staff.tumblr.com/post/120560915667/tumblr-tuesday-extremely-literal-blogs-sad', u'source_title': u'epicconductingphotos', u'image_permalink': u'http://staff.tumblr.com/image/120560915667', u'tags': [u'Tumblr Tuesday'], u'highlighted': [], u'state': u'published', u'short_url': u'http://tmblr.co/ZE5Fby1mH-PJJ', u'type': u'photo', u'format': u'html', u'timestamp': 1433284209, u'note_count': 3080, u'source_url': u'http://epicconductingphotos.tumblr.com/post/103856485613/lenny-in-da-club-like', u'trail': [{u'content': u'<h2><b>Tumblr Tuesday: Extremely Literal Blogs</b></h2><p><b>Sad Dinosaur Facts </b>(<a href="http://tmblr.co/m5wPOikY2afr5YDl8AhWKBg">saddinosaurfacts</a>)<br>This is a blog about sad dinosaur facts.</p><p><b>Google Sheep View </b>(<a href="http://tmblr.co/mjA7Kkgp6i0a80pSi9wlsYw">googlesheepview</a>)<br>This is blog about sheep on Google Street View.</p><p><b>Serious Baby </b>(<a href="http://tmblr.co/mXCujD9Cncw9b600nnOE06w">seriousbaby</a>)<br>This is one serious baby.</p><p><b>A Study in Bee Movie</b> (<a href="http://tmblr.co/mb1nalG3ZmAq6qK7s7CT3Yw">astudyinbeemovie</a>)<br>This is a study in Bee Movie.</p><p><b>Epic Conducting Photos </b>(<a href="http://tmblr.co/mwrJHhEsRZ0xfyhswAJ7PsQ">epicconductingphotos</a>)<br>These are some epic conducting photos.</p><p><i>Bernstein bouncing via <a href="http://tmblr.co/mwrJHhEsRZ0xfyhswAJ7PsQ">epicconductingphotos</a>\xa0</i></p>', u'content_raw': u'<h2><b>Tumblr Tuesday: Extremely Literal Blogs</b></h2><p><b>Sad Dinosaur Facts </b>(<a href="http://tmblr.co/m5wPOikY2afr5YDl8AhWKBg">saddinosaurfacts</a>)<br>This is a blog about sad dinosaur facts.</p><p><b>Google Sheep View </b>(<a href="http://tmblr.co/mjA7Kkgp6i0a80pSi9wlsYw">googlesheepview</a>)<br>This is blog about sheep on Google Street View.</p><p><b>Serious Baby </b>(<a href="http://tmblr.co/mXCujD9Cncw9b600nnOE06w">seriousbaby</a>)<br>This is one serious baby.</p><p><b>A Study in Bee Movie</b> (<a href="http://tmblr.co/mb1nalG3ZmAq6qK7s7CT3Yw">astudyinbeemovie</a>)<br>This is a study in Bee Movie.</p><p><b>Epic Conducting Photos </b>(<a href="http://tmblr.co/mwrJHhEsRZ0xfyhswAJ7PsQ">epicconductingphotos</a>)<br>These are some epic conducting photos.</p><p><i>Bernstein bouncing via <a href="http://tmblr.co/mwrJHhEsRZ0xfyhswAJ7PsQ">epicconductingphotos</a>&nbsp;</i></p>', u'is_current_item': True, u'blog': {u'theme': {u'title_font_weight': u'bold', u'title_color': u'#FFFFFF', u'header_bounds': 0, u'title_font': u'Gibson', u'link_color': u'#56BC8A', u'header_image_focused': u'http://static.tumblr.com/10e607f9b9b4c588d1cbd6c9f8b564d9/3hpyv0p/nFBnlgttl/tumblr_static_1sssiwavcjs0gs4cggwsok040_2048_v2.gif', u'show_description': True, u'show_header_image': True, u'header_stretch': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_image_scaled': u'http://static.tumblr.com/10e607f9b9b4c588d1cbd6c9f8b564d9/3hpyv0p/nFBnlgttl/tumblr_static_1sssiwavcjs0gs4cggwsok040_2048_v2.gif', u'avatar_shape': u'square', u'show_avatar': False, u'background_color': u'#37475c', u'header_image': u'http://static.tumblr.com/10e607f9b9b4c588d1cbd6c9f8b564d9/3hpyv0p/nFBnlgttl/tumblr_static_1sssiwavcjs0gs4cggwsok040.gif'}, u'name': u'staff'}, u'is_root_item': True, u'post': {u'id': u'120560915667'}}], u'date': u'2015-06-02 22:30:09 GMT', u'slug': u'tumblr-tuesday-extremely-literal-blogs-sad', u'blog_name': u'staff', u'photos': [{u'caption': u'', u'original_size': {u'url': u'http://31.media.tumblr.com/cea4b6bccb27671c4947de7ca10db3b5/tumblr_npc6l1VqRY1qz8q0ho2_r1_400.gif', u'width': 320, u'height': 240}, u'alt_sizes': [{u'url': u'http://31.media.tumblr.com/cea4b6bccb27671c4947de7ca10db3b5/tumblr_npc6l1VqRY1qz8q0ho2_r1_400.gif', u'width': 320, u'height': 240}, {u'url': u'http://38.media.tumblr.com/cea4b6bccb27671c4947de7ca10db3b5/tumblr_npc6l1VqRY1qz8q0ho2_r1_250.gif', u'width': 250, u'height': 188}, {u'url': u'http://31.media.tumblr.com/cea4b6bccb27671c4947de7ca10db3b5/tumblr_npc6l1VqRY1qz8q0ho2_r1_100.gif', u'width': 100, u'height': 75}, {u'url': u'http://38.media.tumblr.com/cea4b6bccb27671c4947de7ca10db3b5/tumblr_npc6l1VqRY1qz8q0ho2_r1_75sq.gif', u'width': 75, u'height': 75}]}], u'link_url': u'http://epicconductingphotos.tumblr.com/post/103856485613/lenny-in-da-club-like', u'caption': u'<h2><b>Tumblr Tuesday: Extremely Literal Blogs</b></h2><p><b>Sad Dinosaur Facts </b>(<a href="http://tmblr.co/m5wPOikY2afr5YDl8AhWKBg">saddinosaurfacts</a>)<br/>This is a blog about sad dinosaur facts.</p><p><b>Google Sheep View </b>(<a href="http://tmblr.co/mjA7Kkgp6i0a80pSi9wlsYw">googlesheepview</a>)<br/>This is blog about sheep on Google Street View.</p><p><b>Serious Baby </b>(<a href="http://tmblr.co/mXCujD9Cncw9b600nnOE06w">seriousbaby</a>)<br/>This is one serious baby.</p><p><b>A Study in Bee Movie</b> (<a href="http://tmblr.co/mb1nalG3ZmAq6qK7s7CT3Yw">astudyinbeemovie</a>)<br/>This is a study in Bee Movie.</p><p><b>Epic Conducting Photos </b>(<a href="http://tmblr.co/mwrJHhEsRZ0xfyhswAJ7PsQ">epicconductingphotos</a>)<br/>These are some epic conducting photos.</p><p><i>Bernstein bouncing via <a href="http://tmblr.co/mwrJHhEsRZ0xfyhswAJ7PsQ">epicconductingphotos</a>\xa0</i></p>'}
+    insert_one_post(
+        session = session,
+        post_dict = photoset_comment_post_dict,
+        blog_id = dummy_blog_id,
+        media_id_list = [],
+        prevent_duplicates = False
         )
     return
 
