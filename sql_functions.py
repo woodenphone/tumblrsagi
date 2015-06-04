@@ -254,6 +254,13 @@ def insert_one_post(session,post_dict,blog_id,media_id_list):# WIP
     # If photo, insert into posts_photo table
     if (post_dict["type"] == "photo"):
         logging.debug("posts_photo")
+        # store photoset comment
+        twkr_post_photo_text_row = twkr_post_photo_text(
+            post_id = post_id,
+            content_raw = post_dict["trail"]["content_raw"],
+            )
+        session.add(twkr_post_photo_text_row)
+
         # Add each photo to a row in the photos table
         photos = post_dict["photos"]
         photo_num = 0
@@ -342,6 +349,8 @@ def insert_one_post(session,post_dict,blog_id,media_id_list):# WIP
     session.commit()
     return True
 # /Posts
+
+
 
 # Blogs table
 def add_blog(session,blog_url):

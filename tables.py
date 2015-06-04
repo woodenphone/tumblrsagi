@@ -128,6 +128,18 @@ class twkr_posts_chat(Base):
     dialogue_html = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     dialogue_json = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB(none_as_null=False))#
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
+
+
+
+class twkr_post_photo_text(Base):
+    """Class Info, functionality, purpose"""
+    __tablename__ = "twkr_post_photo_text"
+    # Columns
+    # Local stuff
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #Local post id
+    content_raw = sqlalchemy.Column(sqlalchemy.UnicodeText())# ["response"]["posts"]["trail"]["content_raw']
+
 # /Twkr's new tables
 
 
