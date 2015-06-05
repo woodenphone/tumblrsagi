@@ -96,15 +96,15 @@ def save_file(file_path,data,force_save=False,allow_fail=False):
             return
         except IOError, err:
             logging.exception(err)
-            logging.error(repr(locals()))
-            time.sleep(0.1)
+            logging.error(repr(file_path))
+            time.sleep(1)
             continue
     logging.warning("save_file() Too many failed write attempts! "+repr(file_path))
     if allow_fail:
         return
     else:
         logging.critical("save_file() Passing on exception")
-        logging.critical(repr(locals()))
+        logging.critical(repr(file_path))
         raise
 
 

@@ -170,6 +170,7 @@ def reverse_map_post_type(type_id):
 def insert_post_media_associations(session,post_id,media_id_list):
     logging.debug("insert_post_media_associations() media_id_list:"+repr(media_id_list))
 
+    media_url_id_pairs = {}# {url: media_id}
     # Find associations already in the db for this post and skip them
     new_media_ids = []
     for media_id in media_id_list:
@@ -181,6 +182,7 @@ def insert_post_media_associations(session,post_id,media_id_list):
         select_id_row = select_id_rows.fetchone()
         if select_id_row:
             logging.debug("Skipping duplicate association: "+str(select_id_row))
+            media_url_id_pairs[select_id_row["media_url"]] = media_id
         else:
             new_media_ids += [media_id]
         continue
@@ -205,7 +207,11 @@ def insert_post_media_associations(session,post_id,media_id_list):
             )
         session.add(media_association_row)
         session.commit()
-    return
+        media_url_id_pairs[verify_id_row["media_url"]] = new_media_id
+        continue
+
+    logging.debug("insert_post_media_associations() media_url_id_pairs:"+repr(media_url_id_pairs))
+    return media_url_id_pairs
 
 
 def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=True):# WIP
@@ -215,6 +221,8 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
     """
     assert( type(post_dict) is type({}) )
     assert( type(media_id_list) is type([]) )
+
+    logging.debug("insert_one_post() post_dict:"+repr(post_dict))
 
     if prevent_duplicates:
         # Ensure post is not already in DB
@@ -227,7 +235,8 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
         if pre_insert_check_row:
             logging.error("This post is already in the DB!")
             logging.error("pre_insert_check_row:"+repr(pre_insert_check_row))
-            raise ValueError
+            assert(False)# This should not happen
+            raise ValueError # This should not happen
     else:
         logging.warning("insert_one_post() duplicate check disabled!")
 
@@ -252,19 +261,27 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
 
     # Add entries to the post-media association table
     logging.debug("adding media associations")
-    insert_post_media_associations(session,post_id,media_id_list)
+    media_url_id_pairs = insert_post_media_associations(session,post_id,media_id_list)
 
+
+    # Store reblog trail
+    trail_depth = 0
+    for trail_entry in post_dict["trail"]:
+        trail_depth += 1
+        logging.debug("Adding reblog trail; depth: "+repr(trail_depth))
+        twkr_post_reblog_trail_row = twkr_post_reblog_trail(
+            post_id = post_id,
+            depth = trail_depth,
+            content = trail_entry["content"],
+            )
+        session.add(twkr_post_reblog_trail_row)
+        continue
+
+    # Deal with posttype-specific stuff
     # If photo, insert into posts_photo table
     if (post_dict["type"] == "photo"):
         logging.debug("posts_photo")
-        # store comment for whole photoset
-        if len(post_dict["trail"]) > 0:
-            assert( len(post_dict["trail"]) == 1 )# I am worried that it might be possible for this to have more than one element, and that would be bad
-            twkr_post_photo_text_row = twkr_post_photo_text(
-                post_id = post_id,
-                content_raw = post_dict["trail"][0]["content_raw"],
-                )
-            session.add(twkr_post_photo_text_row)
+
 
         # Add each photo to a row in the photos table
         photos = post_dict["photos"]
@@ -277,7 +294,7 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
             posts_photo_dict["caption"] = photo["caption"]
             posts_photo_dict["url"] = photo_url
             posts_photo_dict["order"] = photo_num
-            posts_photo_dict["sha512b64"] = "FIXME"#post_dict["links"][photo_url]
+            posts_photo_dict["media_id"] = media_url_id_pairs[photo_url]
             posts_photo_dict["post_id"] = post_id
 
             posts_photo_row = twkr_posts_photo(**posts_photo_dict)

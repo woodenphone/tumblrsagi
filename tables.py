@@ -61,8 +61,8 @@ class twkr_posts_photo(Base):
     caption = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     order = sqlalchemy.Column(sqlalchemy.BigInteger()) #
-    sha512b64 = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
+    media_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("media.media_id")) # Local media ID
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
 
 
 
@@ -131,14 +131,14 @@ class twkr_posts_chat(Base):
 
 
 
-class twkr_post_photo_text(Base):
+class twkr_post_reblog_trail(Base):# Blame ATC
     """Class Info, functionality, purpose"""
-    __tablename__ = "twkr_post_photo_text"
+    __tablename__ = "twkr_post_reblog_trail"
     # Columns
-    # Local stuff
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #Local post id
-    content_raw = sqlalchemy.Column(sqlalchemy.UnicodeText())# ["response"]["posts"]["trail"]["content_raw']
+    depth = sqlalchemy.Column(sqlalchemy.BigInteger())# Starting at 1 for the first reply, how deep is this?
+    content = sqlalchemy.Column(sqlalchemy.UnicodeText())# ["response"]["posts"]["trail"][depth-1]["content']
 
 # /Twkr's new tables
 
