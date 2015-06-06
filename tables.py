@@ -199,7 +199,7 @@ class media_associations(Base):
 # /Media
 # Media Extractors
 
-class handler_api_youtube(Base):
+class handler_api_youtube(Base):#not yet used
     """Record which posts have been checked against which versions
     of the API youtube emebed media handler"""
     __tablename__ = "handler_api_youtube"
