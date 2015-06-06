@@ -223,157 +223,163 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
     assert( type(media_id_list) is type([]) )
 
     logging.debug("insert_one_post() post_dict:"+repr(post_dict))
+    try:
+        if prevent_duplicates:
+            # Ensure post is not already in DB
+            pre_insert_check_query = sqlalchemy.select([twkr_posts]).\
+                where(twkr_posts.blog_id == blog_id).\
+                where(twkr_posts.source_id == post_dict["id"]).\
+                where(twkr_posts.timestamp == post_dict["timestamp"])
+            pre_insert_check_rows = session.execute(pre_insert_check_query)
+            pre_insert_check_row = pre_insert_check_rows.fetchone()
+            if pre_insert_check_row:
+                logging.error("This post is already in the DB!")
+                logging.error("pre_insert_check_row:"+repr(pre_insert_check_row))
+                assert(False)# This should not happen
+                raise ValueError # This should not happen
+        else:
+            logging.warning("insert_one_post() duplicate check disabled!")
 
-    if prevent_duplicates:
-        # Ensure post is not already in DB
-        pre_insert_check_query = sqlalchemy.select([twkr_posts]).\
-            where(twkr_posts.blog_id == blog_id).\
-            where(twkr_posts.source_id == post_dict["id"]).\
-            where(twkr_posts.timestamp == post_dict["timestamp"])
-        pre_insert_check_rows = session.execute(pre_insert_check_query)
-        pre_insert_check_row = pre_insert_check_rows.fetchone()
-        if pre_insert_check_row:
-            logging.error("This post is already in the DB!")
-            logging.error("pre_insert_check_row:"+repr(pre_insert_check_row))
-            assert(False)# This should not happen
-            raise ValueError # This should not happen
-    else:
-        logging.warning("insert_one_post() duplicate check disabled!")
+        # Insert into twkr_posts table
+        posts_row_dict = {}
+        #posts_dict["field"] = "value" # Example of setting a field
+        posts_row_dict["date_saved"] = get_current_unix_time() # Unix time to millisecond precision
+        posts_row_dict["blog_id"] = blog_id # local ID number of the blog
+        posts_row_dict["source_id"] = post_dict["id"] # ID number tumblr gave us for the post
+        posts_row_dict["post_type"] = map_post_type(post_dict["type"]) #
+        posts_row_dict["source_url"] = post_dict["post_url"] # using value the API gave us
+        posts_row_dict["timestamp"] = post_dict["timestamp"] # using value the API gave us
 
-    # Insert into twkr_posts table
-    posts_row_dict = {}
-    #posts_dict["field"] = "value" # Example of setting a field
-    #posts_dict["post_id"] = post_id
-    posts_row_dict["date_saved"] = get_current_unix_time() # Unix time to millisecond precision
-    posts_row_dict["blog_id"] = blog_id # local ID number of the blog
-    posts_row_dict["source_id"] = post_dict["id"] # ID number tumblr gave us for the post
-    posts_row_dict["post_type"] = map_post_type(post_dict["type"]) #
-    posts_row_dict["source_url"] = post_dict["post_url"] # using value the API gave us
-    posts_row_dict["timestamp"] = post_dict["timestamp"] # using value the API gave us
+        posts_row = twkr_posts(**posts_row_dict)
+        session.add(posts_row)
 
-    posts_row = twkr_posts(**posts_row_dict)
-    session.add(posts_row)
+        # Flush to let us get the local post_id
+        logging.debug("Flushing")
+        session.flush()
 
-    logging.debug("committing post row")
-    session.commit()# We have to commit this first for some reason?
-    post_id = posts_row.post_id
-    print post_id
+        #logging.debug("committing post row")
+        #session.commit()# We have to commit this first for some reason?
+        post_id = posts_row.post_id
+        print post_id
 
-    # Add entries to the post-media association table
-    logging.debug("adding media associations")
-    media_url_id_pairs = insert_post_media_associations(session,post_id,media_id_list)
+        # Add entries to the post-media association table
+        logging.debug("adding media associations")
+        media_url_id_pairs = insert_post_media_associations(session,post_id,media_id_list)
 
-    # Store reblog trail
-    if "trail" in post_dict.keys():
-        logging.debug("Saving trail for post")
-        trail_depth = 0
-        for trail_entry in post_dict["trail"]:
-            trail_depth += 1
-            logging.debug("Adding reblog trail; depth: "+repr(trail_depth))
-            assert("content" in trail_entry.keys())# we're trying to insert it so it better be there
-            twkr_post_reblog_trail_row = twkr_post_reblog_trail(
-                post_id = post_id,
-                depth = trail_depth,
-                content = trail_entry["content"],
-                )
-            session.add(twkr_post_reblog_trail_row)
-            continue
+        # Store reblog trail
+        if "trail" in post_dict.keys():
+            logging.debug("Saving trail for post")
+            trail_depth = 0
+            for trail_entry in post_dict["trail"]:
+                trail_depth += 1
+                logging.debug("Adding reblog trail; depth: "+repr(trail_depth))
+                assert("content" in trail_entry.keys())# we're trying to insert it so it better be there
+                twkr_post_reblog_trail_row = twkr_post_reblog_trail(
+                    post_id = post_id,
+                    depth = trail_depth,
+                    content = trail_entry["content"],
+                    )
+                session.add(twkr_post_reblog_trail_row)
+                continue
 
-    # Deal with posttype-specific stuff
-    # If photo, insert into posts_photo table
-    if (post_dict["type"] == "photo"):
-        logging.debug("posts_photo")
+        # Deal with posttype-specific stuff
+        # If photo, insert into posts_photo table
+        if (post_dict["type"] == "photo"):
+            logging.debug("posts_photo")
 
-        # Add each photo to a row in the photos table
-        photos = post_dict["photos"]
-        photo_num = 0
-        for photo in photos:
-            photo_num += 1
-            photo_url = photo["original_size"]["url"]
-            posts_photo_dict = {}
+            # Add each photo to a row in the photos table
+            photos = post_dict["photos"]
+            photo_num = 0
+            for photo in photos:
+                photo_num += 1
+                photo_url = photo["original_size"]["url"]
+                posts_photo_dict = {}
 
-            posts_photo_dict["caption"] = photo["caption"]
-            posts_photo_dict["url"] = photo_url
-            posts_photo_dict["order"] = photo_num
-            posts_photo_dict["media_id"] = media_url_id_pairs[photo_url]
-            posts_photo_dict["post_id"] = post_id
+                posts_photo_dict["caption"] = photo["caption"]
+                posts_photo_dict["url"] = photo_url
+                posts_photo_dict["order"] = photo_num
+                posts_photo_dict["media_id"] = media_url_id_pairs[photo_url]
+                posts_photo_dict["post_id"] = post_id
 
-            posts_photo_row = twkr_posts_photo(**posts_photo_dict)
-            session.add(posts_photo_row)
-            #session.commit()
+                posts_photo_row = twkr_posts_photo(**posts_photo_dict)
+                session.add(posts_photo_row)
+                #session.commit()
 
-    # If link, insert into posts_link table
-    if (post_dict["type"] == "link"):
-        logging.debug("posts_link")
-        posts_link_dict = {}
+        # If link, insert into posts_link table
+        if (post_dict["type"] == "link"):
+            logging.debug("posts_link")
+            posts_link_dict = {}
 
-        posts_link_dict["source_url"] = post_dict["url"]
-        posts_link_dict["source_title"] = post_dict["title"]
-        posts_link_dict["description"] = post_dict["description"]
-        posts_link_dict["post_id"] = post_id
+            posts_link_dict["source_url"] = post_dict["url"]
+            posts_link_dict["source_title"] = post_dict["title"]
+            posts_link_dict["description"] = post_dict["description"]
+            posts_link_dict["post_id"] = post_id
 
-        posts_link_row = twkr_posts_link(**posts_link_dict)
-        session.add(posts_link_row)
+            posts_link_row = twkr_posts_link(**posts_link_dict)
+            session.add(posts_link_row)
 
-    # If answer, insert into posts_answer table
-    if (post_dict["type"] == "answer"):
-        logging.debug("posts_answer")
-        posts_answer_dict = {}
+        # If answer, insert into posts_answer table
+        if (post_dict["type"] == "answer"):
+            logging.debug("posts_answer")
+            posts_answer_dict = {}
 
-        posts_answer_dict["asking_name"] = post_dict["asking_name"]
-        posts_answer_dict["asking_url"] = post_dict["asking_url"]
-        posts_answer_dict["question"] = post_dict["question"]
-        posts_answer_dict["answer"] = post_dict["answer"]
-        posts_answer_dict["post_id"] = post_id
+            posts_answer_dict["asking_name"] = post_dict["asking_name"]
+            posts_answer_dict["asking_url"] = post_dict["asking_url"]
+            posts_answer_dict["question"] = post_dict["question"]
+            posts_answer_dict["answer"] = post_dict["answer"]
+            posts_answer_dict["post_id"] = post_id
 
-        posts_answer_row = twkr_posts_answer(**posts_answer_dict)
-        session.add(posts_answer_row)
+            posts_answer_row = twkr_posts_answer(**posts_answer_dict)
+            session.add(posts_answer_row)
 
-    # If text, insert into posts_text table
-    if (post_dict["type"] == "text"):
-        logging.debug("posts_text")
-        posts_text_dict = {}
+        # If text, insert into posts_text table
+        if (post_dict["type"] == "text"):
+            logging.debug("posts_text")
+            posts_text_dict = {}
 
-        posts_text_dict["title"] = post_dict["title"]
-        posts_text_dict["body"] = post_dict["body"]
-        posts_text_dict["post_id"] = post_id
+            posts_text_dict["title"] = post_dict["title"]
+            posts_text_dict["body"] = post_dict["body"]
+            posts_text_dict["post_id"] = post_id
 
-        posts_text_row = twkr_posts_text(**posts_text_dict)
-        session.add(posts_text_row)
+            posts_text_row = twkr_posts_text(**posts_text_dict)
+            session.add(posts_text_row)
 
-    # If quote, insert into posts_quote table
-    if (post_dict["type"] == "quote"):
-        logging.debug("posts_quote")
-        posts_quote_dict = {}
+        # If quote, insert into posts_quote table
+        if (post_dict["type"] == "quote"):
+            logging.debug("posts_quote")
+            posts_quote_dict = {}
 
-        if "source_url" in post_dict.keys():
-            posts_quote_dict["source_url"] = post_dict["source_url"]
-        if "source_title" in post_dict.keys():
-            posts_quote_dict["source_title"] = post_dict["source_title"]
-        posts_quote_dict["source"] = post_dict["source"]
-        posts_quote_dict["text"] = post_dict["text"]
-        posts_quote_dict["post_id"] = post_id
+            if "source_url" in post_dict.keys():
+                posts_quote_dict["source_url"] = post_dict["source_url"]
+            if "source_title" in post_dict.keys():
+                posts_quote_dict["source_title"] = post_dict["source_title"]
+            posts_quote_dict["source"] = post_dict["source"]
+            posts_quote_dict["text"] = post_dict["text"]
+            posts_quote_dict["post_id"] = post_id
 
-        posts_quote_row = twkr_posts_quote(**posts_quote_dict)
-        session.add(posts_quote_row)
+            posts_quote_row = twkr_posts_quote(**posts_quote_dict)
+            session.add(posts_quote_row)
 
-    # If chat, insert into posts_chat table
-    if (post_dict["type"] == "chat"):
-        logging.debug("posts_chat")
-        posts_chat_dict = {}
+        # If chat, insert into posts_chat table
+        if (post_dict["type"] == "chat"):
+            logging.debug("posts_chat")
+            posts_chat_dict = {}
 
-        posts_chat_dict["title"] = post_dict["title"]
-        posts_chat_dict["body"] = post_dict["body"]
-        posts_chat_dict["dialogue_html"] = None
-        posts_chat_dict["dialogue_json"] = json.dumps(post_dict["dialogue"])
-        posts_chat_dict["post_id"] = post_id
+            posts_chat_dict["title"] = post_dict["title"]
+            posts_chat_dict["body"] = post_dict["body"]
+            posts_chat_dict["dialogue_html"] = None
+            posts_chat_dict["dialogue_json"] = json.dumps(post_dict["dialogue"])
+            posts_chat_dict["post_id"] = post_id
 
-        posts_chat_row = twkr_posts_chat(**posts_chat_dict)
-        session.add(posts_chat_row)
+            posts_chat_row = twkr_posts_chat(**posts_chat_dict)
+            session.add(posts_chat_row)
 
-    # Commit once ALL rows for this post are input
-    session.commit()
-    return True
+        # Commit once ALL rows for this post are input
+        session.commit()
+        return True
+    except:# Rollback if something is fucked up
+        session.rollback()
+        raise
 # /Posts
 
 
