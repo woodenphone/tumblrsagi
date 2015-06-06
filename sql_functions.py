@@ -241,17 +241,17 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
         logging.warning("insert_one_post() duplicate check disabled!")
 
     # Insert into twkr_posts table
-    posts_dict = {}
+    posts_row_dict = {}
     #posts_dict["field"] = "value" # Example of setting a field
     #posts_dict["post_id"] = post_id
-    posts_dict["date_saved"] = get_current_unix_time() # Unix time to millisecond precision
-    posts_dict["blog_id"] = blog_id # local ID number of the blog
-    posts_dict["source_id"] = post_dict["id"] # ID number tumblr gave us for the post
-    posts_dict["post_type"] = map_post_type(post_dict["type"]) #
-    posts_dict["source_url"] = post_dict["post_url"] # using value the API gave us
-    posts_dict["timestamp"] = post_dict["timestamp"] # using value the API gave us
+    posts_row_dict["date_saved"] = get_current_unix_time() # Unix time to millisecond precision
+    posts_row_dict["blog_id"] = blog_id # local ID number of the blog
+    posts_row_dict["source_id"] = post_dict["id"] # ID number tumblr gave us for the post
+    posts_row_dict["post_type"] = map_post_type(post_dict["type"]) #
+    posts_row_dict["source_url"] = post_dict["post_url"] # using value the API gave us
+    posts_row_dict["timestamp"] = post_dict["timestamp"] # using value the API gave us
 
-    posts_row = twkr_posts(**posts_dict)
+    posts_row = twkr_posts(**posts_row_dict)
     session.add(posts_row)
 
     logging.debug("committing post row")
@@ -346,8 +346,11 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
         logging.debug("posts_quote")
         posts_quote_dict = {}
 
-        posts_quote_dict["source_url"] = post_dict["source_url"]
-        posts_quote_dict["source_title"] = post_dict["source_title"]
+        if "source_url" in post_dict.keys():
+            posts_quote_dict["source_url"] = post_dict["source_url"]
+        if "source_title" in post_dict.keys():
+            posts_quote_dict["source_title"] = post_dict["source_title"]
+        posts_quote_dict["source"] = post_dict["source"]
         posts_quote_dict["text"] = post_dict["text"]
         posts_quote_dict["post_id"] = post_id
 

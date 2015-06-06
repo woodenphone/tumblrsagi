@@ -112,7 +112,8 @@ class twkr_posts_quote(Base):
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
     source_url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     source_title = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    text = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    source = sqlalchemy.Column(sqlalchemy.UnicodeText())# source text (the guy who is being quoted)
+    text = sqlalchemy.Column(sqlalchemy.UnicodeText())# text from whoever made this post
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
 
 
