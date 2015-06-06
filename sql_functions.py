@@ -264,13 +264,13 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
     media_url_id_pairs = insert_post_media_associations(session,post_id,media_id_list)
 
     # Store reblog trail
-    if "trail" in post_dict.keys:
+    if "trail" in post_dict.keys():
         logging.debug("Saving trail for post")
         trail_depth = 0
         for trail_entry in post_dict["trail"]:
             trail_depth += 1
             logging.debug("Adding reblog trail; depth: "+repr(trail_depth))
-            assert("content" in trail_entry.keys())
+            assert("content" in trail_entry.keys())# we're trying to insert it so it better be there
             twkr_post_reblog_trail_row = twkr_post_reblog_trail(
                 post_id = post_id,
                 depth = trail_depth,

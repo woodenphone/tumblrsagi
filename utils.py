@@ -377,21 +377,7 @@ def hash_file_data(file_data):
     return sha512base16_hash
 
 
-def _generate_media_file_path_hash(root_path,filename):
-    assert(len(filename) == 128)# Filenames should be of fixed length
-    folder = filename[0:4]
-    file_path = os.path.join(root_path,folder,filename)
-    return file_path
-
-
-def _generate_media_file_path_timestamp(root_path,filename):
-    first_four_chars = filename[0:4]
-    second_two_chars = filename[4:6]
-    file_path = os.path.join(root_path,first_four_chars,second_two_chars,filename)
-    return file_path
-
-
-def generate_filename(ext,sha512base16_hash=None):# WIP
+def generate_filename(ext,sha512base16_hash=None):
     """Abstraction for generating filenames, this is so only one function needs to care about it
     Take the file extention and maybe some other info and return a filename"""
 ##    # Timestamp filename
@@ -402,10 +388,19 @@ def generate_filename(ext,sha512base16_hash=None):# WIP
     return filename
 
 
-def generate_path(root_path,filename):#WIP
+def generate_path(root_path,filename):
     """Abstraction for generating file paths
-    Take a filename and create a path for it"""
-    return _generate_media_file_path_timestamp(root_path,filename)# Lazy but good enough
+    Take a filename and create a path for it
+    Uses /12/34/56/ style due to folders containing 16^n subfolders
+    where n is number of digits per foldername"""
+    file_path = os.path.join(
+        root_path,
+        filename[0:2],# First two chars of filename
+        filename[2:4],# Second two chars of filename
+        filename[4:6],# Third two chars of filename
+        filename
+        )
+    return file_path
 
 
 def clean_blog_url(raw_url):
