@@ -65,7 +65,7 @@ class twkr_posts_photo(Base):
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
 
 
-class twkr_posts_photo_text(Base):
+class twkr_posts_photo_text(Base):# Blame ATC
     """Class Info, functionality, purpose"""
     __tablename__ = "twkr_posts_photo_text"
     # Columns
@@ -149,6 +149,34 @@ class twkr_post_reblog_trail(Base):# Blame ATC
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #Local post id
     depth = sqlalchemy.Column(sqlalchemy.BigInteger())# Starting at 1 for the first reply, how deep is this?
     content = sqlalchemy.Column(sqlalchemy.UnicodeText())# ["response"]["posts"]["trail"][depth-1]["content']
+
+
+
+class twkr_post_audio(Base):# Blame ATC
+    """Class Info, functionality, purpose"""
+    __tablename__ = "twkr_post_audio"
+    # Columns
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
+    caption = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    artist = sqlalchemy.Column(sqlalchemy.UnicodeText())# Artist name
+    track_name = sqlalchemy.Column(sqlalchemy.UnicodeText())# Track name
+    album = sqlalchemy.Column(sqlalchemy.UnicodeText())# Name of the album
+    audio_source_url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    audio_type = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    source_title = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    album_art_url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+
+
+
+class twkr_post_video(Base):# Blame ATC
+    """Class Info, functionality, purpose"""
+    __tablename__ = "twkr_post_video"
+    # Columns
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
+
+
 
 # /Twkr's new tables
 

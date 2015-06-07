@@ -206,12 +206,11 @@ def insert_post_media_associations(session,post_id,media_id_list):
             media_id = new_media_id
             )
         session.add(media_association_row)
-        session.commit()
         media_url_id_pairs[verify_id_row["media_url"]] = new_media_id
         continue
 
     logging.debug("insert_post_media_associations() media_url_id_pairs:"+repr(media_url_id_pairs))
-    return media_url_id_pairs
+    return media_url_id_pairs # {url: media_id}
 
 
 def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=True):# WIP
@@ -264,7 +263,7 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
 
         # Add entries to the post-media association table
         logging.debug("adding media associations")
-        media_url_id_pairs = insert_post_media_associations(session,post_id,media_id_list)
+        media_url_id_pairs = insert_post_media_associations(session,post_id,media_id_list) # {url: media_id}
 
         # Store reblog trail
         if "trail" in post_dict.keys():
@@ -304,7 +303,7 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
                 posts_photo_dict["caption"] = photo["caption"]
                 posts_photo_dict["url"] = photo_url
                 posts_photo_dict["order"] = photo_num
-                posts_photo_dict["media_id"] = media_url_id_pairs[photo_url]
+                posts_photo_dict["media_id"] = media_url_id_pairs[photo_url]# {url: media_id}
                 posts_photo_dict["post_id"] = post_id
 
                 posts_photo_row = twkr_posts_photo(**posts_photo_dict)
@@ -378,6 +377,42 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
 
             posts_chat_row = twkr_posts_chat(**posts_chat_dict)
             session.add(posts_chat_row)
+
+        # If audio
+        if (post_dict["type"] == "audio"):
+            logging.debug("twkr_post_audio")
+            twkr_post_audio_dict = {}
+            twkr_post_audio_dict["post_id"] = post_id,
+
+            if "audio_source_url" in post_dict.keys():
+                twkr_post_audio_dict["audio_source_url"] = post_dict["audio_source_url"]
+            if "album_art" in post_dict.keys():
+                album_art_url = post_dict["album_art"]
+            if "caption" in post_dict.keys():
+                twkr_post_audio_dict["caption"] = post_dict["caption"]
+            if "artist" in post_dict.keys():
+                twkr_post_audio_dict["artist"] = post_dict["artist"]
+            if "track_name" in post_dict.keys():
+                twkr_post_audio_dict["track_name"] = post_dict["track_name"]
+            if "audio_type" in post_dict.keys():
+                twkr_post_audio_dict["audio_type"] = post_dict["audio_type"]
+            if "source_title" in post_dict.keys():
+                twkr_post_audio_dict["source_title"] = post_dict["source_title"]
+            if "artist" in post_dict.keys():
+                twkr_post_audio_dict["artist"] = post_dict["artist"]
+
+            twkr_post_audio_row = twkr_post_audio(**twkr_post_audio_dict)
+            session.add(twkr_post_audio_row)
+
+        # If video
+        if (post_dict["type"] == "video"):
+            logging.debug("posts_video")
+            twkr_post_video_dict = {}
+
+            twkr_post_video_dict["post_id"] = post_id,
+
+            twkr_post_video_row = twkr_post_video(**twkr_post_video_dict)
+            session.add(twkr_post_video_row)
 
         # Commit once ALL rows for this post are input
         session.commit()
