@@ -158,14 +158,14 @@ class twkr_post_audio(Base):# Blame ATC
     # Columns
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
-    caption = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    caption = sqlalchemy.Column(sqlalchemy.UnicodeText())# from API, beyond that uncertain
     artist = sqlalchemy.Column(sqlalchemy.UnicodeText())# Artist name
     track_name = sqlalchemy.Column(sqlalchemy.UnicodeText())# Track name
     album = sqlalchemy.Column(sqlalchemy.UnicodeText())# Name of the album
-    audio_source_url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    audio_type = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    source_title = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    album_art_url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    audio_source_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# from API, beyond that uncertain
+    audio_type = sqlalchemy.Column(sqlalchemy.UnicodeText())# from API, beyond that uncertain
+    source_title = sqlalchemy.Column(sqlalchemy.UnicodeText())# from API, beyond that uncertain
+    album_art_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# from API, beyond that uncertain
 
 
 
@@ -175,7 +175,10 @@ class twkr_post_video(Base):# Blame ATC
     # Columns
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
-
+    caption = sqlalchemy.Column(sqlalchemy.UnicodeText())# from API, beyond that uncertain
+    video_type = sqlalchemy.Column(sqlalchemy.UnicodeText())# from API, beyond that uncertain
+    permalink_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# from API, beyond that uncertain
+    thumbnail_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# from API, beyond that uncertain
 
 
 # /Twkr's new tables
