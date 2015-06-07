@@ -65,6 +65,15 @@ class twkr_posts_photo(Base):
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
 
 
+class twkr_posts_photo_text(Base):
+    """Class Info, functionality, purpose"""
+    __tablename__ = "twkr_posts_photo_text"
+    # Columns
+    # Local stuff
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
+    caption = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
+
 
 class twkr_posts_link(Base):
     """Class Info, functionality, purpose"""

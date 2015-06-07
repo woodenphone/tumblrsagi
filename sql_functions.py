@@ -286,6 +286,12 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
         # If photo, insert into posts_photo table
         if (post_dict["type"] == "photo"):
             logging.debug("posts_photo")
+            # Add root level stuff for this post
+            twkr_posts_photo_text_row = twkr_posts_photo_text(
+                post_id = post_id,
+                caption = post_dict["caption"]
+                )
+            session.add(twkr_posts_photo_text_row)
 
             # Add each photo to a row in the photos table
             photos = post_dict["photos"]
@@ -303,7 +309,6 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
 
                 posts_photo_row = twkr_posts_photo(**posts_photo_dict)
                 session.add(posts_photo_row)
-                #session.commit()
 
         # If link, insert into posts_link table
         if (post_dict["type"] == "link"):
