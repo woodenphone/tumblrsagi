@@ -410,10 +410,14 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
             twkr_post_video_dict = {}
 
             twkr_post_video_dict["post_id"] = post_id,
-            twkr_post_video_dict["caption"] = post_dict["caption"],
-            twkr_post_video_dict["video_type"] = post_dict["video_type"],
-            twkr_post_video_dict["permalink_url"] = post_dict["permalink_url"],
-            twkr_post_video_dict["thumbnail_url"] = post_dict["thumbnail_url"],
+            if "caption" in post_dict.keys():
+                twkr_post_video_dict["caption"] = post_dict["caption"],
+            if "video_type" in post_dict.keys():
+                twkr_post_video_dict["video_type"] = post_dict["video_type"],
+            if "permalink_url" in post_dict.keys():
+                twkr_post_video_dict["permalink_url"] = post_dict["permalink_url"],
+            if "thumbnail_url" in post_dict.keys():
+                twkr_post_video_dict["thumbnail_url"] = post_dict["thumbnail_url"],
 
             twkr_post_video_row = twkr_post_video(**twkr_post_video_dict)
             session.add(twkr_post_video_row)
