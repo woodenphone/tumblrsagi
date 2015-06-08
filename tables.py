@@ -34,6 +34,8 @@ class twkr_blogs(Base):
     description = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     ask = sqlalchemy.Column(sqlalchemy.Boolean())
     alive = sqlalchemy.Column(sqlalchemy.Boolean())
+    user_thumbnail_media_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("media.media_id")) # Local media ID for user's thumbnail
+    background_image_media_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("media.media_id")) # Local media ID for user's background image
 
 
 

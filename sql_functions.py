@@ -453,6 +453,34 @@ def add_blog(session,blog_url):
 
         # Return blog entry
         return add_blog(session,blog_url)
+
+def update_blog_theme(session,blog_url):
+    """blah"""
+    logging.debug("update_blog_theme blog_url:"+repr(blog_url))
+    # -Avatar-
+    # Find out what the last avatar URL we were given is
+    avatar_media_id_query = sqlalchemy.select([twkr_blogs.user_thumbnail_media_id]).\
+        where(twkr_blogs.blog_url == blog_url)
+    avatar_media_id_rows = session.execute(avatar_media_id_query)
+    avatar_media_id_row = avatar_media_id_rows.fetchone()
+    avatar_media_id = blog_id_row["user_thumbnail_media_id"]
+
+    avatar_url_query = sqlalchemy.select([Media.media_url]).\
+        where(Media.media_id == avatar_media_id)
+    avatar_url_rows = session.execute(avatar_media_id_query)
+    avatar_url_row = avatar_media_id_rows.fetchone()
+    avatar_url = avatar_url_row["media_url"]
+    # Grab small avatar image from API
+    small_avatar_api_url ="http://api.tumblr.com/v2/blog/"+blog_url+"/avatar"
+    logging.debug("small_avatar_api_url:"+repr(small_avatar_api_url))
+    small_avatar, info = getwithinfo(small_avatar_api_url)
+    small_avatar_real_url = info.get_full_url()
+    logging.debug("small_avatar_api_url:"+repr(small_avatar_api_url))
+
+    # If new and old url differ, grab new image and update field
+
+    return
+
 # /Blogs table
 
 def debug():
