@@ -29,7 +29,7 @@ import string
 import hashlib# Needed to hash file data
 import base64 # Needed to do base32 encoding of filenames
 
-
+import config# Local config
 
 def setup_logging(log_file_path,concise_log_file_path=None):
     """Setup logging (Before running any other code)
@@ -65,7 +65,7 @@ def setup_logging(log_file_path,concise_log_file_path=None):
         print"cfh"
     # Console output
     ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
+    ch.setLevel(config.console_log_level)
     ch.setFormatter(formatter)
     logger.addHandler(ch)
     logging.info("Logging started.")
