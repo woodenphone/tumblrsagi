@@ -111,8 +111,7 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
         return {}
 
     # Generate hash for media file
-    file_data = read_file(media_temp_filepath)
-    sha512base16_hash = hash_file_data(file_data)
+    sha512base16_hash = hash_file(media_temp_filepath)
     # Decide where to put the file
 
     # Check if hash is in media DB

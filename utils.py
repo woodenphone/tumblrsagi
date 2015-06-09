@@ -376,6 +376,21 @@ def hash_file_data(file_data):
     #logging.debug("sha512base16_hash: "+repr(sha512base16_hash))
     return sha512base16_hash
 
+def hash_file(file_path):
+    #http://stackoverflow.com/questions/30478972/hashing-files-with-python
+    assert(os.path.exists(file_path))
+    blocksize = 65536
+    with open(file_path, "rb") as f:
+        hasher = hashlib.sha512()
+        buf = f.read(blocksize)
+        while len(buf)>0:
+            hasher.update(buf)
+            buf = f.read(blocksize)
+        raw_hash =  hasher.digest()
+    sha512base16_hash = base64.b16encode(raw_hash)
+    return sha512base16_hash
+
+
 
 def generate_filename(ext,sha512base16_hash=None):
     """Abstraction for generating filenames, this is so only one function needs to care about it
@@ -515,6 +530,15 @@ def main():
     print get_file_extention("http://www.papermag.com/2014/11/arabelle_sicardi.php")# php
 
     print parse_tumblr_timsetamp_string("2014-01-24 19:40:00 GMT")
+    # Test hashing of files
+    test_filename = "hashtest.txt"
+    hash_a = hash_file(test_filename)
+    print hash_a
+    with open(test_filename) as f:
+        file_data = f.read()
+    hash_b = hash_file_data(file_data)
+    print hash_b
+    print "Hashes matched?", (hash_a == hash_b)
 
 if __name__ == '__main__':
     main()
