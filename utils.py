@@ -465,7 +465,7 @@ def import_blog_list(list_file_path="tumblr_todo_list.txt"):
         else:
             cleaned_url = clean_blog_url(line)
             if cleaned_url:
-                blog_urls.append(cleaned_url)
+                blog_urls.append(cleaned_url+u"")
             else:
                 logging.error("import_blog_list(): Cleaning line "+repr(line_counter)+" : "+repr(line)+"Failed!")
     blog_urls = uniquify(blog_urls)

@@ -162,34 +162,34 @@ def handle_video_links(session,all_post_links):# WIP
             continue
             logging.debug("Link is youtube video: "+repr(link))
             media_id_list += run_yt_dl_single(
-            session=session,
-            download_url=download_url,
-            extractor_used="link_handlers.handle_video_links:youtube.com",
-            video_id=video_id,
-            )
+                session=session,
+                download_url=link,
+                extractor_used="link_handlers.handle_video_links:youtube.com",
+                video_id=video_id,
+                )
 
         # gfycat.com
         elif "gfycat.com/" in link[0:20]:
             logging.debug("Link is gfycat video: "+repr(link))
             media_id_list += run_yt_dl_single(
-            session=session,
-            download_url=download_url,
-            extractor_used="link_handlers.handle_video_links:gfycat.com",
-            audio_id=audio_id,
-            video_id=video_id,
-            )
+                session=session,
+                download_url=link,
+                extractor_used="link_handlers.handle_video_links:gfycat.com",
+                audio_id=audio_id,
+                video_id=video_id,
+                )
             video_dicts.append(video_dict)
 
         # http://webmshare.com
         elif "webmshare.com" in link[0:20]:
             logging.debug("Link is webmshare video: "+repr(link))
             media_id_list += run_yt_dl_single(
-            session=session,
-            download_url=download_url,
-            extractor_used="link_handlers.handle_video_links:webmshare.com",
-            audio_id=audio_id,
-            video_id=video_id,
-            )
+                session=session,
+                download_url=link,
+                extractor_used="link_handlers.handle_video_links:webmshare.com",
+                audio_id=audio_id,
+                video_id=video_id,
+                )
             video_dicts.append(video_dict)
 
     return media_id_list
