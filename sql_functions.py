@@ -238,7 +238,15 @@ def insert_photoset(session,post_id,post_dict,media_url_id_pairs):
         posts_photo_dict["caption"] = photo["caption"]
         posts_photo_dict["url"] = photo_url
         posts_photo_dict["order"] = photo_num
-        posts_photo_dict["media_id"] = media_url_id_pairs[photo_url]# {url: media_id}
+        if photo_url in media_url_id_pairs.keys():
+            posts_photo_dict["media_id"] = media_url_id_pairs[photo_url]# {url: media_id}
+        else:
+            logging.error("Photo id could not be found! adding photo media_id as NULL instead")
+            appendlist(
+                photo_url,
+                list_file_path=os.path.join("debug","photoset_failed.txt"),
+                initial_text="# List of media URLS that could not be added to photosets.\n"
+                )
         posts_photo_dict["post_id"] = post_id
 
         posts_photo_row = twkr_posts_photo(**posts_photo_dict)
