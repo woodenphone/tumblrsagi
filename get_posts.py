@@ -163,9 +163,12 @@ class tumblr_blog:
             prev_page_posts_list = this_page_posts_list
 
             # Stop loading posts if the last post on this page is older than the newest on in the DB
-            if this_page_posts_list[-1]["timestamp"] <= timestamp_of_last_post_in_db:
-                logging.info("newest post in db is newer than one of the posts on this page, stopping loading posts. "+repr(page_url))
-                break
+            if config.stop_loading_posts_when_timestamp_match:
+                if this_page_posts_list[-1]["timestamp"] <= timestamp_of_last_post_in_db:
+                    logging.debug("""this_page_posts_list[-1]["timestamp"]"""+repr(this_page_posts_list[-1]["timestamp"]))
+                    logging.debug("timestamp_of_last_post_in_db:"+repr(timestamp_of_last_post_in_db))
+                    logging.info("newest post in db is newer than one of the posts on this page, stopping loading posts. "+repr(page_url))
+                    break
             continue
 
         logging.info("Finished loading posts. "+repr(self.blog_url))
