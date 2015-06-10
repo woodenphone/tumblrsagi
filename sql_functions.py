@@ -88,7 +88,8 @@ def add_raw_post(session,raw_post_dict,processed_post_dict,info_dict,blog_url,us
     # Full post reencoded into JSON
     row_to_insert["raw_post_json"] = raw_post_dict
     row_to_insert["media_processed"] = False
-    logging.debug("row_to_insert:"+repr(row_to_insert))
+    if config.log_db_rows:
+        logging.debug("row_to_insert:"+repr(row_to_insert))
 
     post_row = RawPosts(**row_to_insert)
     session.add(post_row)
@@ -117,7 +118,7 @@ def find_blog_posts(session,sanitized_username):# TODO Replace this with one tha
     for row in posts_rows:
         post_ids.append(row["all_posts_id"])
          #logging.debug("find_blog_posts()"+"row"+": "+repr(row))
-    logging.debug("find_blog_posts()"+"for "+repr(sanitized_username)+"post_ids"+": "+repr(post_ids))
+    #logging.debug("find_blog_posts()"+"for "+repr(sanitized_username)+"post_ids"+": "+repr(post_ids))
     return post_ids
 
 
@@ -213,6 +214,41 @@ def insert_post_media_associations(session,post_id,media_id_list):
     return media_url_id_pairs # {url: media_id}
 
 
+def insert_photos(session,post_id,post_dict,media_url_id_pairs):
+    """Perform inserts for a post's photoset"""
+    logging.debug("Inserting photoset")
+    logging.debug("insert_photos() post_id:"+repr(post_id))
+    logging.debug("insert_photos() media_url_id_pairs:"+repr(media_url_id_pairs))
+    logging.debug("insert_photos() post_dict:"+repr(post_dict))
+    # Add root level stuff for this post
+    twkr_posts_photo_text_row = twkr_posts_photo_text(
+        post_id = post_id,
+        caption = post_dict["caption"]
+        )
+    session.add(twkr_posts_photo_text_row)
+
+    # Add each photo to a row in the photos table
+    photos = post_dict["photos"]
+    photo_num = 0
+    for photo in photos:
+        photo_num += 1
+        photo_url = photo["original_size"]["url"]
+        posts_photo_dict = {}
+
+        posts_photo_dict["caption"] = photo["caption"]
+        posts_photo_dict["url"] = photo_url
+        posts_photo_dict["order"] = photo_num
+        posts_photo_dict["media_id"] = media_url_id_pairs[photo_url]# {url: media_id}
+        posts_photo_dict["post_id"] = post_id
+
+        posts_photo_row = twkr_posts_photo(**posts_photo_dict)
+        session.add(posts_photo_row)
+        logging.debug("Added photo "+repr(photo_num)+" : "+repr(posts_photo_dict))
+        continue
+    logging.debug("Finished inserting photoset.")
+    return
+
+
 def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=True):# WIP
     """Insert a single post into Twkr's new postgres tables
     Only commit if all tables are set
@@ -234,6 +270,7 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
             if pre_insert_check_row:
                 logging.error("This post is already in the DB!")
                 logging.error("pre_insert_check_row:"+repr(pre_insert_check_row))
+                return
                 assert(False)# This should not happen
                 raise ValueError # This should not happen
         else:
@@ -285,29 +322,12 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
         # If photo, insert into posts_photo table
         if (post_dict["type"] == "photo"):
             logging.debug("posts_photo")
-            # Add root level stuff for this post
-            twkr_posts_photo_text_row = twkr_posts_photo_text(
-                post_id = post_id,
-                caption = post_dict["caption"]
+            insert_photos(
+                session=session,
+                post_id=post_id,
+                post_dict=post_dict,
+                media_url_id_pairs=media_url_id_pairs,
                 )
-            session.add(twkr_posts_photo_text_row)
-
-            # Add each photo to a row in the photos table
-            photos = post_dict["photos"]
-            photo_num = 0
-            for photo in photos:
-                photo_num += 1
-                photo_url = photo["original_size"]["url"]
-                posts_photo_dict = {}
-
-                posts_photo_dict["caption"] = photo["caption"]
-                posts_photo_dict["url"] = photo_url
-                posts_photo_dict["order"] = photo_num
-                posts_photo_dict["media_id"] = media_url_id_pairs[photo_url]# {url: media_id}
-                posts_photo_dict["post_id"] = post_id
-
-                posts_photo_row = twkr_posts_photo(**posts_photo_dict)
-                session.add(posts_photo_row)
 
         # If link, insert into posts_link table
         if (post_dict["type"] == "link"):
@@ -599,7 +619,7 @@ def debug():
 
 def main():
     try:
-        setup_logging(log_file_path=os.path.join("debug","sql-functions-log.txt"))
+        setup_logging(log_file_path=os.path.join("debug","sql_functions_log.txt"))
         debug()
         logging.info("Finished, exiting.")
         pass

@@ -237,8 +237,8 @@ def save_blogs(list_file_path="tumblr_todo_list.txt"):
 def main():
     try:
         setup_logging(
-        log_file_path=os.path.join("debug","tumblr-api-dumper-log.txt"),
-        concise_log_file_path=os.path.join("debug","short-tumblr-api-dumper-log.txt")
+        log_file_path=os.path.join("debug","get_posts_log.txt"),
+        concise_log_file_path=os.path.join("debug","short_get_posts_log.txt")
         )
         # Program
         #classy_play()

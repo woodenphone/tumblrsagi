@@ -40,7 +40,13 @@ def download_image_link(session,media_url):
     file_data = get(media_url)
     if not file_data:
         logging.error("Could not load image URL!")
-        return
+        appendlist(
+            media_url,
+            list_file_path=os.path.join("debug","image_get_failed.txt"),
+            initial_text="# List of completed items.\n"
+            )
+        return []
+
     time_of_retreival = get_current_unix_time()
 
     # Generate hash

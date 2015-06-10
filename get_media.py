@@ -120,8 +120,8 @@ def process_all_posts_media(session,max_rows=1000):
 def main():
     try:
         setup_logging(
-            log_file_path=os.path.join("debug","tumblr-media-grabber-log.txt"),
-            concise_log_file_path=os.path.join("debug","short-tumblr-media-grabber-log.txt")
+            log_file_path=os.path.join("debug","get_media_log.txt"),
+            concise_log_file_path=os.path.join("debug","short_get_media_log.txt")
             )
         # Program
         # Connect to DB
