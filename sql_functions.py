@@ -73,6 +73,20 @@ def check_if_media_url_in_DB(session,media_url):
 # Raw Posts
 def add_raw_post(session,raw_post_dict,processed_post_dict,info_dict,blog_url,username,version=0):
     """Store the raw data from a post into the raw data table"""
+    # Ensure post is not already in DB
+    # Assuming blog url, postid, and timestamp will never all match on different posts
+    post_duplicate_check_query = sqlalchemy.select([RawPosts]).\
+        where(RawPosts.blog_domain == blog_url).\
+        where(RawPosts.all_posts_id == raw_post_dict["id"]).\
+        where(RawPosts.all_posts_timestamp == raw_post_dict["timestamp"])
+    post_duplicate_check_rows = session.execute(post_duplicate_check_query)
+    post_duplicate_check_row = post_duplicate_check_rows.fetchone()
+    if post_duplicate_check_row:
+        logging.error("This post is already in the DB!")
+        logging.error("raw_post_dict:"+repr(raw_post_dict))
+        logging.error("post_duplicate_check_row:"+repr(post_duplicate_check_row))
+        return
+
     # Build row to insert
     row_to_insert = {}
     # Local stuff
