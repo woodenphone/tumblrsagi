@@ -175,7 +175,6 @@ def handle_video_links(session,all_post_links):# WIP
                 download_url=link,
                 extractor_used="link_handlers.handle_video_links:gfycat.com",
                 )
-            video_dicts.append(video_dict)
 
         # http://webmshare.com
         elif "webmshare.com" in link[0:20]:
@@ -185,7 +184,6 @@ def handle_video_links(session,all_post_links):# WIP
                 download_url=link,
                 extractor_used="link_handlers.handle_video_links:webmshare.com",
                 )
-            video_dicts.append(video_dict)
 
     return media_id_list
 
