@@ -152,7 +152,7 @@ def get(url):
     #logging.debug( "getting url ", locals())
     gettuple = getwithinfo(url_with_protocol)
     if gettuple:
-        reply, info = gettuple
+        reply, info, r = gettuple
         return reply
     else:
         return
@@ -205,7 +205,7 @@ def getwithinfo(url):
             if (len(reply) < 1) and (attemptcount < max_attempts):
                 logging.error("Reply too short :"+repr(reply))
                 continue
-            return reply,info
+            return reply,info,r
 
         except urllib2.HTTPError, err:
             logging.exception(err)

@@ -108,7 +108,7 @@ def process_all_posts_media(session,max_rows=1000):
     logging.debug("Processing posts")
     # http://stackoverflow.com/questions/2846653/python-multithreading-for-dummies
     # Make the Pool of workers
-    pool = ThreadPool(1)# Set to one for debugging
+    pool = ThreadPool(config.number_of_media_workers)# Set to one for debugging
     results = pool.map(process_one_new_posts_media, post_dicts)
     #close the pool and wait for the work to finish
     pool.close()

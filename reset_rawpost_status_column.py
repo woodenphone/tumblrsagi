@@ -28,6 +28,7 @@ def reset_rows():
         values(media_processed = False)
     session.execute(update_statement)
     session.commit()
+    return
 
 
 

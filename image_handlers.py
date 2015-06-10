@@ -99,7 +99,7 @@ def download_image_link(session,media_url):
     session.commit()
 
     # Get the id back
-    get_id_row = sql_functions.check_if_hash_in_db(session,sha512base16_hash)
+    get_id_row = sql_functions.check_if_media_url_in_DB(session,media_url)
     media_id = get_id_row["media_id"]
     media_id_list = [media_id]
     return media_id_list
