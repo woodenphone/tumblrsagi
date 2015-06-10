@@ -165,7 +165,6 @@ def handle_video_links(session,all_post_links):# WIP
                 session=session,
                 download_url=link,
                 extractor_used="link_handlers.handle_video_links:youtube.com",
-                video_id=video_id,
                 )
 
         # gfycat.com
@@ -175,8 +174,6 @@ def handle_video_links(session,all_post_links):# WIP
                 session=session,
                 download_url=link,
                 extractor_used="link_handlers.handle_video_links:gfycat.com",
-                audio_id=audio_id,
-                video_id=video_id,
                 )
             video_dicts.append(video_dict)
 
@@ -187,8 +184,6 @@ def handle_video_links(session,all_post_links):# WIP
                 session=session,
                 download_url=link,
                 extractor_used="link_handlers.handle_video_links:webmshare.com",
-                audio_id=audio_id,
-                video_id=video_id,
                 )
             video_dicts.append(video_dict)
 
