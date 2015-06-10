@@ -512,42 +512,124 @@ def add_blog(session,blog_url):
         # Return blog entry
         return add_blog(session,blog_url)
 
-def update_blog_theme(session,blog_url):
-    """blah"""
-    logging.debug("update_blog_theme blog_url:"+repr(blog_url))
+
+def update_blog_avatar(session,blog_url):
     # -Avatar-
-    # Find out what the last avatar URL we were given is
-    avatar_media_id_query = sqlalchemy.select([twkr_blogs.user_thumbnail_media_id]).\
+    # Get the ids for this user's avatar image at both small and large sizes
+    avatar_media_id_query = sqlalchemy.select([twkr_blogs]).\
         where(twkr_blogs.blog_url == blog_url)
     avatar_media_id_rows = session.execute(avatar_media_id_query)
     avatar_media_id_row = avatar_media_id_rows.fetchone()
-    avatar_media_id = blog_id_row["user_thumbnail_media_id"]
+    small_avatar_media_id = avatar_media_id_row["user_thumbnail_64_media_id"]
+    large_avatar_media_id = avatar_media_id_row["user_thumbnail_512_media_id"]
+    blog_id = avatar_media_id_row["blog_id"]
 
-    avatar_url_query = sqlalchemy.select([Media.media_url]).\
+    # Check if small avatar has changed
+    # Get URL and hash of small avatar
+    small_avatar_check_query = sqlalchemy.select([Media.media_url]).\
         where(Media.media_id == avatar_media_id)
-    avatar_url_rows = session.execute(avatar_media_id_query)
-    avatar_url_row = avatar_media_id_rows.fetchone()
-    avatar_url = avatar_url_row["media_url"]
+    small_avatar_check_rows = session.execute(small_avatar_check_query)
+    small_avatar_check_row = small_avatar_check_rows.fetchone()
+    if small_avatar_check_row:
+        old_small_avatar_url = small_avatar_check_row["media_url"]
+        old_small_avatar_sha512base16_hash = small_avatar_check_row["sha512base16_hash"]
+    else:
+        old_small_avatar_url = None
+        old_small_avatar_sha512base16_hash = None
+
     # Grab small avatar image from API
-    small_avatar_api_url ="http://api.tumblr.com/v2/blog/"+blog_url+"/avatar"
-    logging.debug("small_avatar_api_url:"+repr(small_avatar_api_url))
-    small_avatar, info = getwithinfo(small_avatar_api_url)
-    small_avatar_real_url = info.get_full_url()
-    logging.debug("small_avatar_api_url:"+repr(small_avatar_api_url))
+    current_small_avatar_api_url = "http://api.tumblr.com/v2/blog/"+blog_url+"/avatar"
+    logging.debug("small_avatar_api_url:"+repr(current_small_avatar_api_url))
+    current_small_avatar, info = getwithinfo(small_avatar_api_url)
+    # Get values to compare from current small avatar
+    current_small_avatar_real_url = info.get_full_url()
+    current_small_avatar_sha512base16_hash = hash_file_data(current_small_avatar)
+    logging.debug("small_avatar_api_url:"+repr(current_small_avatar_real_url))
 
-    # If new and old url differ, grab new image and update field
+    # Comapre URL and hash of the current small avatar with those from the DB
+    if  (
+        (old_small_avatar_url == current_small_avatar_real_url)
+        and (old_small_avatar_sha512base16_hash == current_small_avatar_sha512base16_hash)
+        ):
+        # We have the latest avatar
+        logging.debug("update_blog_avatar() Avatar does not need updating.")
+        return
 
+
+
+    # Make sure this isn't the default avatar (In case the account was deleted)
+    default_small_avatar_url = "https://secure.assets.tumblr.com/images/default_avatar_64.png"
+    default_small_avatar = get(default_small_avatar)
+    default_small_avatar_sha512base16_hash = hash_file_data(default_small_avatar)
+    if (
+        (default_small_avatar_sha512base16_hash == current_small_avatar_sha512base16_hash)
+        or (default_small_avatar_url == current_small_avatar_real_url)
+        ):
+        # Avatar is the default avatar!
+        logging.debug("Blog avatar is default, not updating in case it was deleted.")
+        return
+
+    # Avatar is changed and not the default.
+    # Our avatar is out of date if we get here
+    logging.debug("update_blog_avatar() Avatar needs updating.")
+
+    # Save large avatar
+    current_large_avatar_api_url = "http://api.tumblr.com/v2/blog/"+blog_url+"/avatar/512"
+    current_large_avatar_media_id_list = download_image_link(
+        session = session,
+        media_url=current_large_avatar_api_url
+        )
+    if len(current_large_avatar_media_id_list) != 0:
+        logging.debug("Updating large avatar record")
+        current_large_avatar_media_id = current_large_avatar_media_id_list[0]
+        # Update large avatar record
+        update_statement = update(twkr_blogs).where(twkr_blogs.blog_id == blog_id).\
+            values(user_thumbnail_512_media_id = current_large_avatar_media_id)
+        session.execute(update_statement)
+
+    # Save small avatar
+    current_small_avatar_media_id_list = download_image_link(
+        session = session,
+        media_url=current_small_avatar_api_url
+        )
+    if len(current_small_avatar_media_id_list) != 0:
+        logging.debug("Updating small avatar record")
+        current_small_avatar_media_id = current_small_avatar_media_id_list[0]
+        # Update small avatar record
+        update_statement = update(twkr_blogs).where(twkr_blogs.blog_id == blog_id).\
+            values(user_thumbnail_64_media_id = current_small_avatar_media_id,)
+        session.execute(update_statement)
+
+    session.commit()
     return
+
+
+def update_blog_background(session,blog_url):
+    """Update the background image for a blog"""
+    logging.debug("Updating background image for blog:"+repr(blog_url))
+    # Find URL of background image
+    # Update record
+    return
+
+def update_blog_theme(session,blog_url):
+    """blah"""
+    logging.debug("update_blog_theme blog_url:"+repr(blog_url))
+    # Update avatar for this blog
+    update_blog_avatar(session,blog_url)
+    # Update blog backgroun image
+    return
+
 
 # /Blogs table
 
 def debug():
     """Temp code for debug"""
     session = connect_to_db()
-
-    dummy_blog_id = add_blog(session,blog_url="staff.tumblr.com")
+    blog_url="staff.tumblr.com"
+    dummy_blog_id = add_blog(session,blog_url)
     logging.debug("dummy_blog_id: "+repr(dummy_blog_id))
-    #return
+    update_blog_theme(session,blog_url)
+    return
 
     # Try each type of post to see what happens
 ##        u"text":1,

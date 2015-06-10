@@ -375,6 +375,7 @@ def hash_file_data(file_data):
     #logging.debug("sha512base16_hash: "+repr(sha512base16_hash))
     return sha512base16_hash
 
+
 def hash_file(file_path):
     #http://stackoverflow.com/questions/30478972/hashing-files-with-python
     assert(os.path.exists(file_path))
@@ -388,7 +389,6 @@ def hash_file(file_path):
         raw_hash =  hasher.digest()
     sha512base16_hash = base64.b16encode(raw_hash)
     return sha512base16_hash
-
 
 
 def generate_filename(ext,sha512base16_hash=None):
