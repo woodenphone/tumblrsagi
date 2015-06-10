@@ -214,7 +214,7 @@ def insert_post_media_associations(session,post_id,media_id_list):
     return media_url_id_pairs # {url: media_id}
 
 
-def insert_photos(session,post_id,post_dict,media_url_id_pairs):
+def insert_photoset(session,post_id,post_dict,media_url_id_pairs):
     """Perform inserts for a post's photoset"""
     logging.debug("Inserting photoset")
     logging.debug("insert_photos() post_id:"+repr(post_id))
@@ -247,6 +247,26 @@ def insert_photos(session,post_id,post_dict,media_url_id_pairs):
         continue
     logging.debug("Finished inserting photoset.")
     return
+
+
+def insert_reblog_trail(session,post_id,post_dict):
+    # Store reblog trail
+    assert( "trail" in post_dict.keys() )
+    logging.debug("Saving trail for post")
+    trail_depth = 0
+    for trail_entry in post_dict["trail"]:
+        trail_depth += 1
+        logging.debug("Adding reblog trail; depth: "+repr(trail_depth))
+        assert("content" in trail_entry.keys())# we're trying to insert it so it better be there
+        twkr_post_reblog_trail_row = twkr_post_reblog_trail(
+            post_id = post_id,
+            depth = trail_depth,
+            content = trail_entry["content"],
+            )
+        session.add(twkr_post_reblog_trail_row)
+        continue
+    return
+
 
 
 def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=True):# WIP
@@ -304,29 +324,21 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
 
         # Store reblog trail
         if "trail" in post_dict.keys():
-            logging.debug("Saving trail for post")
-            trail_depth = 0
-            for trail_entry in post_dict["trail"]:
-                trail_depth += 1
-                logging.debug("Adding reblog trail; depth: "+repr(trail_depth))
-                assert("content" in trail_entry.keys())# we're trying to insert it so it better be there
-                twkr_post_reblog_trail_row = twkr_post_reblog_trail(
-                    post_id = post_id,
-                    depth = trail_depth,
-                    content = trail_entry["content"],
-                    )
-                session.add(twkr_post_reblog_trail_row)
-                continue
+            insert_reblog_trail(
+                session = session,
+                post_id = post_id,
+                post_dict = post_dict,
+                )
 
-        # Deal with posttype-specific stuff
+        # -Deal with posttype-specific stuff-
         # If photo, insert into posts_photo table
         if (post_dict["type"] == "photo"):
             logging.debug("posts_photo")
-            insert_photos(
-                session=session,
-                post_id=post_id,
-                post_dict=post_dict,
-                media_url_id_pairs=media_url_id_pairs,
+            insert_photoset(
+                session = session,
+                post_id = post_id,
+                post_dict = post_dict,
+                media_url_id_pairs = media_url_id_pairs,
                 )
 
         # If link, insert into posts_link table

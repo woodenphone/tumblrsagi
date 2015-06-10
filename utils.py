@@ -62,7 +62,6 @@ def setup_logging(log_file_path,concise_log_file_path=None):
         cfh.setLevel(logging.INFO)
         cfh.setFormatter(formatter)
         logger.addHandler(cfh)
-        print"cfh"
     # Console output
     ch = logging.StreamHandler()
     ch.setLevel(config.console_log_level)
