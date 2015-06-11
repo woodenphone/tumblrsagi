@@ -102,17 +102,21 @@ def list_new_posts(session,max_rows):
 
 
 def process_all_posts_media(session,max_rows=1000):
-    # Get primary keys for some new posts
-    post_dicts = list_new_posts(session,max_rows)
-    # Process posts
-    logging.debug("Processing posts")
-    # http://stackoverflow.com/questions/2846653/python-multithreading-for-dummies
-    # Make the Pool of workers
-    pool = ThreadPool(config.number_of_media_workers)# Set to one for debugging
-    results = pool.map(process_one_new_posts_media, post_dicts)
-    #close the pool and wait for the work to finish
-    pool.close()
-    pool.join()
+    post_dicts = "dummy"
+    while len(post_dicts) > 0:
+        # Get primary keys for some new posts
+        post_dicts = list_new_posts(session,max_rows)
+        # Process posts
+        logging.debug("Processing posts")
+        # http://stackoverflow.com/questions/2846653/python-multithreading-for-dummies
+        # Make the Pool of workers
+        pool = ThreadPool(config.number_of_media_workers)# Set to one for debugging
+        results = pool.map(process_one_new_posts_media, post_dicts)
+        #close the pool and wait for the work to finish
+        pool.close()
+        pool.join()
+        logging.debug("Finished proccessing this group of posts")
+        continue
     logging.debug("Finished processing posts for media")
     return
 
