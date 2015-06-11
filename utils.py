@@ -28,6 +28,7 @@ import socket
 import string
 import hashlib# Needed to hash file data
 import base64 # Needed to do base32 encoding of filenames
+import ssl # So we can turn SSL off
 
 import config# Local config
 
@@ -168,6 +169,12 @@ def getwithinfo(url):
     max_attempts = 10
     retry_delay = 10
     request_delay = 0.5#avoid hammering the site too hard
+    # Remove all ssl because ATC said to
+    # http://stackoverflow.com/questions/19268548/python-ignore-certicate-validation-urllib2
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+
     while attemptcount < max_attempts:
         attemptcount = attemptcount + 1
         if attemptcount > 1:
@@ -180,7 +187,10 @@ def getwithinfo(url):
 ##                force_save = True,
 ##                allow_fail = True
 ##                )
-            r = urllib2.urlopen(url)
+            r = urllib2.urlopen(
+                url,
+                context=ctx
+                )
             info = r.info()
             reply = r.read()
             delay(request_delay)

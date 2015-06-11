@@ -612,10 +612,43 @@ def update_blog_background(session,blog_url):
     logging.debug("Updating background image for blog:"+repr(blog_url))
     # Load blog page
     blog_homepage_url = "http://"+blog_url+""
-    page_html = get()
+    page_html = get(blog_homepage_url)
+    if not page_html:
+        logging.error("Could not get page html, skipping background")
+        return
     # Find URL of background image
-    # Update record
+    # background: #3b627e url('http://static.tumblr.com/c94205eb4c3de586041f1ad660c46caa/idxu2du/eIkno8wrk/tumblr_static_2xi0rehz8qg4owck0cso0os80.png') top left fixed repeat;
+    # http://static.tumblr.com/c94205eb4c3de586041f1ad660c46caa/idxu2du/eIkno8wrk/tumblr_static_2xi0rehz8qg4owck0cso0os80.png
+    background_image_regex = """background:\s+(?:\#\w+)\s+url\(["']([^\n"']+)["']"""
+    background_image_search = re.search(background_image_regex, page_html, re.IGNORECASE|re.DOTALL)
+    if background_image_search:
+        background_image_url = background_image_search.group(1)
+        logging.debug("update_blog_background() background_image_url:"+repr(background_image_url))
+        # Save background image
+        background_image_media_id_list = image_handlers.download_image_link(
+            session = session,
+            media_url=background_image_url
+            )
+        if len(background_image_media_id_list) == 0:# Handle failed downloads
+            return
+        background_image_media_id = background_image_media_id_list[0]
+        # Update blog row with background image
+        update_statement = sqlalchemy.update(twkr_blogs).where(twkr_blogs.blog_url == blog_url).\
+            values(background_image_media_id = background_image_media_id,)
+        session.execute(update_statement)
+        return
+    else:
+        logging.debug("Could not find background image.")
+        return
+
+
+def update_blog_header_image(session,blog_url):
+    logging.debug("Updating header image")
+    # Find header image link
+    # Save header image
+    # Update record for header image
     return
+
 
 def update_blog_theme(session,blog_url):
     """blah"""
@@ -623,6 +656,9 @@ def update_blog_theme(session,blog_url):
     # Update avatar for this blog
     update_blog_avatar(session,blog_url)
     # Update blog backgroun image
+    update_blog_background(session,blog_url)
+    # Update header image
+    update_blog_header_image(session,blog_url)
     return
 
 
@@ -631,12 +667,17 @@ def update_blog_theme(session,blog_url):
 def debug():
     """Temp code for debug"""
     session = connect_to_db()
-    blog_url="staff.tumblr.com"
-    dummy_blog_id = add_blog(session,blog_url)
-    logging.debug("dummy_blog_id: "+repr(dummy_blog_id))
-    update_blog_theme(session,blog_url)
-    update_blog_theme(session,blog_url="testsetsts2.tumblr.com")
-
+    blog_urls = [
+    #"staff.tumblr.com",
+    #"testsetsts2.tumblr.com",
+    "lunarshinestore.tumblr.com",
+    "atryl.tumblr.com",
+    ]
+    for blog_url in blog_urls:
+        dummy_blog_id = add_blog(session,blog_url)
+        logging.debug("dummy_blog_id: "+repr(dummy_blog_id))
+        update_blog_theme(session,blog_url)
+        continue
     return
 
     # Try each type of post to see what happens
