@@ -8,6 +8,7 @@
 # Copyright:   (c) User 2015
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
+import time
 
 import get_media
 import config
