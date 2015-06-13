@@ -16,9 +16,14 @@ import config
 
 def loop():
     """Run in a loop forever"""
+    print "Starting loop for get_media"
     while True:
+        print "calling get_media.main()"
         get_media.main()
+        print "finished get_media.main()"
         time.sleep(config.get_media_restart_delay)
+        continue
+
 
 
 def main():
