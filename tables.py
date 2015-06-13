@@ -253,6 +253,33 @@ class handler_api_youtube(Base):#not yet used
 # /Media Extractors
 
 
+
+# Admin tables
+class meta_reports(Base):
+    """Page reports.
+    Most of the code relating to this is on the display side."""
+    __tablename__ = "meta_reports"
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
+    url = sqlalchemy.Column(sqlalchemy.UnicodeText())
+    email = sqlalchemy.Column(sqlalchemy.UnicodeText())
+    comment = sqlalchemy.Column(sqlalchemy.UnicodeText())
+    ip = sqlalchemy.Column(sqlalchemy.UnicodeText())
+    time  = sqlalchemy.Column(sqlalchemy.BigInteger)
+
+class meta_requests(Base):
+    """Requests for new blogs to add to the archive.
+    Most of the code relating to this is on the display side."""
+    __tablename__ = "meta_requests"
+    primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
+    url = sqlalchemy.Column(sqlalchemy.UnicodeText())
+    email = sqlalchemy.Column(sqlalchemy.UnicodeText())
+    comment = sqlalchemy.Column(sqlalchemy.UnicodeText())
+    ip = sqlalchemy.Column(sqlalchemy.UnicodeText())
+    time  = sqlalchemy.Column(sqlalchemy.BigInteger)
+# /Admin tables
+
+
+
 # Tables on the server we need to be able to handle
 class vm_RawPosts(Base):# Live DB on server uses this
     """The raw post dicts for a blog
