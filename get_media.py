@@ -102,7 +102,9 @@ def list_new_posts(session,max_rows):
 
 
 def process_all_posts_media(session,max_rows=1000):
-    post_dicts = "dummy"
+    # Connect to DB
+    session = sql_functions.connect_to_db()
+    post_dicts = ["dummy"]
     while len(post_dicts) > 0:
         # Get primary keys for some new posts
         post_dicts = list_new_posts(session,max_rows)
@@ -128,9 +130,7 @@ def main():
             concise_log_file_path=os.path.join("debug","short_get_media_log.txt")
             )
         # Program
-        # Connect to DB
-        session = sql_functions.connect_to_db()
-        process_all_posts_media(session)
+        process_all_posts_media()
         # /Program
         logging.info("Finished, exiting.")
         return
