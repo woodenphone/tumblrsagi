@@ -132,6 +132,8 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
         # Generate output filepath
         filename = generate_filename(ext=file_ext,sha512base16_hash=sha512base16_hash)
         final_media_filepath = generate_path(root_path=config.root_path,filename=filename)
+        # Pause to prevent open file conflicts
+        time.sleep(10)
         # Move file to final location
         move_file(media_temp_filepath,final_media_filepath)
         assert(os.path.exists(final_media_filepath))

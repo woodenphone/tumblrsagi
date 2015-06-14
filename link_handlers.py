@@ -265,11 +265,21 @@ def handle_links(session,post_dict):# TODO FIXME
         #  -> https://dl.dropbox.com/s/npga7y1r24a5dqo/comma%20seperated%20tags.PNG
         if "www.dropbox.com/s/" in link:
             logging.debug("Link is dropbox: "+repr(link))
-            dropbox_link_segment = re.search("""dropbox.com/s/([^?<>]+)""", link, re.DOTALL)
-            dropbox_link = "https://dl.dropbox.com/s/"+dropbox_link_segment
-            logging.debug("Dropbox link:")+repr(dropbox_link)
-            media_id_list += download_image_links(session,[dropbox_link])
-            continue
+            dropbox_link_segment_search = re.search("""dropbox.com/s/([^?<>]+)""", link, re.DOTALL)
+            if dropbox_link_segment_search:
+                dropbox_link_segment = dropbox_link_segment_search.group(1)
+                dropbox_link = "https://dl.dropbox.com/s/"+dropbox_link_segment
+                logging.debug("Dropbox link:")+repr(dropbox_link)
+                media_id_list += download_image_links(session,[dropbox_link])
+                continue
+            else:
+                logging.error("Cannot parse dropbox link!")
+                appendlist(
+                    link,
+                    list_file_path=os.path.join("debug","bad_dropbox_links.txt"),
+                    initial_text="# dropbox handler failed.\n"
+                    )
+                continue
 
         # e621.net
         # https://e621.net/post/show/599802
