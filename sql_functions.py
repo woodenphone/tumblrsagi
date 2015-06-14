@@ -327,6 +327,12 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
         posts_row_dict["post_type"] = map_post_type(post_dict["type"]) #
         posts_row_dict["source_url"] = post_dict["post_url"] # using value the API gave us
         posts_row_dict["timestamp"] = post_dict["timestamp"] # using value the API gave us
+        # Tags to a string
+        tags_string = ""
+        for tag in post_dict["tags"]:
+            tags_string += tag+","
+        tags_string = tags_string[:-1]
+        posts_row_dict["tags"] = tags_string
 
         posts_row = twkr_posts(**posts_row_dict)
         session.add(posts_row)

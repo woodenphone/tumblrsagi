@@ -47,7 +47,9 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
     return """
     logging.debug("download_url: "+repr(download_url))
 
-    temp_id = str(get_current_unix_time())# For filenames in the temp dir
+    temp_id_timestamp = str(get_current_unix_time())# For filenames in the temp dir
+    temp_id_hash = hash_file_data(download_url)# For filenames in the temp dir
+    temp_id = temp_id_timestamp+"."+temp_id_hash
 
     # Check that URL is not already saved
     video_page_row = sql_functions.check_if_media_url_in_DB(
@@ -80,11 +82,11 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
     time_of_retreival = get_current_unix_time()
 
     # Verify download worked
-    if command_result != 1:
-        logging.error("Command did not return 1, this means something went wrong.")
+    if command_result != 0:
+        logging.error("Command did not return 0, this means something went wrong.")
         logging.error("Failed to save media: "+repr(download_url))
         logging.error(repr(locals()))
-        #return {}
+        return {}
 
     # Read info JSON file
     expected_info_path = os.path.join(output_dir, temp_id+".info.json")

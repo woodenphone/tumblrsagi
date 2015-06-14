@@ -52,6 +52,7 @@ class twkr_posts(Base):
     post_type = sqlalchemy.Column(sqlalchemy.SmallInteger()) #
     source_url = sqlalchemy.Column(sqlalchemy.UnicodeText()) #
     timestamp = sqlalchemy.Column(sqlalchemy.BigInteger()) # timestamp of post as given by API
+    tags = sqlalchemy.Column(sqlalchemy.UnicodeText())# Comma seperated tags
 
 
 
