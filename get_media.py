@@ -101,7 +101,7 @@ def list_new_posts(session,max_rows):
     return post_dicts
 
 
-def process_all_posts_media(session,max_rows=1000):
+def process_all_posts_media(max_rows=1000):
     # Connect to DB
     session = sql_functions.connect_to_db()
     post_dicts = ["dummy"]
