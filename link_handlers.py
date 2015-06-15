@@ -311,6 +311,8 @@ def handle_links(session,post_dict):# TODO FIXME
 
         # -Image-
         # Imgur
+        if "www.dropbox.com/s/" in link:
+            logging.debug("Link is imgur: "+repr(link))
 
         # -Video-
         # Youtube

@@ -470,6 +470,10 @@ def handle_video_posts(session,post_dict):
         elif "creativity-online.com" in repr(post_dict["player"]):
             logging.debug("Post looks like a flash advertisment, fuck coding for that bullshit. skipping.")
             return {}
+        # Bandcamp? WHY
+        elif "bandcamp.com/EmbeddedPlayer" in repr(post_dict["player"]):
+            logging.debug("Post looks like a bandcamp gizmo that we can't easily code for. skipping.")
+            return {}
     # If no handler is applicable, stop for fixing
     logging.error("Unknown video type!")
     logging.error("locals(): "+repr(locals()))
