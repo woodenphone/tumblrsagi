@@ -199,6 +199,8 @@ def remove_tumblr_links(link_list):
         # Reject tumblr posts ex. "http://somescrub.tumblr.com/post/110535365780/joshy-gifs-8-bit-tits"
         if ".tumblr.com/post/" in link:
             continue
+        elif "" in link:
+            continue
         # If not rejected by any filter, keep the link
         wanted_links.append(link)
         continue
@@ -219,23 +221,25 @@ def handle_generic_link(session,link):
             # http://stackoverflow.com/questions/107405/how-do-you-send-a-head-http-request-in-python
             resp = requests.head(link)
             content_type = resp.headers["content-type"]
-        except ConnectionError, err:
+
+            logging.debug("content_type:"+repr(content_type))
+
+            # Skip if bad content-type header
+            ignored_content_types = [
+                "text/html",
+                ]
+            if content_type in ignored_content_types:
+                return []
+            else:
+                # Try saving if content-type is not a know bad value
+                media_id_list = download_image_links(session,[link])
+                return media_id_list
+
+        except requests.ConnectionError, err:
             logging.exception(err)
             logging.error("Connection error getting content-type!")
             logging.debug("(locals():"+repr(locals() ) )
-
-        logging.debug("content_type:"+repr(content_type))
-
-        # Skip if bad content-type header
-        ignored_content_types = [
-            "text/html",
-            ]
-        if content_type in ignored_content_types:
-            return []
-        else:
-            # Try saving if content-type is not a know bad value
-            media_id_list = download_image_links(session,[link])
-            return media_id_list
+            continue
     logging.error("Too many retries getting content-type, failing.")
     appendlist(
         link,
