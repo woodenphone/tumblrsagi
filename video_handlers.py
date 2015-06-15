@@ -466,6 +466,10 @@ def handle_video_posts(session,post_dict):
         elif "http://www.youtube.com" in repr(post_dict["player"]):
             logging.debug("Post looks like a dead youtube video? skipping video DL")
             return {}
+        # creativity-online.com - Ads
+        elif "creativity-online.com" in repr(post_dict["player"]):
+            logging.debug("Post looks like a flash advertisment, fuck coding for that bullshit. skipping.")
+            return {}
     # If no handler is applicable, stop for fixing
     logging.error("Unknown video type!")
     logging.error("locals(): "+repr(locals()))

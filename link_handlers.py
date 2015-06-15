@@ -199,7 +199,7 @@ def remove_tumblr_links(link_list):
         # Reject tumblr posts ex. "http://somescrub.tumblr.com/post/110535365780/joshy-gifs-8-bit-tits"
         if ".tumblr.com/post/" in link:
             continue
-        elif "" in link:
+        elif "//tmblr.co/" in link:
             continue
         # If not rejected by any filter, keep the link
         wanted_links.append(link)

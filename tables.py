@@ -37,6 +37,7 @@ class twkr_blogs(Base):
     user_thumbnail_64_media_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("media.media_id")) # Local media ID for user's thumbnail
     user_thumbnail_512_media_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("media.media_id")) # Local media ID for user's thumbnail
     background_image_media_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("media.media_id")) # Local media ID for user's background image
+    tags = sqlalchemy.Column(sqlalchemy.UnicodeText())# Comma seperated tags
 
 
 
