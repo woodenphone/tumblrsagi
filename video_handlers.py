@@ -462,6 +462,10 @@ def handle_video_posts(session,post_dict):
         elif "http://www.sembeo.com" in repr(post_dict["player"]):
             logging.debug("Post looks like an ad for sembeo? skipping video DL")
             return {}
+        # ?dead? youtube?
+        elif "http://www.youtube.com" in repr(post_dict["player"]):
+            logging.debug("Post looks like a dead youtube video? skipping video DL")
+            return {}
     # If no handler is applicable, stop for fixing
     logging.error("Unknown video type!")
     logging.error("locals(): "+repr(locals()))

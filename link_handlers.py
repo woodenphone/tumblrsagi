@@ -207,22 +207,42 @@ def remove_tumblr_links(link_list):
 
 def handle_generic_link(session,link):
     logging.debug("Genric handler")
-    # Get header to check filetype
-    # AnonTheCuck> you should make an HTTP Head request and check the file type to see if it is something we want (image, video) and if it is, then pull it
-    # http://stackoverflow.com/questions/107405/how-do-you-send-a-head-http-request-in-python
-    resp = requests.head(link)
-    content_type = resp.headers["content-type"]
-    logging.debug("content_type:"+repr(content_type))
-    # Skip if bad content-type header
-    ignored_content_types = [
-        "text/html",
-        ]
-    if content_type in ignored_content_types:
-        return []
-    else:
-        # Try saving if content-type is not a know bad value
-        media_id_list = download_image_links(session,[link])
-        return media_id_list
+    attempt_counter = 0
+    max_attempts = 10
+    while attempt_counter <= max_attempts:
+        attempt_counter += 1
+        if attempt_counter > 1:
+            logging.debug("Attempt "+repr(attempt_counter)+"to process link: "+repr(link))
+        # Get header to check filetype
+        try:
+            # AnonTheCuck> you should make an HTTP Head request and check the file type to see if it is something we want (image, video) and if it is, then pull it
+            # http://stackoverflow.com/questions/107405/how-do-you-send-a-head-http-request-in-python
+            resp = requests.head(link)
+            content_type = resp.headers["content-type"]
+        except ConnectionError, err:
+            logging.exception(err)
+            logging.error("Connection error getting content-type!")
+            logging.debug("(locals():"+repr(locals() ) )
+
+        logging.debug("content_type:"+repr(content_type))
+
+        # Skip if bad content-type header
+        ignored_content_types = [
+            "text/html",
+            ]
+        if content_type in ignored_content_types:
+            return []
+        else:
+            # Try saving if content-type is not a know bad value
+            media_id_list = download_image_links(session,[link])
+            return media_id_list
+    logging.error("Too many retries getting content-type, failing.")
+    appendlist(
+        link,
+        list_file_path=os.path.join("debug","link_handlers.handle_generic_link.failed.txt"),
+        initial_text="# handle_generic_link() failed.\n"
+        )
+    return []
 
 
 def handle_links(session,post_dict):# TODO FIXME
