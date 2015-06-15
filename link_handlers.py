@@ -269,7 +269,7 @@ def handle_links(session,post_dict):# TODO FIXME
             if dropbox_link_segment_search:
                 dropbox_link_segment = dropbox_link_segment_search.group(1)
                 dropbox_link = "https://dl.dropbox.com/s/"+dropbox_link_segment
-                logging.debug("Dropbox link:")+repr(dropbox_link)
+                logging.debug("Dropbox link:"+repr(dropbox_link))
                 media_id_list += download_image_links(session,[dropbox_link])
                 continue
             else:
