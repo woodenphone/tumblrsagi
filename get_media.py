@@ -48,6 +48,7 @@ def process_one_new_posts_media(post_row):
         # Handle links for the post
         media_id_list = save_media(session,raw_post_dict)
         logging.debug("media_id_list"": "+repr(media_id_list))
+        session.commit()# Media can be safely persisted without the post
 
         # Insert row to posts tables
         sql_functions.insert_one_post(
@@ -56,19 +57,23 @@ def process_one_new_posts_media(post_row):
                 blog_id = blog_id,
                 media_id_list = media_id_list
                 )
-        session.commit()
 
         # Modify origin row to show media has been processed
         logging.debug("About to update RawPosts")
         update_statement = update(RawPosts).where(RawPosts.primary_key == post_primary_key).\
             values(media_processed = True)
         session.execute(update_statement)
+
         session.commit()
 
         logging.debug("Finished processing new post media")
         return
-    except Exception, e:# Log exceptions and pass them on
+
+    # Log exceptions and pass them on
+    # Also rollback
+    except Exception, e:
         logging.critical("Unhandled exception in save_blog()!")
+        session.rollback()
         logging.exception(e)
         raise
     return

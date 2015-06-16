@@ -38,6 +38,7 @@ class twkr_blogs(Base):
     user_thumbnail_512_media_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("media.media_id")) # Local media ID for user's thumbnail
     background_image_media_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("media.media_id")) # Local media ID for user's background image
     tags = sqlalchemy.Column(sqlalchemy.UnicodeText())# Comma seperated tags
+    reasons_added = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB)# Why was this added? Populated initially by URLs in todo list ["url","URL",..]
 
 
 

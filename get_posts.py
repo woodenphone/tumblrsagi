@@ -17,14 +17,15 @@ import sql_functions# Database interaction
 from media_handlers import *# Media finding, extractiong, ect
 from tables import *# Table definitions
 import config # Settings and configuration
-
+import blog_themes# blog themes
 
 class tumblr_blog:
     def __init__(self,session,consumer_key,blog_url=None,blog_username=None):
         # Store args for later and initialise variables
         self.blog_exists = None
         self.consumer_key = consumer_key
-        self.blog_url = blog_url
+        self.raw_blog_url = blog_url
+        self.blog_url = clean_blog_url(self.raw_blog_url)
         self.blog_username = blog_username
         self.session = session
         self.posts_list = []# List of post dicts
@@ -41,13 +42,16 @@ class tumblr_blog:
 
         # Make sure user is in blogs DB and get blog_id integer
         self.blog_id = sql_functions.add_blog(self.session,self.sanitized_blog_url)
-        # Add info to blogs table
-        if self.blog_exists:
-            self.update_blog_row()
-        return
 
-    def clean_blog_url(self,raw_blog_url):
-        return raw_blog_url
+        if self.blog_exists:
+            # Add info to blogs table
+            self.update_blog_row()
+            # Update blog theme
+            blog_themes.update_blog_theme(
+                session=self.session,
+                blog_url=self.blog_url
+                )
+        return
 
     def load_info(self):
         """Load data from API /info"""
@@ -82,7 +86,22 @@ class tumblr_blog:
     def update_blog_row(self):
         """Update this blog's row in the blogs table"""
         logging.debug("About to update blog metadata for: "+repr(self.blog_url))
-        update_statement = sqlalchemy.update(twkr_blogs).where(twkr_blogs.blog_id == self.blog_id).\
+        # Load row from blogs table so we can compare reason info
+        select_query = sqlalchemy.select([twkr_blogs]).\
+                where(twkr_blogs.blog_id == self.blog_id)
+        blogs_rows = self.session.execute(select_query)
+        blogs_row = blogs_rows.fetchone()
+
+        # Make sure the URL we used to start this is in the reasons
+        reasons_added = blogs_row["reasons_added"]
+        if type(reasons_added) is type(None):
+            reasons_added = []
+        if self.raw_blog_url not in reasons_added:
+            reasons_added += [self.raw_blog_url]
+
+        # Update data in the row
+        update_statement = sqlalchemy.update(twkr_blogs).\
+            where(twkr_blogs.blog_id == self.blog_id).\
             values(
                 blog_username = self.blog_username,
                 title = self.info_title,
@@ -91,6 +110,8 @@ class tumblr_blog:
                 name = self.info_name,
                 description = self.info_description,
                 ask = self.info_ask,
+                alive = self.blog_exists,
+                reasons_added = reasons_added
                 )
         self.session.execute(update_statement)
         self.session.commit()

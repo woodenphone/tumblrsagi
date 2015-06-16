@@ -447,6 +447,11 @@ def clean_blog_url(raw_url):
         return ""
 
 
+def clean_list_line(line):
+    stripped_url = line.strip("\r\n\t ")
+    return stripped_url
+
+
 def import_blog_list(list_file_path="tumblr_todo_list.txt"):
     """Import (open and parse) list file of blogs to save
     return a list of api-friendly blog url strings"""
@@ -473,7 +478,7 @@ def import_blog_list(list_file_path="tumblr_todo_list.txt"):
         if line[0] in ["#", "\r", "\n"]:
             continue
         else:
-            cleaned_url = clean_blog_url(line)
+            cleaned_url = clean_list_line(line)
             if cleaned_url:
                 blog_urls.append(cleaned_url+u"")
             else:

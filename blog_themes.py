@@ -159,7 +159,7 @@ def update_blog_header_image(session,blog_url):
 
 
 def update_blog_theme(session,blog_url):
-    """blah"""
+    """Update all theme attributes for a blog"""
     logging.debug("update_blog_theme blog_url:"+repr(blog_url))
     # Update avatar for this blog
     update_blog_avatar(session,blog_url)

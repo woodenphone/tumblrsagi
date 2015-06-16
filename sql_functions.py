@@ -482,8 +482,6 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
             twkr_post_video_row = twkr_post_video(**twkr_post_video_dict)
             session.add(twkr_post_video_row)
 
-        # Commit once ALL rows for this post are input
-        session.commit()
         return True
     except:# Rollback if something is fucked up
         session.rollback()
