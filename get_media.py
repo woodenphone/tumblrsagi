@@ -83,7 +83,7 @@ def list_new_posts(session,max_rows):
         limit(max_rows)
     #logging.debug("posts_query"": "+repr(posts_query))
     post_rows = session.execute(posts_query)
-    logging.debug("post_rows"": "+repr(post_rows))
+    #logging.debug("post_rows"": "+repr(post_rows))
 
     # List rows to grab
     logging.debug("Getting list of rows")
@@ -94,10 +94,10 @@ def list_new_posts(session,max_rows):
         if row_list_counter > max_rows:
             break
         if post_row:
-            logging.debug("post_row: "+repr(post_row))
+            #logging.debug("post_row: "+repr(post_row))
             post_dicts.append(post_row)
         continue
-    logging.debug("post_dicts: "+repr(post_dicts))
+    #logging.debug("post_dicts: "+repr(post_dicts))
     return post_dicts
 
 

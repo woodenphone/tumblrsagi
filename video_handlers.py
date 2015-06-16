@@ -368,8 +368,6 @@ def handle_instagram_videos(session,post_dict):
     return media_id_list
 
 
-
-
 def handle_kickstarter_videos(session,post_dict):
     """Download kickstarter videos given by the videos section fo the API"""
     logging.debug("Processing kickstarter video")
@@ -402,11 +400,6 @@ def handle_kickstarter_videos(session,post_dict):
 
     logging.debug("Finished downloading kickstarter embeds")
     return media_id_list
-
-
-
-
-
 
 
 def handle_video_posts(session,post_dict):
@@ -477,7 +470,7 @@ def handle_video_posts(session,post_dict):
     # If no handler is applicable, stop for fixing
     logging.error("Unknown video type!")
     logging.error("locals(): "+repr(locals()))
-    logging.error("""post_dict["player"]: """+repr(post_dict["player"]))
+    logging.error("""post_dict: """+repr(post_dict))
     assert(False)# Not implimented
     return {}
 
