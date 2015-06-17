@@ -220,6 +220,10 @@ def handle_generic_link(session,link):
             # AnonTheCuck> you should make an HTTP Head request and check the file type to see if it is something we want (image, video) and if it is, then pull it
             # http://stackoverflow.com/questions/107405/how-do-you-send-a-head-http-request-in-python
             resp = requests.head(link)
+            if "content-type" not in resp.headers:
+                logging.error("handle_generic_link() No content-type header!")
+                logging.debug("handle_generic_link() locals()"+repr(locals))
+                continue
             content_type = resp.headers["content-type"]
 
             logging.debug("content_type:"+repr(content_type))
