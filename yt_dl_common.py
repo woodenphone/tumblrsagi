@@ -70,7 +70,7 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
     output_arg = "-o"
     info_json_arg = "--write-info-json"
     description_arg ="--write-annotations"
-    max_filesise_arg = "--max-filesize"+config.youtube_dl_max_filesize
+    max_filesise_arg = "--max-filesize"#+config.youtube_dl_max_filesize
     output_dir = os.path.join(config.root_path,"temp")
     output_template = os.path.join(output_dir, temp_id+".%(ext)s")# CHECK THIS! Will multiple videos in a link be an issue?
 
@@ -79,11 +79,10 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
         program_path,
         ignore_errors,
         safe_filenames,
-        max_filesise_arg,
+        max_filesise_arg, config.youtube_dl_max_filesize,
         info_json_arg,
         description_arg,
-        output_arg,
-        output_template,
+        output_arg, output_template,
         download_url
         ]
     logging.debug("command: "+repr(command))

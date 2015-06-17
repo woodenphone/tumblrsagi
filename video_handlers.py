@@ -446,7 +446,7 @@ def handle_coub_videos(session,post_dict):
             if embed_url_search:
                 video_id = embed_url_search.group(1)
                 video_url = "http://coub.com/view/"+video_id
-                video_urls.append(embed_url)
+                video_urls.append(video_url)
         continue
     logging.debug("handle_coub_videos() video_urls: "+repr(video_urls))
 
@@ -457,6 +457,38 @@ def handle_coub_videos(session,post_dict):
         extractor_used="video_handlers.handle_coub_videos()",
         )
     logging.debug("Finished downloading coub embeds")
+    return media_id_list
+
+
+def handle_liveleak_videos(session,post_dict):
+    """Download liveleak videos given by the videos section fo the API"""
+    logging.debug("Processing liveleak video")
+    # Extract video links from post dict
+    video_urls = []
+    video_items = post_dict["player"]
+    for video_item in video_items:
+        embed_code = video_item["embed_code"]
+        # u'embed_code': u'<iframe width="250" height="140" src="http://www.liveleak.com/ll_embed?f=01b03505a8a6" frameborder="0" allowfullscreen></iframe>',
+        # http://www.liveleak.com/ll_embed?f=01b03505a8a6
+        if embed_code:
+            # Process links so YT-DL can understand them
+            logging.debug("handle_liveleak_videos() embed_code: "+repr(embed_code))
+            embed_url_regex ="""liveleak.com/ll_embed\?f=(\w+)"""
+            embed_url_search = re.search(embed_url_regex, embed_code, re.IGNORECASE|re.DOTALL)
+            if embed_url_search:
+                video_id = embed_url_search.group(1)
+                video_url = "http://www.liveleak.com/ll_embed?f="+video_id
+                video_urls.append(video_url)
+        continue
+    logging.debug("handle_liveleak_videos() video_urls: "+repr(video_urls))
+
+    # Download videos if there are any
+    media_id_list = run_yt_dl_multiple(
+        session = session,
+        download_urls = video_urls,
+        extractor_used="video_handlers.handle_liveleak_videos()",
+        )
+    logging.debug("Finished downloading liveleak embeds")
     return media_id_list
 
 
@@ -545,6 +577,10 @@ def handle_video_posts(session,post_dict):
         elif "www.jest.com" in repr(post_dict["player"]):
             logging.debug("Post looks like a jest.com thing, skipping.")
             return []
+        # Liveleak
+        elif "liveleak.com" in repr(post_dict["player"]):
+            logging.debug("Post looks like a liveleak embed..")
+            return handle_liveleak_videos(session,post_dict)
     # If no handler is applicable, stop for fixing
     logging.error("Unknown video type!")
     logging.error("locals(): "+repr(locals()))
@@ -625,6 +661,11 @@ def debug():
     coub_post_dict = {u'reblog_key': u'q3pdA63K', u'reblog': {u'comment': u'<blockquote>\n<p><em>Artorias Bowling</em></p>\n</blockquote>', u'tree_html': u''}, u'thumbnail_width': 540, u'player': [{u'width': 250, u'embed_code': u'<iframe src="//coub.com/embed/3rj9f?autoplay=true&maxheight=720&maxwidth=540&muted=true" allowfullscreen="true" frameborder="0" autoplay="true" width="250" height="140"></iframe>'}, {u'width': 400, u'embed_code': u'<iframe src="//coub.com/embed/3rj9f?autoplay=true&maxheight=720&maxwidth=540&muted=true" allowfullscreen="true" frameborder="0" autoplay="true" width="400" height="224"></iframe>'}, {u'width': 500, u'embed_code': u'<iframe src="//coub.com/embed/3rj9f?autoplay=true&maxheight=720&maxwidth=540&muted=true" allowfullscreen="true" frameborder="0" autoplay="true" width="500" height="280"></iframe>'}], u'id': 101082217532L, u'highlighted': [], u'source_title': u'lordranandbeyond', u'format': u'html', u'post_url': u'http://eissypone.tumblr.com/post/101082217532/artorias-bowling', u'state': u'published', u'short_url': u'http://tmblr.co/ZHhs0n1U8_3my', u'html5_capable': False, u'type': u'video', u'tags': [], u'timestamp': 1414412701, u'note_count': 196, u'video_type': u'coub', u'source_url': u'http://lordranandbeyond.tumblr.com/post/101061834450/artorias-bowling', u'trail': [{u'blog': {u'theme': {u'title_font_weight': u'bold', u'title_color': u'#444444', u'header_bounds': 0, u'background_color': u'#FAFAFA', u'link_color': u'#529ECC', u'header_image_focused': u'http://assets.tumblr.com/images/default_header/optica_pattern_11.png?_v=4275fa0865b78225d79970023dde05a1', u'show_description': True, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'square', u'show_avatar': True, u'title_font': u'Gibson', u'header_image': u'http://assets.tumblr.com/images/default_header/optica_pattern_11.png?_v=4275fa0865b78225d79970023dde05a1', u'header_image_scaled': u'http://assets.tumblr.com/images/default_header/optica_pattern_11.png?_v=4275fa0865b78225d79970023dde05a1'}, u'name': u'eissypone'}, u'content': u'<blockquote>\n<p><em>Artorias Bowling</em></p>\n</blockquote>', u'post': {u'id': u'101082217532'}, u'content_raw': u'<blockquote>\r\n<p><em>Artorias Bowling</em></p>\r\n</blockquote>\r\n<p></p>', u'is_current_item': True}], u'date': u'2014-10-27 12:25:01 GMT', u'thumbnail_height': 303, u'permalink_url': u'http://coub.com/view/3rj9f', u'slug': u'artorias-bowling', u'blog_name': u'eissypone', u'caption': u'<blockquote>\n<p><em>Artorias Bowling</em></p>\n</blockquote>', u'thumbnail_url': u'https://coub.com/assets-proxy?url=http://ell.akamai.coub.com/get/b13/p/coub/simple/cw_tumblr_pic/3bc739152fe/ef8972d4689eae22aebda/1413989827_62qolm_tumblr-img-generator-res.jpg'}
     #coub_result = handle_video_posts(session,coub_post_dict)
     #logging.debug("coub_result:"+repr(coub_result))
+
+    # liveleak
+    liveleak_post_dict = {u'reblog_key': u'AmAhWGkj', u'reblog': {u'comment': u'<p>&#65288;*&acute;&#9661;&#65344;*&#65289;</p>', u'tree_html': u''}, u'thumbnail_width': 0, u'player': [{u'width': 250, u'embed_code': u'<iframe width="250" height="140" src="http://www.liveleak.com/ll_embed?f=01b03505a8a6" frameborder="0" allowfullscreen></iframe>'}, {u'width': 400, u'embed_code': u'<iframe width="400" height="225" src="http://www.liveleak.com/ll_embed?f=01b03505a8a6" frameborder="0" allowfullscreen></iframe>'}, {u'width': 500, u'embed_code': u'<iframe width="500" height="281" src="http://www.liveleak.com/ll_embed?f=01b03505a8a6" frameborder="0" allowfullscreen></iframe>'}], u'id': 22162041589L, u'highlighted': [], u'format': u'html', u'post_url': u'http://sukebepanda.tumblr.com/post/22162041589', u'state': u'published', u'short_url': u'http://tmblr.co/ZHmWxvKezUhr', u'html5_capable': False, u'type': u'video', u'tags': [], u'timestamp': 1335834624, u'note_count': 1, u'video_type': u'unknown', u'trail': [{u'content': u'<p>\uff08*\xb4\u25bd\uff40*\uff09</p>', u'content_raw': u'<p>&#65288;*&acute;&#9661;&#65344;*&#65289;</p>', u'is_current_item': True, u'blog': {u'theme': {u'title_font_weight': u'bold', u'title_color': u'#444444', u'header_bounds': 0, u'background_color': u'#F6F6F6', u'link_color': u'#529ECC', u'header_image_focused': u'http://assets.tumblr.com/images/default_header/optica_pattern_02.png?_v=b976ee00195b1b7806c94ae285ca46a7', u'show_description': True, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'square', u'show_avatar': True, u'title_font': u'Helvetica Neue', u'header_image': u'http://assets.tumblr.com/images/default_header/optica_pattern_02.png?_v=b976ee00195b1b7806c94ae285ca46a7', u'header_image_scaled': u'http://assets.tumblr.com/images/default_header/optica_pattern_02.png?_v=b976ee00195b1b7806c94ae285ca46a7'}, u'name': u'sukebepanda'}, u'is_root_item': True, u'post': {u'id': u'22162041589'}}], u'date': u'2012-05-01 01:10:24 GMT', u'thumbnail_height': 0, u'slug': u'', u'blog_name': u'sukebepanda', u'caption': u'<p>\uff08*\xb4\u25bd\uff40*\uff09</p>', u'thumbnail_url': u''}
+    liveleak_result = handle_video_posts(session,liveleak_post_dict)
+    logging.debug("liveleak_result:"+repr(liveleak_result))
 
     return
 
