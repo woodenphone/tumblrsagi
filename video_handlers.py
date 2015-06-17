@@ -454,6 +454,10 @@ def handle_video_posts(session,post_dict):
     elif post_dict["video_type"] == u"kickstarter":
         logging.debug("Post is kickstarter video")
         return handle_kickstarter_videos(session,post_dict)
+    # collegehumor
+    elif post_dict["video_type"] == u"collegehumor":
+        logging.debug("Post is collegehumor video, not saving video.")
+        return []
     # "unknown" - special cases?
     elif (post_dict["video_type"] == u"unknown"):
         logging.warning("API reports video type as unknown, handlers may be inappropriate or absent.")
