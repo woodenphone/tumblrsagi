@@ -154,6 +154,7 @@ def handle_tumblr_audio(session,post_dict):
     if hash_check_row_dict:
         media_already_saved = True
         media_id = hash_check_row_dict["media_id"]
+        existing_filename = hash_check_row_dict["local_filename"]
     else:
         logging.debug("handle_tumblr_audio() Hash is already in DB, no need to save file.")
     if media_already_saved:
