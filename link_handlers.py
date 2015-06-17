@@ -23,7 +23,7 @@ import sql_functions
 import config # User settings
 from image_handlers import *
 import yt_dl_common
-
+import imgur
 
 
 
