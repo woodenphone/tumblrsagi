@@ -526,7 +526,7 @@ def handle_video_posts(session,post_dict):
             logging.debug("Post looks like an ad for sembeo? skipping video DL")
             return []
         # ?dead? youtube?
-        elif "http://www.youtube.com" in repr(post_dict["player"]):
+        elif "youtube.com" in repr(post_dict["player"]):
             logging.debug("Post looks like a dead youtube video? skipping video DL")
             return []
         # creativity-online.com - Ads
