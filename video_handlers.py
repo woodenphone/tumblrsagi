@@ -46,10 +46,8 @@ def handle_youtube_video(session,post_dict):# NEW TABLES
     video_dicts = []# Init early so skipped videos can still return results
     logging.debug("Processing youtube video")
     video_page = post_dict["post_url"]
-    post_id = str(post_dict["id"])
     media_id_list = []
     logging.debug("video_page: "+repr(video_page))
-    logging.debug("post_id: "+repr(post_id))
 
     # Extract youtube links from video field
     # ex. https://www.youtube.com/embed/lGIEmH3BoyA
@@ -102,7 +100,6 @@ def handle_vimeo_videos(session,post_dict):# New table
     """Handle downloading of vimeo videos
     https://github.com/rg3/youtube-dl/blob/master/docs/supportedsites.md"""
     logging.debug("Processing vimeo videos")
-    post_id = str(post_dict["id"])
     # Extract video links from post dict
     video_items = post_dict["player"]
     vimeo_urls = []
@@ -134,8 +131,6 @@ def handle_vimeo_videos(session,post_dict):# New table
 def handle_imgur_videos(session,post_dict):# NEW TABLES
     """This is where I plan to put code for imgur videos"""
     logging.debug("Processing imgur videos")
-    post_id = str(post_dict["id"])
-
     # Extract video links from post dict
     imgur_urls = []
     video_items = post_dict["player"]
@@ -169,8 +164,6 @@ def handle_vine_videos(session,post_dict):# New table
     """Handle downloading of vine videos
     https://github.com/rg3/youtube-dl/blob/master/docs/supportedsites.md"""
     logging.debug("Processing vine videos")
-    post_id = str(post_dict["id"])
-
     # Extract video links from post dict
     video_items = post_dict["player"]
     vine_urls = []
@@ -227,9 +220,7 @@ def handle_tumblr_videos(session,post_dict):
     https://github.com/rg3/youtube-dl/"""
     logging.debug("Processing tumblr video")
     video_page = post_dict["post_url"]
-    post_id = str(post_dict["id"])
     logging.debug("video_page: "+repr(video_page))
-    logging.debug("post_id: "+repr(post_id))
 
     download_urls = [video_page]
     # Download videos if there are any
@@ -245,8 +236,6 @@ def handle_tumblr_videos(session,post_dict):
 def handle_livestream_videos(session,post_dict):
     """This is where I plan to put code for imgur videos"""
     logging.debug("Processing livestream video")
-    post_id = str(post_dict["id"])
-
     # Extract video links from post dict
     livestream_urls = []
     video_items = post_dict["player"]
@@ -279,8 +268,6 @@ def handle_livestream_videos(session,post_dict):
 def handle_yahoo_videos(session,post_dict):
     """Download yahoo videos given by the videos section fo the API"""
     logging.debug("Processing yahoo video")
-    post_id = str(post_dict["id"])
-
     # Extract video links from post dict
     yahoo_urls = []
     video_items = post_dict["player"]
@@ -313,8 +300,6 @@ def handle_yahoo_videos(session,post_dict):
 def handle_dailymotion_videos(session,post_dict):
     """Download dailymotion videos given by the videos section fo the API"""
     logging.debug("Processing dailymotion video")
-    post_id = str(post_dict["id"])
-
     # Extract video links from post dict
     video_urls = []
     video_items = post_dict["player"]
@@ -347,10 +332,7 @@ def handle_dailymotion_videos(session,post_dict):
 def handle_instagram_videos(session,post_dict):
     """Download instagram videos given by the videos section fo the API"""
     logging.debug("Processing instagram video")
-    post_id = str(post_dict["id"])
-
     # Extract video links from post dict
-
     if "instagram.com" in post_dict["permalink_url"]:
         video_urls = [ post_dict["permalink_url"] ]
     else:
@@ -371,8 +353,6 @@ def handle_instagram_videos(session,post_dict):
 def handle_kickstarter_videos(session,post_dict):
     """Download kickstarter videos given by the videos section fo the API"""
     logging.debug("Processing kickstarter video")
-    post_id = str(post_dict["id"])
-
     # Extract video links from post dict
     video_urls = []
     video_items = post_dict["player"]
@@ -414,6 +394,37 @@ def handle_dropbox_embed(session,post_dict):
             return link_handlers.handle_dropbox_link(session,link)
     # If no links match return empty list
     return []
+
+
+def handle_blip_videos(session,post_dict):
+    """Download blip videos given by the videos section fo the API"""
+    logging.debug("Processing blip video")
+    # Extract video links from post dict
+    video_urls = []
+    video_items = post_dict["player"]
+    for video_item in video_items:
+        embed_code = video_item["embed_code"]
+        # u'embed_code': u'<iframe src="https://blip.tv/play/iIEHgv_aSAI.html?p=1" width="250" height="203" frameborder="0" allowfullscreen></iframe><embed type="application/x-shockwave-flash" src="http://a.blip.tv/api.swf#iIEHgv_aSAI" style="display:none"></embed>',
+        # https://blip.tv/play/iIEHgv_aSAI.html
+        if embed_code:
+            # Process links so YT-DL can understand them
+            logging.debug("handle_blip_videos() embed_code: "+repr(embed_code))
+            embed_url_regex ="""(https:?//blip.tv/play/\w+.html)"""
+            embed_url_search = re.search(embed_url_regex, embed_code, re.IGNORECASE|re.DOTALL)
+            if embed_url_search:
+                embed_url = embed_url_search.group(1)
+                video_urls.append(embed_url)
+        continue
+    logging.debug("handle_blip_videos() video_urls: "+repr(video_urls))
+
+    # Download videos if there are any
+    media_id_list = run_yt_dl_multiple(
+        session = session,
+        download_urls = video_urls,
+        extractor_used="video_handlers.handle_blip_videos()",
+        )
+    logging.debug("Finished downloading blip embeds")
+    return media_id_list
 
 
 def handle_video_posts(session,post_dict):
@@ -458,6 +469,10 @@ def handle_video_posts(session,post_dict):
     elif post_dict["video_type"] == u"collegehumor":
         logging.debug("Post is collegehumor video, not saving video.")
         return []
+    # blip
+    elif post_dict["video_type"] == u"blip":
+        logging.debug("Post is blip video")
+        return handle_blip_videos(session,post_dict)
     # "unknown" - special cases?
     elif (post_dict["video_type"] == u"unknown"):
         logging.warning("API reports video type as unknown, handlers may be inappropriate or absent.")
@@ -554,6 +569,11 @@ def debug():
     dropbox_flash_post_dict = {u'reblog_key': u'217zx1Ox', u'reblog': {u'comment': u'<p>Silly. (It&rsquo;s a game, Go to the post to play it)</p>', u'tree_html': u'<p><a class="tumblr_blog" href="http://stoicfive.tumblr.com/post/95173128374/a-little-game-prototype-based-off-this-one-mock-up" target="_blank">stoicfive</a>:</p><blockquote>\n<p>A little game prototype based off <a href="http://archive.heinessen.com/boards/mlp/img/0193/11/1408317408319.webm" target="_blank">this</a> one mock-up I keep seeing too often.</p>\n<p>Like the reference material you can only boop and have a slugfest with the enemy npcs in this version. (But it\u2019s ready to be expanded on)</p>\n<p>As there\u2019s nothing else to build off, winning just advances you by 1 level, losing sets you back to level 5.</p>\n<p>I took a guess at how the mock-up\u2019s system might have worked. It seems like as your captcha meter fills, you get extra commands to execute before the reload timer ticks down and begins posting all the commands in queue. That would allow for combining or combos.</p>\n<p>Music is <a href="https://www.youtube.com/watch?v=CsG9HiKcPM0" target="_blank">Boop</a><br/>Sounds effects fudged in sfxr<br/>Victory fanfare is from MaL:SS? Ran through GXSCC</p>\n</blockquote>'}, u'thumbnail_width': 0, u'player': [{u'width': 250, u'embed_code': u'<object width="250" height="250"><param name="movie" value="https://dl.dropboxusercontent.com/s/cdxam7r5iwv3ax6/test.swf" /><param name="allowFullScreen" value="true" /><param name="allowscriptaccess" value="always" /><embed src="https://dl.dropboxusercontent.com/s/cdxam7r5iwv3ax6/test.swf" width="250" height="250"></embed></object>'}, {u'width': 400, u'embed_code': u'<object width="400" height="400"><param name="movie" value="https://dl.dropboxusercontent.com/s/cdxam7r5iwv3ax6/test.swf" /><param name="allowFullScreen" value="true" /><param name="allowscriptaccess" value="always" /><embed src="https://dl.dropboxusercontent.com/s/cdxam7r5iwv3ax6/test.swf" width="400" height="400"></embed></object>'}, {u'width': 500, u'embed_code': u'<object width="500" height="500"><param name="movie" value="https://dl.dropboxusercontent.com/s/cdxam7r5iwv3ax6/test.swf" /><param name="allowFullScreen" value="true" /><param name="allowscriptaccess" value="always" /><embed src="https://dl.dropboxusercontent.com/s/cdxam7r5iwv3ax6/test.swf" width="500" height="500"></embed></object>'}], u'id': 95175094419L, u'highlighted': [], u'format': u'html', u'post_url': u'http://zippysqrl.tumblr.com/post/95175094419/stoicfive-a-little-game-prototype-based-off', u'state': u'published', u'short_url': u'http://tmblr.co/ZSpV2v1OeuB2J', u'html5_capable': False, u'type': u'video', u'tags': [u'MLPGame', u'reblog'], u'timestamp': 1408435680, u'note_count': 91, u'video_type': u'unknown', u'trail': [{u'blog': {u'theme': {u'title_font_weight': u'bold', u'title_color': u'#444444', u'header_bounds': 0, u'background_color': u'#FAFAFA', u'link_color': u'#529ECC', u'header_image_focused': u'http://assets.tumblr.com/images/default_header/optica_pattern_01.png?_v=f67ca5ac5d1c4a0526964674cb5a0605', u'show_description': True, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'square', u'show_avatar': True, u'title_font': u'Gibson', u'header_image': u'http://assets.tumblr.com/images/default_header/optica_pattern_01.png?_v=f67ca5ac5d1c4a0526964674cb5a0605', u'header_image_scaled': u'http://assets.tumblr.com/images/default_header/optica_pattern_01.png?_v=f67ca5ac5d1c4a0526964674cb5a0605'}, u'name': u'stoicfive'}, u'content': u'<p>A little game prototype based off <a href="http://archive.heinessen.com/boards/mlp/img/0193/11/1408317408319.webm" target="_blank">this</a> one mock-up I keep seeing too often.</p>\n<p>Like the reference material you can only boop and have a slugfest with the enemy npcs in this version. (But it\u2019s ready to be expanded on)</p>\n<p>As there\u2019s nothing else to build off, winning just advances you by 1 level, losing sets you back to level 5.</p>\n<p>I took a guess at how the mock-up\u2019s system might have worked. It seems like as your captcha meter fills, you get extra commands to execute before the reload timer ticks down and begins posting all the commands in queue. That would allow for combining or combos.</p>\n<p>Music is <a href="https://www.youtube.com/watch?v=CsG9HiKcPM0" target="_blank">Boop</a><br>Sounds effects fudged in sfxr<br>Victory fanfare is from MaL:SS? Ran through GXSCC</p>', u'post': {u'id': u'95173128374'}, u'is_root_item': True}, {u'blog': {u'theme': {u'title_font_weight': u'bold', u'header_full_height': 810, u'title_color': u'#444444', u'header_bounds': u'72,1183,737,0', u'background_color': u'#F6F6F6', u'link_color': u'#529ECC', u'header_image_focused': u'http://static.tumblr.com/310beb53e5f385bc79d5017c31fd655a/3uessne/SeCn65nho/tumblr_static_tumblr_static_80gai8e3d7s484cko0sos4s40_focused_v3.png', u'show_description': True, u'header_full_width': 1183, u'header_focus_width': 1183, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'circle', u'show_avatar': True, u'header_focus_height': 665, u'title_font': u'Helvetica Neue', u'header_image': u'http://static.tumblr.com/310beb53e5f385bc79d5017c31fd655a/3uessne/SGLn65nhm/tumblr_static_80gai8e3d7s484cko0sos4s40.png', u'header_image_scaled': u'http://static.tumblr.com/310beb53e5f385bc79d5017c31fd655a/3uessne/SGLn65nhm/tumblr_static_80gai8e3d7s484cko0sos4s40_2048_v2.png'}, u'name': u'zippysqrl'}, u'content': u'<p>Silly. (It\u2019s a game, Go to the post to play it)</p>', u'post': {u'id': u'95175094419'}, u'content_raw': u"<p>Silly. (It's a game, Go to the post to play it)</p>", u'is_current_item': True}], u'date': u'2014-08-19 08:08:00 GMT', u'thumbnail_height': 0, u'slug': u'stoicfive-a-little-game-prototype-based-off', u'blog_name': u'zippysqrl', u'caption': u'<p><a class="tumblr_blog" href="http://stoicfive.tumblr.com/post/95173128374/a-little-game-prototype-based-off-this-one-mock-up" target="_blank">stoicfive</a>:</p>\n<blockquote>\n<p>A little game prototype based off <a href="http://archive.heinessen.com/boards/mlp/img/0193/11/1408317408319.webm" target="_blank">this</a> one mock-up I keep seeing too often.</p>\n<p>Like the reference material you can only boop and have a slugfest with the enemy npcs in this version. (But it\u2019s ready to be expanded on)</p>\n<p>As there\u2019s nothing else to build off, winning just advances you by 1 level, losing sets you back to level 5.</p>\n<p>I took a guess at how the mock-up\u2019s system might have worked. It seems like as your captcha meter fills, you get extra commands to execute before the reload timer ticks down and begins posting all the commands in queue. That would allow for combining or combos.</p>\n<p>Music is <a href="https://www.youtube.com/watch?v=CsG9HiKcPM0" target="_blank">Boop</a><br/>Sounds effects fudged in sfxr<br/>Victory fanfare is from MaL:SS? Ran through GXSCC</p>\n</blockquote>\n<p>Silly. (It&rsquo;s a game, Go to the post to play it)</p>', u'thumbnail_url': u''}
     dropbox_flash_result = handle_video_posts(session,dropbox_flash_post_dict)
     logging.info("dropbox_flash_result:"+repr(dropbox_flash_result))
+
+    # blip
+    blip_post_dict = {u'reblog_key': u'2AdxssOH', u'reblog': {u'comment': u'<p>Retsupurae - The Most Shameful Thing in the World - The Retsupurae Archive on Blip</p>\n<p>LIFE IS SUFFERING</p>', u'tree_html': u''}, u'thumbnail_width': 480, u'player': [{u'width': 250, u'embed_code': u'<iframe src="https://blip.tv/play/iIEHgv_aSAI.html?p=1" width="250" height="203" frameborder="0" allowfullscreen></iframe><embed type="application/x-shockwave-flash" src="http://a.blip.tv/api.swf#iIEHgv_aSAI" style="display:none"></embed>'}, {u'width': 400, u'embed_code': u'<iframe src="https://blip.tv/play/iIEHgv_aSAI.html?p=1" width="400" height="325" frameborder="0" allowfullscreen></iframe><embed type="application/x-shockwave-flash" src="http://a.blip.tv/api.swf#iIEHgv_aSAI" style="display:none"></embed>'}, {u'width': 500, u'embed_code': u'<iframe src="https://blip.tv/play/iIEHgv_aSAI.html?p=1" width="500" height="406" frameborder="0" allowfullscreen></iframe><embed type="application/x-shockwave-flash" src="http://a.blip.tv/api.swf#iIEHgv_aSAI" style="display:none"></embed>'}], u'id': 29958821420L, u'highlighted': [], u'source_title': u'blip.tv', u'format': u'html', u'post_url': u'http://rapidstrike.tumblr.com/post/29958821420/retsupurae-the-most-shameful-thing-in-the-world', u'state': u'published', u'short_url': u'http://tmblr.co/Zf2prwRvhrOi', u'html5_capable': True, u'type': u'video', u'tags': [], u'timestamp': 1345630795, u'note_count': 0, u'video_type': u'blip', u'source_url': u'http://blip.tv/players/episode/iIEHgv_aSAI', u'trail': [{u'content': u'<p>Retsupurae - The Most Shameful Thing in the World - The Retsupurae Archive on Blip</p>\n<p>LIFE IS SUFFERING</p>', u'content_raw': u'<p>Retsupurae - The Most Shameful Thing in the World - The Retsupurae Archive on Blip</p>\r\n<p>LIFE IS SUFFERING</p>', u'is_current_item': True, u'blog': {u'theme': {u'title_font_weight': u'bold', u'header_full_height': 2000, u'title_color': u'#444444', u'header_bounds': u'644,2000,1769,0', u'background_color': u'#FAFAFA', u'link_color': u'#529ECC', u'header_image_focused': u'http://static.tumblr.com/f422cfd10f999ee477482cb90bbd268d/9kxvsrn/N1Mn8uarc/tumblr_static_tumblr_static_1nejsfhjccpww444c4wo8sk8c_focused_v3.jpg', u'show_description': True, u'header_full_width': 2000, u'header_focus_width': 2000, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'square', u'show_avatar': True, u'header_focus_height': 1125, u'title_font': u'Gibson', u'header_image': u'http://static.tumblr.com/22ebfa39543f2494741f8a0b626fb5a4/9kxvsrn/XbGn8uar6/tumblr_static_1nejsfhjccpww444c4wo8sk8c.png', u'header_image_scaled': u'http://static.tumblr.com/22ebfa39543f2494741f8a0b626fb5a4/9kxvsrn/XbGn8uar6/tumblr_static_1nejsfhjccpww444c4wo8sk8c_2048_v2.png'}, u'name': u'rapidstrike'}, u'is_root_item': True, u'post': {u'id': u'29958821420'}}], u'date': u'2012-08-22 10:19:55 GMT', u'thumbnail_height': 390, u'permalink_url': u'https://blip.tv/file/iIEHgv_aSAI', u'slug': u'retsupurae-the-most-shameful-thing-in-the-world', u'blog_name': u'rapidstrike', u'caption': u'<p>Retsupurae - The Most Shameful Thing in the World - The Retsupurae Archive on Blip</p>\n<p>LIFE IS SUFFERING</p>', u'thumbnail_url': u'http://a.images.blip.tv/TheRPArchive-RetsupuraeTheMostShamefulThingInTheWorld911-998.jpg', u'bookmarklet': True}
+    blip_result = handle_video_posts(session,blip_post_dict)
+    logging.debug("blip_result:"+repr(blip_result))
     return
 
 
