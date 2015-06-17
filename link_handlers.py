@@ -248,6 +248,29 @@ def handle_generic_link(session,link):
         )
     return []
 
+def handle_dropbox_link(session,link):
+    """Supported link formats:
+        https://dl.dropboxusercontent.com/s/cdxam7r5iwv3ax6/test.swf
+        https://www.dropbox.com/s/npga7y1r24a5dqo/comma%20seperated%20tags.PNG?dl=0
+
+        """
+    assert( ("dropbox.com" in link) or ("dropboxusercontent.com" in link) )# Make sure the link is actually for dropbox
+    dropbox_link_segment_search = re.search(""".com/s/([^?<>\s"']+)""", link, re.DOTALL)
+    if dropbox_link_segment_search:
+        # ex. cdxam7r5iwv3ax6/test.swf
+        dropbox_link_segment = dropbox_link_segment_search.group(1)
+        dropbox_link = "https://dl.dropbox.com/s/"+dropbox_link_segment
+        logging.debug("Dropbox link:"+repr(dropbox_link))
+        return download_image_links(session,[dropbox_link])
+    else:
+        logging.error("Cannot parse dropbox link!")
+        appendlist(
+            link,
+            list_file_path=os.path.join("debug","bad_dropbox_links.txt"),
+            initial_text="# dropbox handler failed.\n"
+            )
+        return []
+
 
 def handle_links(session,post_dict):# TODO FIXME
     """Call other functions to handle non-tumblr API defined links and pass data from them back"""
@@ -289,21 +312,8 @@ def handle_links(session,post_dict):# TODO FIXME
         #  -> https://dl.dropbox.com/s/npga7y1r24a5dqo/comma%20seperated%20tags.PNG
         if "www.dropbox.com/s/" in link:
             logging.debug("Link is dropbox: "+repr(link))
-            dropbox_link_segment_search = re.search("""dropbox.com/s/([^?<>]+)""", link, re.DOTALL)
-            if dropbox_link_segment_search:
-                dropbox_link_segment = dropbox_link_segment_search.group(1)
-                dropbox_link = "https://dl.dropbox.com/s/"+dropbox_link_segment
-                logging.debug("Dropbox link:"+repr(dropbox_link))
-                media_id_list += download_image_links(session,[dropbox_link])
-                continue
-            else:
-                logging.error("Cannot parse dropbox link!")
-                appendlist(
-                    link,
-                    list_file_path=os.path.join("debug","bad_dropbox_links.txt"),
-                    initial_text="# dropbox handler failed.\n"
-                    )
-                continue
+            media_id_list += handle_dropbox_link(session,link)
+            continue
 
         # e621.net
         # https://e621.net/post/show/599802
