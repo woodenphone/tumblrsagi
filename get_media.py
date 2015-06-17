@@ -20,17 +20,6 @@ import config # Settings and configuration
 from tables import RawPosts
 
 
-def check_if_there_are_new_posts_to_do_media_for(session):
-    """Return true if one or more rows in raw_posts has "null" as the value
-    for the processed_post_json column.
-    Otherwise return False"""
-    posts_query = sqlalchemy.select([RawPosts]).where(RawPosts.processed_post_json == "null")
-    post_rows = session.execute(posts_query)
-    post_row = post_rows.fetchone()
-    logging.debug("post_row: "+repr(post_row))
-    return False
-
-
 def process_one_new_posts_media(post_row):
     """Return True if everything was fine.
     Return False if no more posts should be tried"""
