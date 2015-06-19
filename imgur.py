@@ -10,7 +10,7 @@
 #-------------------------------------------------------------------------------
 
 import logging
-from imgurpython import ImgurClient# Imgur API
+import imgurpython# Imgur API
 
 from utils import *
 import sql_functions
@@ -31,7 +31,7 @@ def save_album(session,album_link):
         logging.error("Could not parse album link! "+repr(album_link))
         assert(False)# we need to fix things if this happens
     # Load album from API
-    client = ImgurClient(config.imgur_client_id, config.imgur_client_secret)
+    client = imgurpython.ImgurClient(config.imgur_client_id, config.imgur_client_secret)
     album = client.get_album(album_id)
     # Download each image in the album
     media_id_list = []
@@ -41,7 +41,7 @@ def save_album(session,album_link):
     return media_id_list
 
 
-def lemondrop_is_a_lazy_bastard(session,link):
+def save_imgur_images(session,link):
     """Process a url and save the image ids from it"""
     # http://imgur.com/UQ1j8OT,2PvFmxV#1
     # Grab image ids
@@ -54,14 +54,20 @@ def lemondrop_is_a_lazy_bastard(session,link):
         assert(False)# we need to fix things if this happens
     # Split image ids
     image_ids = unprocessed_image_ids.split(",")
+    logging.debug("save_imgur_images() image_ids:"+repr(image_ids))
     # Initialise client
-    client = ImgurClient(config.imgur_client_id, config.imgur_client_secret)
+    client = imgurpython.ImgurClient(config.imgur_client_id, config.imgur_client_secret)
     # Process each image id
     media_id_list = []
     for image_id in image_ids:
-        image = client.get_image(image_id)
-        media_url = image.link
-        media_id_list += image_handlers.download_image_link(session,media_url)
+        try:
+            logging.debug("save_imgur_images() image_id:"+repr(image_id))
+            image = client.get_image(image_id)
+            media_url = image.link
+            media_id_list += image_handlers.download_image_link(session,media_url)
+        except imgurpython.ImgurClientError, err:
+            logging.exception(err)
+            logging.error("err:"+repr(err))
     return media_id_list
 
 
@@ -74,7 +80,7 @@ def save_imgur(session,link):
     if "imgur.com/a/" in link:
         return save_album(session,link)
     # Check if multiple image ids in url
-    return lemondrop_is_a_lazy_bastard(session,link)
+    return save_imgur_images(session,link)
     # Let us know if we fail to process a link
 
 
