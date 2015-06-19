@@ -110,7 +110,7 @@ def debug():
         )
     logging.debug("single_image_link_media_id_list:"+repr(single_image_link_media_id_list))
 
-    logging.debug(repr(locals))
+    logging.debug(repr(locals()))
     return
 
 

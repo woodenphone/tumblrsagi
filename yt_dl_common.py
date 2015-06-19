@@ -124,8 +124,11 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
 
     # Generate hash for media file
     sha512base16_hash = hash_file(media_temp_filepath)
-    # Decide where to put the file
 
+    # Pause to make sure file is not in use
+    time.sleep(10)
+
+    # Decide where to put the file
     # Check if hash is in media DB
     video_page_row = sql_functions.check_if_hash_in_db(session,sha512base16_hash)
     if video_page_row:
@@ -142,8 +145,6 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
         # Generate output filepath
         filename = generate_filename(ext=file_ext,sha512base16_hash=sha512base16_hash)
         final_media_filepath = generate_path(root_path=config.root_path,filename=filename)
-        # Pause to prevent open file conflicts
-        time.sleep(10)
         # Move file to final location
         move_file(media_temp_filepath,final_media_filepath)
         assert(os.path.exists(final_media_filepath))

@@ -354,20 +354,35 @@ def uniquify(seq, idfun=None):
    return result
 
 
-def move_file(original_path,final_path):
+def move_file(original_path,final_path,max_attempts=10):
     """Move a file from one location to another"""
     assert_is_string(original_path)
     assert_is_string(final_path)
-    # Make sure output folder exists
-    output_dir = os.path.dirname(final_path)
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    assert(os.path.exists(output_dir))
-    # Move file
-    shutil.move(original_path, final_path)
-    assert(not os.path.exists(original_path))
-    assert(os.path.exists(final_path))
-    return
+
+    attempt_counter = 0
+    while attempt_counter < max_attempts:
+        attempt_counter += 1
+        if attempt_counter > 1:
+            time.sleep(1)
+        try:
+            # Make sure output folder exists
+            output_dir = os.path.dirname(final_path)
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+            assert(os.path.exists(output_dir))
+            # Move file
+            shutil.move(original_path, final_path)
+            assert(not os.path.exists(original_path))
+            assert(os.path.exists(final_path))
+            return
+        except WindowsError, err:
+            logging.exception(err)
+            logging.error("Failed to move file: "+repr(original_path)+" to "+repr(final_path))
+            continue
+    # If we get here we already have an exception to re-raise
+    logging.critical("move_file() Too many failed attempts to move a file!")
+    logging.critical("move_file()"+repr(locals()))
+    raise
 
 
 def hash_file_data(file_data):
