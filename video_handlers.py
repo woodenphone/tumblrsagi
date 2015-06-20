@@ -524,6 +524,39 @@ def handle_vidme_videos(session,post_dict):
     return media_id_list
 
 
+def handle_xhamster_videos(session,post_dict):#TODO FIXME
+    """Download xhamster videos given by the videos section fo the API"""
+    logging.debug("Processing xhamster video")
+    logging.warning("handle_xhamster_videos() is not finished yet due to youtube-dl issues. FIX IT!")#TODO FIXME
+    return []#TODO FIXME
+    # Extract video links from post dict
+    video_urls = []
+    video_items = post_dict["player"]
+    for video_item in video_items:
+        embed_code = video_item["embed_code"]
+        # u'embed_code': u'<iframe width="250" height="187" src="http://xhamster.com/xembed.php?video=3328539" frameborder="0" scrolling="no"></iframe>',
+        # http://xhamster.com/xembed.php?video=3328539
+        if embed_code:
+            # Process links so YT-DL can understand them
+            logging.debug("handle_xhamster_videos() embed_code: "+repr(embed_code))
+            embed_url_regex ="""vid.me/\w/([a-zA-Z0-9]+)"""#TODO FIXME
+            embed_url_search = re.search(embed_url_regex, embed_code, re.IGNORECASE|re.DOTALL)
+            if embed_url_search:
+                video_id = embed_url_search.group(1)
+                video_url = "https://vid.me/e/"+video_id#TODO FIXME
+                video_urls.append(video_url)
+        continue
+    logging.debug("handle_xhamster_videos() video_urls: "+repr(video_urls))
+
+    # Download videos if there are any
+    media_id_list = run_yt_dl_multiple(
+        session = session,
+        download_urls = video_urls,
+        extractor_used="video_handlers.handle_xhamster_videos()",
+        )
+    logging.debug("Finished downloading xhamster embeds")
+    return media_id_list
+
 
 def handle_video_posts(session,post_dict):
     """Decide which video functions to run and pass back what they return"""
@@ -618,10 +651,14 @@ def handle_video_posts(session,post_dict):
         elif "dailymotion.com" in repr(post_dict["player"]):
             logging.debug("Post looks like a broken dailymotion video, skipping.")
             return []
-        # Liveleak
+        # vid.me
         elif "vid.me" in repr(post_dict["player"]):
             logging.debug("Post looks like a vid.me embed..")
             return handle_vidme_videos(session,post_dict)
+        # xhamster.com
+        elif "xhamster.com/xembed.php?" in repr(post_dict["player"]):
+            logging.debug("Post looks like a xhamster embed..")
+            return handle_xhamster_videos(session,post_dict)
     # If no handler is applicable, stop for fixing
     logging.error("Unknown video type!")
     logging.error("locals(): "+repr(locals()))
@@ -718,6 +755,12 @@ def debug():
     vidme_post_dict = {u'reblog_key': u'p8Mr5KUO', u'reblog': {u'comment': u'<p>proud patron =D</p>', u'tree_html': u'<p><a href="http://saltyicecream.tumblr.com/post/120791148304/supported-by-patreon-miyuki-the-android-was" class="tumblr_blog">saltyicecream</a>:</p><blockquote><h2>Supported by <b><a href="https://www.patreon.com/SaltyIceCream">Patreon</a></b></h2><p>Miyuki (the android) was voiced by <b><a href="http://megamoeka.tumblr.com/">MegaMoeka</a>.</b>\xa0</p><p><i>please don\u2019t be a creepo 8). It\u2019s called voice acting for a reason.</i></p><p>I found her through <a href="http://hentaiwriter.tumblr.com/">HentaiWriter</a>.\xa0Megamoeka is an awesome voice actress. I think she is still doing commissions for criminally low rates. I\u2019d hop on that if you need voice acting done.\xa0</p><p>I know it\u2019s short, I just wanted to see if I could actually do something like this. I think it turned out ok. The sound was a headache tho.</p><h2>Here is a <b><a href="http://webmup.com/7cb40/">WebM Link</a>.</b>\xa0Just better quality.</h2><p>On a side note, if you are interested in voice acting in future stuff, shoot me a voice demo (male or female, just be 18 or over). I don\u2019t need to hear moaning or anything like that, actual voice acting is way better for me.</p></blockquote>'}, u'thumbnail_width': 0, u'player': [{u'width': 250, u'embed_code': u'<iframe src="https://vid.me/e/JPd9" frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen scrolling="no" height="140" width="250"></iframe>'}, {u'width': 400, u'embed_code': u'<iframe src="https://vid.me/e/JPd9" frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen scrolling="no" height="225" width="400"></iframe>'}, {u'width': 500, u'embed_code': u'<iframe src="https://vid.me/e/JPd9" frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen scrolling="no" height="281" width="500"></iframe>'}], u'id': 120800817969L, u'highlighted': [], u'format': u'html', u'post_url': u'http://tenkaboutthebutts.tumblr.com/post/120800817969/saltyicecream-supported-by-patreon-miyuki-the', u'recommended_source': None, u'state': u'published', u'short_url': u'http://tmblr.co/Ze4Tbv1mWIZCn', u'html5_capable': False, u'type': u'video', u'tags': [], u'timestamp': 1433537926, u'note_count': 1060, u'video_type': u'unknown', u'trail': [{u'blog': {u'theme': {u'title_font_weight': u'bold', u'header_full_height': 500, u'title_color': u'#444444', u'header_bounds': u'109,500,390,0', u'background_color': u'#F6F6F6', u'link_color': u'#529ECC', u'header_image_focused': u'http://static.tumblr.com/9d05d0626ceede201b6fb625392530ec/qwzs2zp/K41nakmsx/tumblr_static_tumblr_static_1t3xub3jop8g4ogskkosgs0k8_focused_v3.gif', u'show_description': True, u'header_full_width': 500, u'header_focus_width': 500, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'circle', u'show_avatar': True, u'header_focus_height': 281, u'title_font': u'Helvetica Neue', u'header_image': u'http://static.tumblr.com/9d05d0626ceede201b6fb625392530ec/qwzs2zp/7punakmsw/tumblr_static_1t3xub3jop8g4ogskkosgs0k8.gif', u'header_image_scaled': u'http://static.tumblr.com/9d05d0626ceede201b6fb625392530ec/qwzs2zp/7punakmsw/tumblr_static_1t3xub3jop8g4ogskkosgs0k8_2048_v2.gif'}, u'name': u'saltyicecream'}, u'content': u'<h2>Supported by <b><a href="https://www.patreon.com/SaltyIceCream">Patreon</a></b></h2><p>Miyuki (the android) was voiced by <b><a href="http://megamoeka.tumblr.com/">MegaMoeka</a>.</b>\xa0</p><p><i>please don\u2019t be a creepo 8). It\u2019s called voice acting for a reason.</i></p><p>I found her through <a href="http://hentaiwriter.tumblr.com/">HentaiWriter</a>.\xa0Megamoeka is an awesome voice actress. I think she is still doing commissions for criminally low rates. I\u2019d hop on that if you need voice acting done.\xa0</p><p>I know it\u2019s short, I just wanted to see if I could actually do something like this. I think it turned out ok. The sound was a headache tho.</p><h2>Here is a <b><a href="http://webmup.com/7cb40/">WebM Link</a>.</b>\xa0Just better quality.</h2><p>On a side note, if you are interested in voice acting in future stuff, shoot me a voice demo (male or female, just be 18 or over). I don\u2019t need to hear moaning or anything like that, actual voice acting is way better for me.</p>', u'post': {u'id': u'120791148304'}, u'is_root_item': True}, {u'blog': {u'theme': {u'title_font_weight': u'bold', u'header_full_height': 333, u'title_color': u'#444444', u'header_bounds': u'25,500,307,0', u'background_color': u'#dccbe7', u'link_color': u'#529ECC', u'header_image_focused': u'http://static.tumblr.com/75bc2eab3cb07b368cfbaf7947fcd61b/soqnzor/er7n68k2k/tumblr_static_tumblr_static_63hqr5ymqvkssc04cw4s0skoo_focused_v3.gif', u'show_description': True, u'header_full_width': 500, u'header_focus_width': 500, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'square', u'show_avatar': True, u'header_focus_height': 282, u'title_font': u'Gibson', u'header_image': u'http://static.tumblr.com/75bc2eab3cb07b368cfbaf7947fcd61b/soqnzor/H8Mn68k2i/tumblr_static_63hqr5ymqvkssc04cw4s0skoo.gif', u'header_image_scaled': u'http://static.tumblr.com/75bc2eab3cb07b368cfbaf7947fcd61b/soqnzor/H8Mn68k2i/tumblr_static_63hqr5ymqvkssc04cw4s0skoo_2048_v2.gif'}, u'name': u'tenkaboutthebutts'}, u'content': u'<p>proud patron =D</p>', u'post': {u'id': u'120800817969'}, u'content_raw': u'<p>proud patron =D</p>', u'is_current_item': True}], u'date': u'2015-06-05 20:58:46 GMT', u'thumbnail_height': 0, u'slug': u'saltyicecream-supported-by-patreon-miyuki-the', u'blog_name': u'tenkaboutthebutts', u'caption': u'<p><a href="http://saltyicecream.tumblr.com/post/120791148304/supported-by-patreon-miyuki-the-android-was" class="tumblr_blog">saltyicecream</a>:</p>\n\n<blockquote><h2>Supported by <b><a href="https://www.patreon.com/SaltyIceCream">Patreon</a></b></h2><p>Miyuki (the android) was voiced by <b><a href="http://megamoeka.tumblr.com/">MegaMoeka</a>.</b>\xa0</p><p><i>please don\u2019t be a creepo 8). It\u2019s called voice acting for a reason.</i></p><p>I found her through <a href="http://hentaiwriter.tumblr.com/">HentaiWriter</a>.\xa0Megamoeka is an awesome voice actress. I think she is still doing commissions for criminally low rates. I\u2019d hop on that if you need voice acting done.\xa0</p><p>I know it\u2019s short, I just wanted to see if I could actually do something like this. I think it turned out ok. The sound was a headache tho.</p><h2>Here is a <b><a href="http://webmup.com/7cb40/">WebM Link</a>.</b>\xa0Just better quality.</h2><p>On a side note, if you are interested in voice acting in future stuff, shoot me a voice demo (male or female, just be 18 or over). I don\u2019t need to hear moaning or anything like that, actual voice acting is way better for me.</p></blockquote>\n\n<p>proud patron =D</p>', u'thumbnail_url': u''}
     #vidme_result = handle_video_posts(session,vidme_post_dict)
     #logging.debug("vidme_result:"+repr(vidme_result))
+
+
+    # xhamster.com
+    xhamster_post_dict = {u'reblog_key': u'oJcaTUkA', u'reblog': {u'comment': u'<p>Quick video animation featuring <a href="http://littlemissbrex.tumblr.com/" target="_blank">LittleMissBrex</a>&rsquo;s voice.</p>\n<p>(During the previous audition, this submitted voice clip really inspired me to make an animation of it)</p>', u'tree_html': u''}, u'thumbnail_width': 0, u'player': [{u'width': 250, u'embed_code': u'<iframe width="250" height="187" src="http://xhamster.com/xembed.php?video=3328539" frameborder="0" scrolling="no"></iframe>'}, {u'width': 400, u'embed_code': u'<iframe width="400" height="300" src="http://xhamster.com/xembed.php?video=3328539" frameborder="0" scrolling="no"></iframe>'}, {u'width': 500, u'embed_code': u'<iframe width="500" height="375" src="http://xhamster.com/xembed.php?video=3328539" frameborder="0" scrolling="no"></iframe>'}], u'id': 93184782392L, u'highlighted': [], u'format': u'html', u'post_url': u'http://manyakisart.tumblr.com/post/93184782392/quick-video-animation-featuring-littlemissbrexs', u'recommended_source': None, u'state': u'published', u'short_url': u'http://tmblr.co/ZwXS0t1MoFl0u', u'html5_capable': False, u'type': u'video', u'tags': [u'Animation', u'LittleMissBrex', u'Pen', u'Masturbation'], u'timestamp': 1406611200, u'note_count': 507, u'video_type': u'unknown', u'trail': [{u'content': u'<p>Quick video animation featuring <a href="http://littlemissbrex.tumblr.com/" target="_blank">LittleMissBrex</a>\u2019s voice.</p>\n<p>(During the previous audition, this submitted voice clip really inspired me to make an animation of it)</p>', u'content_raw': u'<p>Quick video animation featuring <a href="http://littlemissbrex.tumblr.com/" target="_blank">LittleMissBrex</a>\'s voice.</p>\r\n<p>(During the previous audition, this submitted voice clip really inspired me to make an animation of it)</p>', u'is_current_item': True, u'blog': {u'theme': {u'title_font_weight': u'bold', u'title_color': u'#444444', u'header_bounds': u'', u'background_color': u'#FAFAFA', u'link_color': u'#529ECC', u'header_image_focused': u'http://static.tumblr.com/ee1543326d0dda96845ae39319176d21/wfewwet/BFRn5jwvr/tumblr_static_bvzexobv6nwcso844gks8ook8_2048_v2.jpg', u'show_description': True, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'circle', u'show_avatar': True, u'title_font': u'Gibson', u'header_image': u'http://static.tumblr.com/ee1543326d0dda96845ae39319176d21/wfewwet/BFRn5jwvr/tumblr_static_bvzexobv6nwcso844gks8ook8.jpg', u'header_image_scaled': u'http://static.tumblr.com/ee1543326d0dda96845ae39319176d21/wfewwet/BFRn5jwvr/tumblr_static_bvzexobv6nwcso844gks8ook8_2048_v2.jpg'}, u'name': u'manyakisart'}, u'is_root_item': True, u'post': {u'id': u'93184782392'}}], u'date': u'2014-07-29 05:20:00 GMT', u'thumbnail_height': 0, u'post_author': u'mikeinelart', u'slug': u'quick-video-animation-featuring-littlemissbrexs', u'blog_name': u'manyakisart', u'caption': u'<p>Quick video animation featuring <a href="http://littlemissbrex.tumblr.com/" target="_blank">LittleMissBrex</a>&rsquo;s voice.</p>\n<p>(During the previous audition, this submitted voice clip really inspired me to make an animation of it)</p>', u'thumbnail_url': u''}
+    xhamster_result = handle_video_posts(session,xhamster_post_dict)
+    logging.debug("xhamster_result:"+repr(xhamster_result))
 
     return
 
