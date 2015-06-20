@@ -11,7 +11,7 @@
 
 import logging
 import imgurpython# Imgur API
-
+from imgurpython.helpers.error import ImgurClientError
 from utils import *
 import sql_functions
 import image_handlers
@@ -65,7 +65,7 @@ def save_imgur_images(session,link):
             image = client.get_image(image_id)
             media_url = image.link
             media_id_list += image_handlers.download_image_link(session,media_url)
-        except imgurpython.ImgurClientError, err:
+        except ImgurClientError, err:
             logging.exception(err)
             logging.error("err:"+repr(err))
     return media_id_list
