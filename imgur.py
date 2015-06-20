@@ -30,9 +30,14 @@ def save_album(session,album_link):
     else:
         logging.error("Could not parse album link! "+repr(album_link))
         assert(False)# we need to fix things if this happens
-    # Load album from API
-    client = imgurpython.ImgurClient(config.imgur_client_id, config.imgur_client_secret)
-    album = client.get_album(album_id)
+    try:
+        # Load album from API
+        client = imgurpython.ImgurClient(config.imgur_client_id, config.imgur_client_secret)
+        album = client.get_album(album_id)
+    except ImgurClientError, err:
+            logging.exception(err)
+            logging.error("err:"+repr(err))
+            return []# Empty because the album cant be retreived
     # Download each image in the album
     media_id_list = []
     for image in album.images:
