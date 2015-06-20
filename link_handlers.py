@@ -244,6 +244,10 @@ def handle_generic_link(session,link):
             logging.error("Connection error getting content-type!")
             logging.debug("(locals():"+repr(locals() ) )
             continue
+        except requests.InvalidSchema, err:
+            logging.exception(err)
+            logging.debug("(locals():"+repr(locals() ) )
+            break# We can't handle this link.
     logging.error("Too many retries getting content-type, failing.")
     appendlist(
         link,
