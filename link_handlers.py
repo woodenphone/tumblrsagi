@@ -244,7 +244,7 @@ def handle_generic_link(session,link):
             logging.error("Connection error getting content-type!")
             logging.debug("(locals():"+repr(locals() ) )
             continue
-        except requests.InvalidSchema, err:
+        except requests.exceptions.InvalidSchema, err:
             logging.exception(err)
             logging.debug("(locals():"+repr(locals() ) )
             break# We can't handle this link.
@@ -278,6 +278,24 @@ def handle_dropbox_link(session,link):
             initial_text="# dropbox handler failed.\n"
             )
         return []
+
+
+
+
+def handle_fastswf_link(session,link):
+    """http://www.fastswf.com/ - Free Flash and Unity Hosting
+        Supported link formats:
+        http://www.fastswf.com/5MH9MZw
+
+        """
+    assert( ("fastswf.com" in link))# Make sure the link is actually for fastswf
+    assert(False)#TODO FIXME
+    # Load page
+    # Find flash file
+    # Save flash file
+    # Add media row
+    media_id_list = []
+    return media_id_list
 
 
 def handle_links(session,post_dict):# TODO FIXME
@@ -367,6 +385,13 @@ def handle_links(session,post_dict):# TODO FIXME
             continue
 
         # -Audio-
+
+
+        # Flash
+        # fastswf.com
+        elif "fastswf.com" in link[0:20]:
+            logging.debug("Link is fastswf.com: "+repr(link))
+            media_id_list += handle_fastswf_link(session,link)
 
 
         # -Generic-
