@@ -37,8 +37,8 @@ def download_image_link(session,media_url):
         return [url_check_row_dict["media_id"]]
 
     # Load URL
-    file_data = get(media_url)
-    if not file_data:
+    request_tuple = getwithinfo(media_url)
+    if not request_tuple:
         logging.error("Could not load image URL!")
         appendlist(
             media_url,
@@ -46,6 +46,13 @@ def download_image_link(session,media_url):
             initial_text="# List of completed items.\n"
             )
         return []
+    file_data, info, r = request_tuple
+    # Reject HTML responses
+    if r.headers.getmaintype() == "text":
+        logging.error("download_image_link() Link was not an image: "+repr(media_url))
+        logging.debug("download_image_link() r.headers.dict: "+repr(r.headers.dict))
+        return []
+
 
     time_of_retreival = get_current_unix_time()
 
@@ -55,7 +62,7 @@ def download_image_link(session,media_url):
     # Generate filename for output file (With extention)
     cropped_full_image_url = media_url.split("?")[0]# Remove after ?
     remote_filename = os.path.basename(cropped_full_image_url)
-    file_extention = get_file_extention(remote_filename)
+    file_extention = get_file_extention(media_url)
     if not file_extention:
         logging.error("download_image_link() No file extention!")
         logging.error(repr(locals()))
@@ -118,9 +125,25 @@ def download_image_links(session,media_urls):
     return media_id_list
 
 
+def debug():
+    """For WIP, debug, ect function calls"""
+    session = sql_functions.connect_to_db()
+    result = download_image_links(session,
+        media_urls = ["http://blog.crooz.jp/svc/userFrontArticle/ShowFiles/?no=1538&blog_id=53800&file_str=5380015381862e669e0073d13d4175ecae9d5a34b8ff05fe3.jpg&guid=on&vga_flg=0&y=2014&m=02&d=19&wid=480&hei=640",
+            "http://static.tumblr.com/f6539f27dff5045834f7722e61c02e21/w5cnjnh/fVJnpuk9d/tumblr_static_digrsyxj0eg400so4g4kgsc4k.jpg",
+            ]
+        )
+    logging.debug(result)
+
 
 def main():
-    pass
+    try:
+        setup_logging(log_file_path=os.path.join("debug","image_handlers_log.txt"))
+        debug()
+    except Exception, e:# Log fatal exceptions
+        logging.critical("Unhandled exception!")
+        logging.exception(e)
+    return
 
 if __name__ == '__main__':
     main()

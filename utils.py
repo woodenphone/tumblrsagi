@@ -147,11 +147,8 @@ def get(url):
     #Example useage:
     #html = get("")
     #if html:
-    assert_is_string(url)
-    deescaped_url = deescape(url)
-    url_with_protocol = add_http(deescaped_url)
     #logging.debug( "getting url ", locals())
-    gettuple = getwithinfo(url_with_protocol)
+    gettuple = getwithinfo(url)
     if gettuple:
         reply, info, r = gettuple
         return reply
@@ -169,6 +166,11 @@ def getwithinfo(url):
     max_attempts = 10
     retry_delay = 10
     request_delay = 0.5#avoid hammering the site too hard
+
+    assert_is_string(url)
+    deescaped_url = deescape(url)
+    url_with_protocol = add_http(deescaped_url)
+
     # Remove all ssl because ATC said to
     # http://stackoverflow.com/questions/19268548/python-ignore-certicate-validation-urllib2
     ctx = ssl.create_default_context()
@@ -188,7 +190,7 @@ def getwithinfo(url):
 ##                allow_fail = True
 ##                )
             r = urllib2.urlopen(
-                url,
+                url_with_protocol,
                 context=ctx
                 )
             info = r.info()
