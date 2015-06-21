@@ -365,7 +365,9 @@ def move_file(original_path,final_path,max_attempts=10):
     while attempt_counter < max_attempts:
         attempt_counter += 1
         if attempt_counter > 1:
-            time.sleep(1)
+            # Pause if something went wrong, (yt-dl is a suspect, might not be closing files?)
+            time.sleep(attempt_counter)
+            logging.debug("Attempt "+repr(attempt_counter)+" to move "+repr(original_path)+" to "+repr(final_path))
         try:
             # Make sure output folder exists
             output_dir = os.path.dirname(final_path)
