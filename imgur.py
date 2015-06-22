@@ -19,6 +19,21 @@ import config
 
 
 
+def get_imgur_client(max_attempts=10):
+    """Wrap imgur client setup to make it more fault-tolerant"""
+    attempt_counter = 0
+    while attempt_counter <= max_attempts:
+        attempt_counter += 1
+        try:
+             client = imgurpython.ImgurClient(config.imgur_client_id, config.imgur_client_secret)
+             return client
+        except ImgurClientError, err:
+            logging.exception(err)
+            logging.error("err:"+repr(err))
+            continue
+    return None
+
+
 
 def save_album(session,album_link):
     """Save the contents of an album"""
@@ -32,7 +47,9 @@ def save_album(session,album_link):
         assert(False)# we need to fix things if this happens
     try:
         # Load album from API
-        client = imgurpython.ImgurClient(config.imgur_client_id, config.imgur_client_secret)
+        client = get_imgur_client(max_attempts=10)
+        if client is None:# Handle failure to setup client
+            return []
         album = client.get_album(album_id)
     except ImgurClientError, err:
             logging.exception(err)
@@ -61,7 +78,9 @@ def save_imgur_images(session,link):
     image_ids = unprocessed_image_ids.split(",")
     logging.debug("save_imgur_images() image_ids:"+repr(image_ids))
     # Initialise client
-    client = imgurpython.ImgurClient(config.imgur_client_id, config.imgur_client_secret)
+    client = get_imgur_client(max_attempts=10)
+    if client is None:# Handle failure to setup client
+        return []
     # Process each image id
     media_id_list = []
     for image_id in image_ids:
