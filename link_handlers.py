@@ -50,9 +50,17 @@ def find_url_links(html):
     return links
 
 
+def find_links(html):
+    """Given a string of text or HTML, find any links.
+    return a list of link strings"""
+    links = []
+    links += find_links_src(html)
+    links += find_url_links(html)
+    return links
+
+
 def extract_post_links(post_dict):
     """Run all applicable extractors for a post"""
-    links = []
     # Collect links in the post text
 
     # collect together fields that would have text
@@ -90,10 +98,10 @@ def extract_post_links(post_dict):
     if u"source_url" in post_dict.keys():
         if post_dict["source_url"]:
             fields_string += (post_dict["source_url"]+u"\n\n")
-    # Search for links in string
     #logging.debug("extract_post_links() fields_string: "+repr(fields_string))
-    links += find_links_src(fields_string)
-    links += find_url_links(fields_string)
+
+    # Search for links in string
+    links = find_links(fields_string)
     #logging.debug("extract_post_links() links: "+repr(links))
     return links
 

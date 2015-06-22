@@ -24,7 +24,7 @@ from tables import *# This module only has the table classes
 import sql_functions
 import config # User settings
 import link_handlers
-
+from image_handlers import download_image_link
 
 def crop_youtube_id(url):
     video_id_regex ="""youtube.com/(?:embed/)?(?:watch\?v=)?([a-zA-Z0-9]+)"""
@@ -384,9 +384,7 @@ def handle_kickstarter_videos(session,post_dict):
 def handle_dropbox_embed(session,post_dict):
     # Grab links
     player_string = repr(post_dict["player"])
-    links = []
-    links += link_handlers.find_links_src(player_string)
-    links += link_handlers.find_url_links(player_string)
+    links = link_handlers.find_links(player_string)
     logging.debug("handle_dropbox_embed() links:"+repr(links))
     for link in links:
         # Process the first matching link and return what the handler gives
@@ -558,6 +556,49 @@ def handle_xhamster_videos(session,post_dict):#TODO FIXME
     return media_id_list
 
 
+def handle_flash_embed(session,post_dict):#TODO FIXME
+    """Download xhamster videos given by the videos section fo the API"""
+    logging.debug("Processing flash embed")
+    logging.warning("handle_flash_embed() is not finished yet. FIX IT!")#TODO FIXME
+    """ u'player': [{u'embed_code': u'<embed width="250" height="291" align="middle" pluginspage="http://www.adobe.com/go/getflashplayer" type="application/x-shockwave-flash" allowfullscreen="false" allowscriptaccess="sameDomain" name="xdft" bgcolor="#000000" scale="noscale" quality="high" menu="false" src="http://www.najle.com/idaft/idaft/xdft.swf">',
+              u'width': 250},
+             {u'embed_code': u'<embed width="400" height="466" align="middle" pluginspage="http://www.adobe.com/go/getflashplayer" type="application/x-shockwave-flash" allowfullscreen="false" allowscriptaccess="sameDomain" name="xdft" bgcolor="#000000" scale="noscale" quality="high" menu="false" src="http://www.najle.com/idaft/idaft/xdft.swf">',
+              u'width': 400},
+             {u'embed_code': u'<embed width="500" height="582" align="middle" pluginspage="http://www.adobe.com/go/getflashplayer" type="application/x-shockwave-flash" allowfullscreen="false" allowscriptaccess="sameDomain" name="xdft" bgcolor="#000000" scale="noscale" quality="high" menu="false" src="http://www.najle.com/idaft/idaft/xdft.swf">',
+              u'width': 500}],"""
+    # Extract video links from post dict
+    found_links = []
+    video_items = post_dict["player"]
+    for video_item in video_items:
+        embed_code = video_item["embed_code"]
+        #
+        if embed_code:
+            # Find links in the field
+            field_links = link_handlers.find_links(embed_code)
+            found_links += field_links
+        continue
+    logging.debug("handle_flash_embed() found_links: "+repr(found_links))
+
+    # Remove duplicate links
+    links = uniquify(found_links)
+
+    media_id_list = []
+    # Choose which links to save
+    for link in links:
+        # If link ends in .swf
+        if ".swf" in link[-4:]:
+            media_id_list += download_image_link(session,link)
+            continue
+        # If link ends in .flv
+        elif ".flv" in link[-4:]:
+            media_id_list += download_image_link(session,link)
+            continue
+        continue
+
+    return media_id_list
+
+
+
 def handle_video_posts(session,post_dict):
     """Decide which video functions to run and pass back what they return"""
     # Check if post is a video post
@@ -671,6 +712,13 @@ def handle_video_posts(session,post_dict):
         elif "naturesoundsfor.me" in repr(post_dict["player"]):
             logging.debug("Post looks like naturesoundsfor.me, skipping.")
             return []
+
+        # This should be last so we don't accidentally pick up other media types
+        # Flash embed
+        elif """pluginspage="http://www.adobe.com/go/getflashplayer" type="application/x-shockwave-flash""" in repr(post_dict["player"]):
+            logging.debug("Post looks like a Flash embed")
+            return handle_flash_embed(session,post_dict)
+
     # If no handler is applicable, stop for fixing
     logging.error("Unknown video type!")
     logging.error("locals(): "+repr(locals()))
@@ -776,19 +824,23 @@ def debug():
 
     # xvideos.com
     xvideos_post_dict = {u'reblog_key': u'dwlUshzs', u'reblog': {u'comment': u'<p>thats it</p>\n<p>everyone in the porn industry go home</p>\n<p>this is the pinnacle of porn so there is no point in continuing</p>', u'tree_html': u''}, u'thumbnail_width': 0, u'player': [{u'width': 250, u'embed_code': u'<iframe src="http://flashservice.xvideos.com/embedframe/6114991" frameborder=0 width=510 height=400 scrolling=no></iframe>'}, {u'width': 400, u'embed_code': u'<iframe src="http://flashservice.xvideos.com/embedframe/6114991" frameborder=0 width=510 height=400 scrolling=no></iframe>'}, {u'width': 500, u'embed_code': u'<iframe src="http://flashservice.xvideos.com/embedframe/6114991" frameborder=0 width=510 height=400 scrolling=no></iframe>'}], u'id': 76968398547L, u'highlighted': [], u'format': u'html', u'post_url': u'http://atrolux.tumblr.com/post/76968398547/thats-it-everyone-in-the-porn-industry-go-home', u'recommended_source': None, u'state': u'published', u'short_url': u'http://tmblr.co/ZiXWFq17hh8xJ', u'html5_capable': False, u'type': u'video', u'tags': [u'nsfw', u'real porn'], u'timestamp': 1392657025, u'note_count': 81, u'video_type': u'unknown', u'trail': [{u'content': u'<p>thats it</p>\n<p>everyone in the porn industry go home</p>\n<p>this is the pinnacle of porn so there is no point in continuing</p>', u'content_raw': u'<p>thats it</p>\r\n<p>everyone in the porn industry go home</p>\r\n<p>this is the pinnacle of porn so there is no point in continuing</p>', u'is_current_item': True, u'blog': {u'theme': {u'title_font_weight': u'bold', u'title_color': u'#444444', u'header_bounds': u'', u'background_color': u'#89826C', u'link_color': u'#D4C69D', u'header_image_focused': u'http://static.tumblr.com/a6412cbeac7cba9cf282bce2dbe379bc/jo4xovz/cbRnn2cuf/tumblr_static_filename_2048_v2.jpg', u'show_description': True, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'square', u'show_avatar': True, u'title_font': u'Helvetica Neue', u'header_image': u'http://static.tumblr.com/a6412cbeac7cba9cf282bce2dbe379bc/jo4xovz/cbRnn2cuf/tumblr_static_filename.jpg', u'header_image_scaled': u'http://static.tumblr.com/a6412cbeac7cba9cf282bce2dbe379bc/jo4xovz/cbRnn2cuf/tumblr_static_filename_2048_v2.jpg'}, u'name': u'atrolux'}, u'is_root_item': True, u'post': {u'id': u'76968398547'}}], u'date': u'2014-02-17 17:10:25 GMT', u'thumbnail_height': 0, u'slug': u'thats-it-everyone-in-the-porn-industry-go-home', u'blog_name': u'atrolux', u'caption': u'<p>thats it</p>\n<p>everyone in the porn industry go home</p>\n<p>this is the pinnacle of porn so there is no point in continuing</p>', u'thumbnail_url': u''}
-    xvideos_result = handle_video_posts(session,xvideos_post_dict)
-    logging.debug("xvideos_result:"+repr(xvideos_result))
+    #xvideos_result = handle_video_posts(session,xvideos_post_dict)
+    #logging.debug("xvideos_result:"+repr(xvideos_result))
 
     # ign
     ign_post_dict = {u'reblog_key': u'A11AOxZ4', u'reblog': {u'comment': u'', u'tree_html': u'<p><a class="tumblr_blog" href="http://heckyeahratchetandclank.tumblr.com/post/55131168661/ratchet-and-clank-into-the-nexus-preview">heckyeahratchetandclank</a>:</p><blockquote>\n<p>Ratchet and Clank: Into the Nexus preview.</p>\n</blockquote>'}, u'thumbnail_width': 0, u'player': [{u'width': 250, u'embed_code': u'<iframe src="http://widgets.ign.com/video/embed/content.html?url=http://www.ign.com/videos/2013/07/10/ratchet-clank-into-the-nexus-video-preview" width="250" height="140" scrolling="no" frameborder="0" allowfullscreen></iframe>'}, {u'width': 400, u'embed_code': u'<iframe src="http://widgets.ign.com/video/embed/content.html?url=http://www.ign.com/videos/2013/07/10/ratchet-clank-into-the-nexus-video-preview" width="400" height="224" scrolling="no" frameborder="0" allowfullscreen></iframe>'}, {u'width': 500, u'embed_code': u'<iframe src="http://widgets.ign.com/video/embed/content.html?url=http://www.ign.com/videos/2013/07/10/ratchet-clank-into-the-nexus-video-preview" width="500" height="280" scrolling="no" frameborder="0" allowfullscreen></iframe>'}], u'id': 55132376273L, u'highlighted': [], u'source_title': u'heckyeahratchetandclank', u'format': u'html', u'post_url': u'http://blinkpen.tumblr.com/post/55132376273/heckyeahratchetandclank-ratchet-and-clank-into', u'recommended_source': None, u'state': u'published', u'short_url': u'http://tmblr.co/ZEPS1xpM9KpH', u'html5_capable': False, u'type': u'video', u'tags': [u'EXCITEMENT', u'AAAAAAAAAA', u'fuck i dont have a ps3', u';m;'], u'timestamp': 1373505842, u'note_count': 40, u'video_type': u'unknown', u'source_url': u'http://heckyeahratchetandclank.tumblr.com/post/55131168661/ratchet-and-clank-into-the-nexus-preview', u'trail': [{u'blog': {u'theme': {u'title_font_weight': u'bold', u'header_full_height': 768, u'title_color': u'#444444', u'header_bounds': u'108,1002,659,21', u'background_color': u'#FAFAFA', u'link_color': u'#529ECC', u'header_image_focused': u'http://static.tumblr.com/3b2881d95516e7eba16f0390b48d346a/6p5tmgy/vrTn5d3jx/tumblr_static_tumblr_static_am4rkfgq38gk0cwcocgsws84k_focused_v3.jpg', u'show_description': True, u'header_full_width': 1024, u'header_focus_width': 981, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'square', u'show_avatar': True, u'header_focus_height': 551, u'title_font': u'Gibson', u'header_image': u'http://static.tumblr.com/ae7c84944d965516123c8dca6fe4093c/6p5tmgy/DBkn5d3ju/tumblr_static_am4rkfgq38gk0cwcocgsws84k.png', u'header_image_scaled': u'http://static.tumblr.com/ae7c84944d965516123c8dca6fe4093c/6p5tmgy/DBkn5d3ju/tumblr_static_am4rkfgq38gk0cwcocgsws84k_2048_v2.png'}, u'name': u'heckyeahratchetandclank'}, u'content': u'<p>Ratchet and Clank: Into the Nexus preview.</p>', u'post': {u'id': u'55131168661'}, u'is_root_item': True}], u'date': u'2013-07-11 01:24:02 GMT', u'thumbnail_height': 0, u'slug': u'heckyeahratchetandclank-ratchet-and-clank-into', u'blog_name': u'blinkpen', u'caption': u'<p><a class="tumblr_blog" href="http://heckyeahratchetandclank.tumblr.com/post/55131168661/ratchet-and-clank-into-the-nexus-preview">heckyeahratchetandclank</a>:</p>\n<blockquote>\n<p>Ratchet and Clank: Into the Nexus preview.</p>\n</blockquote>', u'thumbnail_url': u''}
-    ign_result = handle_video_posts(session,ign_post_dict)
-    logging.debug("ign_result:"+repr(ign_result))
+    #ign_result = handle_video_posts(session,ign_post_dict)
+    #logging.debug("ign_result:"+repr(ign_result))
 
     # naturesoundsfor.me REALLY TUMBLR FUCKING REALLY?
     naturesoundsforme_post_dict = {u'reblog_key': u'A11AOxZ4', u'reblog': {u'comment': u'', u'tree_html': u'<p><a class="tumblr_blog" href="http://heckyeahratchetandclank.tumblr.com/post/55131168661/ratchet-and-clank-into-the-nexus-preview">heckyeahratchetandclank</a>:</p><blockquote>\n<p>Ratchet and Clank: Into the Nexus preview.</p>\n</blockquote>'}, u'thumbnail_width': 0, u'player': [{u'width': 250, u'embed_code': u'<iframe src="http://widgets.ign.com/video/embed/content.html?url=http://www.ign.com/videos/2013/07/10/ratchet-clank-into-the-nexus-video-preview" width="250" height="140" scrolling="no" frameborder="0" allowfullscreen></iframe>'}, {u'width': 400, u'embed_code': u'<iframe src="http://widgets.ign.com/video/embed/content.html?url=http://www.ign.com/videos/2013/07/10/ratchet-clank-into-the-nexus-video-preview" width="400" height="224" scrolling="no" frameborder="0" allowfullscreen></iframe>'}, {u'width': 500, u'embed_code': u'<iframe src="http://widgets.ign.com/video/embed/content.html?url=http://www.ign.com/videos/2013/07/10/ratchet-clank-into-the-nexus-video-preview" width="500" height="280" scrolling="no" frameborder="0" allowfullscreen></iframe>'}], u'id': 55132376273L, u'highlighted': [], u'source_title': u'heckyeahratchetandclank', u'format': u'html', u'post_url': u'http://blinkpen.tumblr.com/post/55132376273/heckyeahratchetandclank-ratchet-and-clank-into', u'recommended_source': None, u'state': u'published', u'short_url': u'http://tmblr.co/ZEPS1xpM9KpH', u'html5_capable': False, u'type': u'video', u'tags': [u'EXCITEMENT', u'AAAAAAAAAA', u'fuck i dont have a ps3', u';m;'], u'timestamp': 1373505842, u'note_count': 40, u'video_type': u'unknown', u'source_url': u'http://heckyeahratchetandclank.tumblr.com/post/55131168661/ratchet-and-clank-into-the-nexus-preview', u'trail': [{u'blog': {u'theme': {u'title_font_weight': u'bold', u'header_full_height': 768, u'title_color': u'#444444', u'header_bounds': u'108,1002,659,21', u'background_color': u'#FAFAFA', u'link_color': u'#529ECC', u'header_image_focused': u'http://static.tumblr.com/3b2881d95516e7eba16f0390b48d346a/6p5tmgy/vrTn5d3jx/tumblr_static_tumblr_static_am4rkfgq38gk0cwcocgsws84k_focused_v3.jpg', u'show_description': True, u'header_full_width': 1024, u'header_focus_width': 981, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'square', u'show_avatar': True, u'header_focus_height': 551, u'title_font': u'Gibson', u'header_image': u'http://static.tumblr.com/ae7c84944d965516123c8dca6fe4093c/6p5tmgy/DBkn5d3ju/tumblr_static_am4rkfgq38gk0cwcocgsws84k.png', u'header_image_scaled': u'http://static.tumblr.com/ae7c84944d965516123c8dca6fe4093c/6p5tmgy/DBkn5d3ju/tumblr_static_am4rkfgq38gk0cwcocgsws84k_2048_v2.png'}, u'name': u'heckyeahratchetandclank'}, u'content': u'<p>Ratchet and Clank: Into the Nexus preview.</p>', u'post': {u'id': u'55131168661'}, u'is_root_item': True}], u'date': u'2013-07-11 01:24:02 GMT', u'thumbnail_height': 0, u'slug': u'heckyeahratchetandclank-ratchet-and-clank-into', u'blog_name': u'blinkpen', u'caption': u'<p><a class="tumblr_blog" href="http://heckyeahratchetandclank.tumblr.com/post/55131168661/ratchet-and-clank-into-the-nexus-preview">heckyeahratchetandclank</a>:</p>\n<blockquote>\n<p>Ratchet and Clank: Into the Nexus preview.</p>\n</blockquote>', u'thumbnail_url': u''}
-    naturesoundsforme_result = handle_video_posts(session,naturesoundsforme_post_dict)
-    logging.debug("naturesoundsforme_result:"+repr(naturesoundsforme_result))
+    #naturesoundsforme_result = handle_video_posts(session,naturesoundsforme_post_dict)
+    #logging.debug("naturesoundsforme_result:"+repr(naturesoundsforme_result))
 
+    # Flash embed
+    flash_embed_1_post_dict = {u'reblog_key': u'yR1QXDvG', u'reblog': {u'comment': u'<p><em><strong>WHO IS BEHIND THIS MARVELOUS GADGET&hellip;.</strong></em></p>', u'tree_html': u'<p><a class="tumblr_blog" href="http://i-like-pigeons.tumblr.com/post/25713502874/your-keyboard-is-now-daft-punk-this-is-not-a">i-like-pigeons</a>:</p><blockquote>\n<p>Your keyboard is now Daft Punk\u2026</p>\n<p><small>this is not a video, click on it</small></p>\n<p><img src="http://media.tumblr.com/tumblr_lwqf46RRAN1r4w28f.png"/></p>\n<p><img src="http://media.tumblr.com/tumblr_m61cysdQfk1qgtjf8.gif"/></p>\n</blockquote>'}, u'thumbnail_width': 0, u'player': [{u'width': 250, u'embed_code': u'<embed width="250" height="291" align="middle" pluginspage="http://www.adobe.com/go/getflashplayer" type="application/x-shockwave-flash" allowfullscreen="false" allowscriptaccess="sameDomain" name="xdft" bgcolor="#000000" scale="noscale" quality="high" menu="false" src="http://www.najle.com/idaft/idaft/xdft.swf">'}, {u'width': 400, u'embed_code': u'<embed width="400" height="466" align="middle" pluginspage="http://www.adobe.com/go/getflashplayer" type="application/x-shockwave-flash" allowfullscreen="false" allowscriptaccess="sameDomain" name="xdft" bgcolor="#000000" scale="noscale" quality="high" menu="false" src="http://www.najle.com/idaft/idaft/xdft.swf">'}, {u'width': 500, u'embed_code': u'<embed width="500" height="582" align="middle" pluginspage="http://www.adobe.com/go/getflashplayer" type="application/x-shockwave-flash" allowfullscreen="false" allowscriptaccess="sameDomain" name="xdft" bgcolor="#000000" scale="noscale" quality="high" menu="false" src="http://www.najle.com/idaft/idaft/xdft.swf">'}], u'id': 25777675314L, u'highlighted': [], u'source_title': u'rossocrama', u'format': u'html', u'post_url': u'http://blinkpen.tumblr.com/post/25777675314/i-like-pigeons-your-keyboard-is-now-daft-punk', u'recommended_source': None, u'state': u'published', u'short_url': u'http://tmblr.co/ZEPS1xO0U1mo', u'html5_capable': False, u'type': u'video', u'tags': [u'daft punk', u'idaft', u'EVERYTHING IS FUN'], u'timestamp': 1340540254, u'note_count': 362383, u'video_type': u'unknown', u'source_url': u'http://rossocrama.tumblr.com/post/3683251435/your-keyboard-is-now-daft-punk-this-is-not-a', u'trail': [{u'blog': {u'theme': {u'title_font_weight': u'bold', u'header_full_height': 340, u'title_color': u'#444444', u'header_bounds': u'70,382,281,8', u'background_color': u'#F6F6F6', u'link_color': u'#529ECC', u'header_image_focused': u'http://static.tumblr.com/c06a92a7f8e0e067da8ba177f4dad940/yebyu3h/ISena682w/tumblr_static_tumblr_static_7vzgahntmccgk8480gc80ww88_focused_v3.gif', u'show_description': False, u'header_full_width': 385, u'header_focus_width': 374, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'circle', u'show_avatar': True, u'header_focus_height': 211, u'title_font': u'Helvetica Neue', u'header_image': u'http://static.tumblr.com/c06a92a7f8e0e067da8ba177f4dad940/yebyu3h/S4Yna67yv/tumblr_static_7vzgahntmccgk8480gc80ww88.gif', u'header_image_scaled': u'http://static.tumblr.com/c06a92a7f8e0e067da8ba177f4dad940/yebyu3h/S4Yna67yv/tumblr_static_7vzgahntmccgk8480gc80ww88_2048_v2.gif'}, u'name': u'i-like-pigeons'}, u'content': u'<p>Your keyboard is now Daft Punk\u2026</p>\n<p><small>this is not a video, click on it</small></p>\n<p><img src="http://media.tumblr.com/tumblr_lwqf46RRAN1r4w28f.png"></p>\n<p><img src="http://media.tumblr.com/tumblr_m61cysdQfk1qgtjf8.gif"></p>', u'post': {u'id': u'25713502874'}}, {u'blog': {u'theme': {u'title_font_weight': u'bold', u'header_full_height': 500, u'title_color': u'#444444', u'header_bounds': u'109,500,390,0', u'background_color': u'#FAFAFA', u'link_color': u'#529ECC', u'header_image_focused': u'http://static.tumblr.com/fd9046a4b64f963fdbdc19006aacd73c/0zjbon4/jYUni1cq9/tumblr_static_tumblr_static_cljm29atew0kgsgcw4kkkscc0_focused_v3.png', u'show_description': True, u'header_full_width': 500, u'header_focus_width': 500, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'circle', u'show_avatar': True, u'header_focus_height': 281, u'title_font': u'Gibson', u'header_image': u'http://static.tumblr.com/fd9046a4b64f963fdbdc19006aacd73c/0zjbon4/Qx7ni1cq8/tumblr_static_cljm29atew0kgsgcw4kkkscc0.png', u'header_image_scaled': u'http://static.tumblr.com/fd9046a4b64f963fdbdc19006aacd73c/0zjbon4/Qx7ni1cq8/tumblr_static_cljm29atew0kgsgcw4kkkscc0_2048_v2.png'}, u'name': u'blinkpen'}, u'content': u'<p><em><strong>WHO IS BEHIND THIS MARVELOUS GADGET\u2026.</strong></em></p>', u'post': {u'id': u'25777675314'}, u'content_raw': u'<p><em><strong>WHO IS BEHIND THIS MARVELOUS GADGET....</strong></em></p>', u'is_current_item': True}], u'date': u'2012-06-24 12:17:34 GMT', u'thumbnail_height': 0, u'slug': u'i-like-pigeons-your-keyboard-is-now-daft-punk', u'blog_name': u'blinkpen', u'caption': u'<p><a class="tumblr_blog" href="http://i-like-pigeons.tumblr.com/post/25713502874/your-keyboard-is-now-daft-punk-this-is-not-a">i-like-pigeons</a>:</p>\n<blockquote>\n<p>Your keyboard is now Daft Punk\u2026</p>\n<p><small>this is not a video, click on it</small></p>\n<p><img src="http://media.tumblr.com/tumblr_lwqf46RRAN1r4w28f.png"/></p>\n<p><img src="http://media.tumblr.com/tumblr_m61cysdQfk1qgtjf8.gif"/></p>\n</blockquote>\n\n<p><em><strong>WHO IS BEHIND THIS MARVELOUS GADGET&hellip;.</strong></em></p>', u'thumbnail_url': u''}
+    flash_embed_1_result = handle_video_posts(session,flash_embed_1_post_dict)
+    logging.debug("flash_embed_1_result:"+repr(flash_embed_1_result))
     return
 
 
