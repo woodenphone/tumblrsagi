@@ -247,6 +247,9 @@ def save_blog(blog_url):
         logging.critical("Unhandled exception in save_blog()!")
         logging.exception(e)
         raise
+    logging.debug("About to close db connection")
+    session.close()
+    logging.debug("Closd db connection")
     return
 
 

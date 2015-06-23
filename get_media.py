@@ -65,6 +65,9 @@ def process_one_new_posts_media(post_row):
         session.rollback()
         logging.exception(e)
         raise
+    logging.debug("About to close db connection")
+    session.close()
+    logging.debug("Closd db connection")
     return
 
 
