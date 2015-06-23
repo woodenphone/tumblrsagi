@@ -44,6 +44,7 @@ class tumblr_blog:
         self.blog_id = sql_functions.add_blog(self.session,self.sanitized_blog_url)
 
         if self.blog_exists:
+            # These things shouldn't be done for dead blogs because they might corrupt the blog data
             # Add info to blogs table
             self.update_blog_row()
             # Update blog theme
@@ -62,8 +63,6 @@ class tumblr_blog:
             logging.error("locals(): "+repr(locals()))
             self.blog_exists = False
             return
-        else:
-            self.blog_exists = True
         info_dict = json.loads(info_json)
         logging.debug("info_dict"+repr(info_dict))
         assert(type(info_dict) is type({}))
@@ -81,6 +80,15 @@ class tumblr_blog:
         self.info_description = info_dict["response"]["blog"]["description"]
         self.info_ask = info_dict["response"]["blog"]["ask"]
         logging.debug("self.info_post_count: "+repr(self.info_post_count))
+        # Determine if blog is alive
+        if self.info_post_count > 0:
+            # If we can get the API data AND there is at least one post
+            logging.debug("load_info() blog is alive: "+repr(self.blog_url))
+            self.blog_exists = True
+        else:
+            # If we dont have any posts, the blog is probably dead
+            logging.error("load_info() blog has no posts! assuming it is dead: "+repr(self.blog_url))
+            self.blog_exists = False
         return
 
     def update_blog_row(self):
