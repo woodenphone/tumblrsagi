@@ -67,7 +67,7 @@ def process_one_new_posts_media(post_row):
         raise
     logging.debug("About to close db connection")
     session.close()
-    logging.debug("Closd db connection")
+    logging.debug("Closed db connection")
     return
 
 

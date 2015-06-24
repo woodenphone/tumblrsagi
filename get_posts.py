@@ -130,78 +130,90 @@ class tumblr_blog:
         """Load posts for the blog"""
         timestamp_of_last_post_in_db = sql_functions.get_timestamp_of_last_post(session=self.session,blog_domain=self.blog_url)
         preexisting_post_ids = sql_functions.find_blog_posts(self.session,self.sanitized_username)
-        added_posts_counter = 0
-        page_counter = -1 # -1 so we start at 0
-        prev_page_posts_list = ["prev page"]# Dummy value
-        this_page_posts_list = ["this page"]# Dummy value
-        while page_counter <= 100000:# 100,000 pages should be enough for anyone - R.M. Stallman
-            page_counter += 1
-            if max_pages is not None:
-                if page_counter > max_pages:
-                    logging.info("Reached max pages")
+        try:
+            added_posts_counter = 0
+            page_counter = -1 # -1 so we start at 0
+            prev_page_posts_list = ["prev page"]# Dummy value
+            this_page_posts_list = ["this page"]# Dummy value
+            while page_counter <= 100000:# 100,000 pages should be enough for anyone - R.M. Stallman
+                page_counter += 1
+                if max_pages is not None:
+                    if page_counter > max_pages:
+                        logging.info("Reached max pages")
+                        break
+                logging.info("Loading page "+repr(page_counter)+" of posts for "+repr(self.blog_url))
+
+                # Load API page
+                offset = page_counter*20 # Maximum posts per page is 20
+                if offset != 0:
+                    page_url = "http://api.tumblr.com/v2/blog/"+self.blog_url+"/posts/?api_key="+self.consumer_key+"&offset="+str(offset)
+                else:
+                    page_url = "http://api.tumblr.com/v2/blog/"+self.blog_url+"/posts/?api_key="+self.consumer_key
+
+                # Decode JSON
+                logging.debug("page_url: "+repr(page_url))
+                page_json = get(page_url)
+                page_dict = json.loads(page_json)
+
+                # Stop if bad response
+                if page_dict["meta"]["status"] != 200:
+                    logging.error("Bad response, stopping scan for posts. "+repr(page_url))
+                    logging.debug(repr(locals()))
                     break
-            logging.info("Loading page "+repr(page_counter)+" of posts for "+repr(self.blog_url))
 
-            # Load API page
-            offset = page_counter*20 # Maximum posts per page is 20
-            if offset != 0:
-                page_url = "http://api.tumblr.com/v2/blog/"+self.blog_url+"/posts/?api_key="+self.consumer_key+"&offset="+str(offset)
-            else:
-                page_url = "http://api.tumblr.com/v2/blog/"+self.blog_url+"/posts/?api_key="+self.consumer_key
+                # Check how many posts the blog says it has
+                if page_counter == 1:
+                    self.posts_post_count = page_dict["response"]["total_posts"]
+                    logging.info("Blog "+repr(self.blog_url)+" /posts post_count: "+repr(self.posts_post_count))
 
-            # Decode JSON
-            logging.debug("page_url: "+repr(page_url))
-            page_json = get(page_url)
-            page_dict = json.loads(page_json)
+                # Add new posts to DB
+                this_page_posts_list = page_dict["response"]["posts"]
+                logging.debug("Processing "+repr(len(this_page_posts_list))+" posts for: "+repr(page_url)+" : ")
+                added_count = 0
+                for post_dict in this_page_posts_list:
+                    # If post is new, add it to the DB
+                    post_id = post_dict["id"]
+                    if not(post_id in preexisting_post_ids):
+                        added_count += 1
+                        #logging.debug("Adding post:"+repr(post_id)+" for: "+repr(self.blog_url))
+                        self.save_post(post_dict)
 
-            # Stop if bad response
-            if page_dict["meta"]["status"] != 200:
-                logging.error("Bad response, stopping scan for posts. "+repr(page_url))
-                logging.debug(repr(locals()))
-                break
+                logging.info("Added "+repr(added_count)+" posts for "+repr(page_url))
 
-            # Check how many posts the blog says it has
-            if page_counter == 1:
-                self.posts_post_count = page_dict["response"]["total_posts"]
-                logging.info("Blog "+repr(self.blog_url)+" /posts post_count: "+repr(self.posts_post_count))
-
-            # Add new posts to DB
-            this_page_posts_list = page_dict["response"]["posts"]
-            logging.debug("Processing "+repr(len(this_page_posts_list))+" posts for: "+repr(page_url)+" : ")
-            added_count = 0
-            for post_dict in this_page_posts_list:
-                # If post is new, add it to the DB
-                post_id = post_dict["id"]
-                if not(post_id in preexisting_post_ids):
-                    added_count += 1
-                    #logging.debug("Adding post:"+repr(post_id)+" for: "+repr(self.blog_url))
-                    self.save_post(post_dict)
-
-            logging.info("Added "+repr(added_count)+" posts for "+repr(page_url))
-
-            # Exit conditions
-            # Stop if duplicate results
-            if this_page_posts_list == prev_page_posts_list:
-                logging.info("Last pages post match this pages posts, stopping loading posts. "+repr(page_url))
-                break
-            # Stop if no posts
-            if len(this_page_posts_list) == 0:
-                logging.error("No posts found on this page, stopping loading posts. "+repr(page_url))
-                break
-            # Update duplicate check list
-            prev_page_posts_list = this_page_posts_list
-
-            # Stop loading posts if the last post on this page is older than the newest on in the DB
-            if config.stop_loading_posts_when_timestamp_match:
-                if this_page_posts_list[-1]["timestamp"] <= timestamp_of_last_post_in_db:
-                    logging.debug("""this_page_posts_list[-1]["timestamp"]"""+repr(this_page_posts_list[-1]["timestamp"]))
-                    logging.debug("timestamp_of_last_post_in_db:"+repr(timestamp_of_last_post_in_db))
-                    logging.info("newest post in db is newer than one of the posts on this page, stopping loading posts. "+repr(page_url))
+                # Exit conditions
+                # Stop if duplicate results
+                if this_page_posts_list == prev_page_posts_list:
+                    logging.info("Last pages post match this pages posts, stopping loading posts. "+repr(page_url))
                     break
-            continue
+                # Stop if no posts
+                if len(this_page_posts_list) == 0:
+                    logging.error("No posts found on this page, stopping loading posts. "+repr(page_url))
+                    break
+                # Update duplicate check list
+                prev_page_posts_list = this_page_posts_list
 
-        logging.info("Finished loading posts. "+repr(self.blog_url))
-        return
+                # Stop loading posts if the last post on this page is older than the newest on in the DB
+                if config.stop_loading_posts_when_timestamp_match:
+                    if this_page_posts_list[-1]["timestamp"] <= timestamp_of_last_post_in_db:
+                        logging.debug("""this_page_posts_list[-1]["timestamp"]"""+repr(this_page_posts_list[-1]["timestamp"]))
+                        logging.debug("timestamp_of_last_post_in_db:"+repr(timestamp_of_last_post_in_db))
+                        logging.info("newest post in db is newer than one of the posts on this page, stopping loading posts. "+repr(page_url))
+                        break
+                continue
+
+            # Commit changes once all posts have been proccessed
+            logging.info("Finished loading posts, committing changes... "+repr(self.blog_url))
+            self.session.commit()
+            logging.info("Changes committed. "+repr(self.blog_url))
+            return
+
+        # Log exceptions and pass them on
+        # Also rollback
+        except Exception, e:
+            logging.critical("Unhandled exception in save_blog()!")
+            session.rollback()
+            logging.exception(e)
+            raise
 
     def save_post(self,post_dict):
         """Save a post for this blog, used by save_new_posts()"""
@@ -249,7 +261,7 @@ def save_blog(blog_url):
         raise
     logging.debug("About to close db connection")
     session.close()
-    logging.debug("Closd db connection")
+    logging.debug("Closed db connection")
     return
 
 

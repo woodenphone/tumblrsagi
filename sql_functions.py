@@ -82,9 +82,10 @@ def add_raw_post(session,raw_post_dict,processed_post_dict,info_dict,blog_url,us
     post_duplicate_check_rows = session.execute(post_duplicate_check_query)
     post_duplicate_check_row = post_duplicate_check_rows.fetchone()
     if post_duplicate_check_row:
-        logging.error("This post is already in the DB!")
-        logging.error("raw_post_dict:"+repr(raw_post_dict))
-        logging.error("post_duplicate_check_row:"+repr(post_duplicate_check_row))
+        logging.error("add_raw_post() This post is already in the DB!")
+        logging.error("add_raw_post() raw_post_dict:"+repr(raw_post_dict))
+        logging.error("add_raw_post() post_duplicate_check_row:"+repr(post_duplicate_check_row))
+        logging.error("add_raw_post() repr(locals()):"+repr(locals()))
         return
 
     # Build row to insert
@@ -107,8 +108,7 @@ def add_raw_post(session,raw_post_dict,processed_post_dict,info_dict,blog_url,us
 
     post_row = RawPosts(**row_to_insert)
     session.add(post_row)
-    session.commit()
-    read_post(session,post_url = raw_post_dict["post_url"])
+    #read_post(session,post_url = raw_post_dict["post_url"])
     return
 
 
