@@ -17,12 +17,57 @@ import config # Settings and configuration
 from tables import *# Table definitions
 
 
+def check_if_alive(blog_url):
+    # Load API page
+    info_url = "http://api.tumblr.com/v2/blog/"+blog_url+"/info?api_key="+config.consumer_key
+    info_json = get(info_url)
+    if not info_json:# If no response from web request
+        logging.error("Cannot load info page! (Maybe blog URL is wrong?)")
+        logging.error("locals(): "+repr(locals()))
+        blog_exists = False
+        return False
+
+    # Decode API page
+    info_dict = json.loads(info_json)
+    logging.debug("info_dict"+repr(info_dict))
+    assert(type(info_dict) is type({}))
+
+    # Check response is valid
+    if info_dict["meta"]["status"] != 200:
+        logging.error("Bad response, cannot load info.")
+        logging.debug(repr(locals()))
+        assert(False)
+
+    # Determine if blog is alive
+    post_count = info_dict["response"]["blog"]["posts"]
+    if post_count > 0:
+        # If we can get the API data AND there is at least one post
+        logging.debug("load_info() blog is alive: "+repr(blog_url))
+        blog_exists = True
+    else:
+        # If we dont have any posts, the blog is probably dead
+        logging.error("load_info() blog has no posts! assuming it is dead: "+repr(blog_url))
+        blog_exists = False
+    return blog_exists
+
+
 def add_blog(session,raw_blog_url):
     """Add a blog to the DB"""
     logging.info("Adding blog to db: "+repr(raw_blog_url))
 
     # Sanitize the blog URL
     sanitized_blog_url = clean_blog_url(raw_blog_url)
+
+    # Check if there's any point adding to the DB
+    alive = check_if_alive(sanitized_blog_url)
+    if not alive:
+        # If the blog is dead or inaccessible
+        appendlist(
+            sanitized_blog_url,
+            list_file_path="tumblr_failed_list.txt",
+            initial_text="# List of failed items.\n"
+            )
+        return
 
     # Make sure user is in blogs DB and get blog_id integer
     blog_id = sql_functions.add_blog(session, sanitized_blog_url)

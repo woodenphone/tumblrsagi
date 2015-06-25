@@ -20,13 +20,12 @@ import config # Settings and configuration
 import blog_themes# blog themes
 
 class tumblr_blog:
-    def __init__(self,session,consumer_key,blog_url=None,blog_username=None):
+    def __init__(self,session,consumer_key,blog_url=None,):
         # Store args for later and initialise variables
         self.blog_exists = None
         self.consumer_key = consumer_key
         self.raw_blog_url = blog_url
         self.blog_url = clean_blog_url(self.raw_blog_url)
-        self.blog_username = blog_username
         self.session = session
         self.posts_list = []# List of post dicts
         self.info_post_count = None # Number of posts the /info API says the blog has
@@ -111,7 +110,6 @@ class tumblr_blog:
         update_statement = sqlalchemy.update(twkr_blogs).\
             where(twkr_blogs.blog_id == self.blog_id).\
             values(
-                blog_username = self.blog_username,
                 title = self.info_title,
                 updated = self.info_updated,
                 postcount = self.info_post_count,
@@ -265,10 +263,11 @@ def save_blog(blog_url):
     return
 
 
-def save_blogs(list_file_path="tumblr_todo_list.txt"):
-    """Save tumblr blogs from a list"""
-    logging.info("Saving list of blogs: "+repr(list_file_path))
-    blog_url_list = import_blog_list(list_file_path)
+def save_blogs():
+    """Save tumblr blogs from the DB twkr_blogs table"""
+    logging.info("Saving posts for blogs in DB")
+    blog_url_list = list_blogs()
+    logging.info("Blogs about to be checked for posts: "+repr(blog_url_list))
     # Run workers
     # http://stackoverflow.com/questions/2846653/python-multithreading-for-dummies
     # Make the Pool of workers
@@ -281,6 +280,32 @@ def save_blogs(list_file_path="tumblr_todo_list.txt"):
     return
 
 
+def list_blogs():
+    """Return a list of up to maximum_blogs blogids"""
+    # Connect to DB
+    session = sql_functions.connect_to_db()
+
+    # Load rows from blogs table so we can compare reason info
+    # Order by ID
+    # Offset by offset rows
+    # maximum of maximum_blogs rows
+    select_query = sqlalchemy.select([twkr_blogs]).\
+        order_by(twkr_blogs.blog_id.asc())
+
+    blogs_rows = session.execute(select_query)
+
+    # Grab blog URLs
+    blog_urls = []
+    for blogs_row in blogs_rows:
+        blog_url = blogs_row["blog_url"]
+        blog_urls += [blog_url]
+
+    # Disconnect from DB
+    session.close()
+
+    return blog_urls
+
+
 def main():
     try:
         setup_logging(
@@ -288,8 +313,7 @@ def main():
         concise_log_file_path=os.path.join("debug","short_get_posts_log.txt")
         )
         # Program
-        #classy_play()
-        save_blogs(list_file_path=config.blog_list_path)
+        save_blogs()
         # /Program
         logging.info("Finished, exiting.")
         return

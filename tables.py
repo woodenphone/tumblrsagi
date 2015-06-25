@@ -25,7 +25,7 @@ class twkr_blogs(Base):
     __tablename__ = "twkr_blogs"
     # Columns
     blog_id = sqlalchemy.Column(sqlalchemy.BigInteger, primary_key=True)# referenced by sub-tables
-    blog_username = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    blog_username = sqlalchemy.Column(sqlalchemy.UnicodeText())# UNUSED! REMOVE
     blog_url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     title = sqlalchemy.Column(sqlalchemy.UnicodeText())#
     postcount = sqlalchemy.Column(sqlalchemy.BigInteger) #
