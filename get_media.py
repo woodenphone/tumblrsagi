@@ -100,11 +100,11 @@ def list_new_posts(session,max_rows):
 
 def process_all_posts_media(max_rows=1000):
     # Connect to DB
-    session = sql_functions.connect_to_db()
+    listing_session = sql_functions.connect_to_db()
     post_dicts = ["dummy"]
     while len(post_dicts) > 0:
         # Get primary keys for some new posts
-        post_dicts = list_new_posts(session,max_rows)
+        post_dicts = list_new_posts(listing_session,max_rows)
         # Process posts
         logging.debug("Processing posts")
         # http://stackoverflow.com/questions/2846653/python-multithreading-for-dummies
