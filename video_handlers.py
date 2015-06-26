@@ -336,7 +336,7 @@ def handle_instagram_videos(session,post_dict):
     if "permalink_url" not in post_dict.keys():
         logging.error("handle_instagram_videos() No permalink URL!")
         if post_dict["player"][0]["embed_code"] == False:
-            return
+            return []
         else:
             logging.critical("handle_instagram_videos() Unknown error case, handle this!")
             logging.critical("post_dict: "+repr(post_dict))
@@ -613,7 +613,7 @@ def handle_video_posts(session,post_dict):
     """Decide which video functions to run and pass back what they return"""
     # Check if post is a video post
     if post_dict["type"] != u"video":
-        return {}
+        return []
     logging.debug("Post is video")
     # Youtube
     if post_dict["video_type"] == u"youtube":
@@ -738,7 +738,7 @@ def handle_video_posts(session,post_dict):
     logging.error("locals(): "+repr(locals()))
     logging.error("""post_dict: """+repr(post_dict))
     assert(False)# Not implimented
-    return {}
+    return []
 
 
 
