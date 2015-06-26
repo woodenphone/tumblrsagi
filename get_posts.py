@@ -175,7 +175,7 @@ class tumblr_blog:
                         added_count += 1
                         #logging.debug("Adding post:"+repr(post_id)+" for: "+repr(self.blog_url))
                         self.save_post(post_dict)
-                session.flush()# Push changes to DB side temp storage
+                self.session.flush()# Push changes to DB side temp storage
                 logging.info("Added "+repr(added_count)+" posts for "+repr(page_url))
 
                 # Exit conditions
