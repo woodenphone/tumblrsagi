@@ -209,7 +209,7 @@ class tumblr_blog:
         # Also rollback
         except Exception, e:
             logging.critical("Unhandled exception in save_blog()!")
-            session.rollback()
+            self.session.rollback()
             logging.exception(e)
             raise
 
