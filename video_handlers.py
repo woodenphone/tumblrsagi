@@ -715,7 +715,7 @@ def handle_video_posts(session,post_dict):
 
         # This should be last so we don't accidentally pick up other media types
         # Flash embed
-        elif """.swf""" in repr(post_dict["player"]):
+        elif """.swf""" in repr(post_dict["player"]):#fuckit we;'ll just assume swf isnt a video site :(
             logging.debug("Post looks like a Flash embed")
             return handle_flash_embed(session,post_dict)
 
