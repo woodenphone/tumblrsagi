@@ -53,7 +53,6 @@ def download_image_link(session,media_url):
         logging.debug("download_image_link() r.headers.dict: "+repr(r.headers.dict))
         return []
 
-
     time_of_retreival = get_current_unix_time()
 
     # Generate hash

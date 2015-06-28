@@ -97,6 +97,33 @@ def list_new_posts(session,max_rows):
     #logging.debug("post_dicts: "+repr(post_dicts))
     return post_dicts
 
+def process_one_thousand_posts_media():
+    """Grab a thousand post_ids and process them using a few threads"""
+    logging.info("Processing media for one thousand posts...")
+
+    # Connect to DB
+    logging.debug("Connection to DB to find new posts")
+    listing_session = sql_functions.connect_to_db()
+
+    # Get primary keys for some new posts
+    logging.debug("Grabbing a thousand unprocessed post primary keys")
+    post_dicts = list_new_posts(
+        listing_session,
+        max_rows = 1000)
+
+    # Process the posts in worker threads
+    logging.debug("Starting workers")
+    # http://stackoverflow.com/questions/2846653/python-multithreading-for-dummies
+    # Make the Pool of workers
+    pool = ThreadPool(config.number_of_media_workers)# Set to one for debugging
+    results = pool.map(process_one_new_posts_media, post_dicts)
+    #close the pool and wait for the work to finish
+    pool.close()
+    pool.join()
+    logging.debug("All workers finished")
+    logging.info("Finished processing media for one thousand posts.")
+    return
+
 
 def process_all_posts_media(max_rows=1000):
     # Connect to DB
@@ -129,7 +156,8 @@ def main():
             concise_log_file_path=os.path.join("debug","short_get_media_log.txt")
             )
         # Program
-        process_all_posts_media()
+        process_one_thousand_posts_media()
+        #process_all_posts_media()
         # /Program
         logging.info("Finished, exiting.")
         return
