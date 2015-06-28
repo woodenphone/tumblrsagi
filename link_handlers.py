@@ -319,20 +319,8 @@ def handle_links(session,post_dict):# TODO FIXME
     non_tumblr_links = remove_tumblr_links(all_post_links)
     logging.debug("handle_links() non_tumblr_links: "+repr(non_tumblr_links))
 
-    # Remove links already in DB
-    logging.warning("handle_links() Preexisting link check is disabled.")
-    preexisting_link_dict = {}# {link:hash}# TODO FIXME
-    logging.debug("handle_links() preexisting_link_dict: "+repr(preexisting_link_dict))
-    new_links = []
-    preexisting_links = preexisting_link_dict.keys()
-    for post_link in non_tumblr_links:
-        if post_link in preexisting_links:
-            continue
-        else:
-            new_links.append(post_link)
-
     # Make sure we don't have duplicate links
-    new_links = uniquify(new_links)
+    new_links = uniquify(non_tumblr_links)
 
     # Check each link to decide what to do with it
     logging.debug("new_links: "+repr(new_links))

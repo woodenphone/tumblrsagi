@@ -137,9 +137,9 @@ class tumblr_blog:
                 page_counter += 1
                 if max_pages is not None:
                     if page_counter > max_pages:
-                        logging.info("Reached max pages")
+                        logging.warning("Reached max pages")
                         break
-                logging.info("Loading page "+repr(page_counter)+" of posts for "+repr(self.blog_url))
+                logging.debug("Loading page "+repr(page_counter)+" of posts for "+repr(self.blog_url))
 
                 # Load API page
                 offset = page_counter*20 # Maximum posts per page is 20
@@ -176,7 +176,7 @@ class tumblr_blog:
                         #logging.debug("Adding post:"+repr(post_id)+" for: "+repr(self.blog_url))
                         self.save_post(post_dict)
                 self.session.flush()# Push changes to DB side temp storage
-                logging.info("Added "+repr(added_count)+" posts for "+repr(page_url))
+                logging.debug("Added "+repr(added_count)+" posts for "+repr(page_url))
 
                 # Exit conditions
                 # Stop if duplicate results
@@ -185,7 +185,7 @@ class tumblr_blog:
                     break
                 # Stop if no posts
                 if len(this_page_posts_list) == 0:
-                    logging.error("No posts found on this page, stopping loading posts. "+repr(page_url))
+                    logging.info("No posts found on this page, stopping loading posts. "+repr(page_url))
                     break
                 # Update duplicate check list
                 prev_page_posts_list = this_page_posts_list

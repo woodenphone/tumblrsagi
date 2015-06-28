@@ -26,19 +26,19 @@ class twkr_blogs(Base):
     # Columns
     blog_id = sqlalchemy.Column(sqlalchemy.BigInteger, primary_key=True)# referenced by sub-tables
     blog_username = sqlalchemy.Column(sqlalchemy.UnicodeText())# UNUSED! REMOVE
-    blog_url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    title = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    postcount = sqlalchemy.Column(sqlalchemy.BigInteger) #
-    name = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    updated = sqlalchemy.Column(sqlalchemy.BigInteger) #
-    description = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    ask = sqlalchemy.Column(sqlalchemy.Boolean())
+    blog_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# The URL fragment we use to ask the API for this blog, ex. "foo.tumblr.com"
+    title = sqlalchemy.Column(sqlalchemy.UnicodeText())# Tumnlr API value
+    postcount = sqlalchemy.Column(sqlalchemy.BigInteger)# Tumnlr API value
+    name = sqlalchemy.Column(sqlalchemy.UnicodeText())# Tumnlr API value
+    updated = sqlalchemy.Column(sqlalchemy.BigInteger) # Tumnlr API value for update time
+    description = sqlalchemy.Column(sqlalchemy.UnicodeText())# Tumnlr API value for description
+    ask = sqlalchemy.Column(sqlalchemy.Boolean())# Tumnlr API value
     alive = sqlalchemy.Column(sqlalchemy.Boolean())
     user_thumbnail_64_media_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("media.media_id")) # Local media ID for user's thumbnail
     user_thumbnail_512_media_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("media.media_id")) # Local media ID for user's thumbnail
     background_image_media_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("media.media_id")) # Local media ID for user's background image
     tags = sqlalchemy.Column(sqlalchemy.UnicodeText())# Comma seperated tags
-    reasons_added = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB)# Why was this added? Populated initially by URLs in todo list ["url","URL",..]
+    reasons_added = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB)# Why was this blog added? Populated initially by URLs in todo list ["url","URL",..]
 
 
 
@@ -51,8 +51,8 @@ class twkr_posts(Base):
     date_saved = sqlalchemy.Column(sqlalchemy.BigInteger())# The unix time the post was saved
     blog_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_blogs.blog_id")) #
     source_id = sqlalchemy.Column(sqlalchemy.BigInteger()) # ID number tumblr gave us for the post
-    post_type = sqlalchemy.Column(sqlalchemy.SmallInteger()) #
-    source_url = sqlalchemy.Column(sqlalchemy.UnicodeText()) #
+    post_type = sqlalchemy.Column(sqlalchemy.SmallInteger()) # numerical identifier for what kind of post this is
+    source_url = sqlalchemy.Column(sqlalchemy.UnicodeText()) # post_dict["post_url"]
     timestamp = sqlalchemy.Column(sqlalchemy.BigInteger()) # timestamp of post as given by API
     tags = sqlalchemy.Column(sqlalchemy.UnicodeText())# Comma seperated tags
 
@@ -64,9 +64,9 @@ class twkr_posts_photo(Base):
     # Columns
     # Local stuff
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
-    caption = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    order = sqlalchemy.Column(sqlalchemy.BigInteger()) #
+    caption = sqlalchemy.Column(sqlalchemy.UnicodeText())# photo["caption"]
+    url = sqlalchemy.Column(sqlalchemy.UnicodeText())# photo["original_size"]["url"]
+    order = sqlalchemy.Column(sqlalchemy.BigInteger()) # starting from 1 ex. 1, 2, 3...
     media_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("media.media_id")) # Local media ID
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
 
@@ -77,7 +77,7 @@ class twkr_posts_photo_text(Base):# Blame ATC
     # Columns
     # Local stuff
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
-    caption = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    caption = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["caption"]
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
 
 
@@ -87,9 +87,9 @@ class twkr_posts_link(Base):
     # Columns
     # Local stuff
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
-    source_url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    source_title = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    description = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    source_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["url"]
+    source_title = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["title"]
+    description = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["description"]
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
 
 
@@ -99,10 +99,10 @@ class twkr_posts_answer(Base):
     # Columns
     # Local stuff
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
-    asking_name = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    asking_url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    question = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    answer = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    asking_name = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["asking_name"]
+    asking_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["asking_url"]
+    question = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["question"]
+    answer = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["answer"]
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
 
 
@@ -113,8 +113,8 @@ class twkr_posts_text(Base):
     # Columns
     # Local stuff
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
-    title = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    body = sqlalchemy.Column(sqlalchemy.UnicodeText())#
+    title = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["title"]
+    body = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["body"]
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
 
 
@@ -125,10 +125,10 @@ class twkr_posts_quote(Base):
     # Columns
     # Local stuff
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
-    source_url = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    source_title = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    source = sqlalchemy.Column(sqlalchemy.UnicodeText())# source text (the guy who is being quoted)
-    text = sqlalchemy.Column(sqlalchemy.UnicodeText())# text from whoever made this post
+    source_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["source_url"] (optional)
+    source_title = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["source_title"] (optional)
+    source = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["source"] source text (the guy who is being quoted)
+    text = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["text"] text from whoever made this post
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
 
 
@@ -139,10 +139,10 @@ class twkr_posts_chat(Base):
     # Columns
     # Local stuff
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
-    title = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    body = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    dialogue_html = sqlalchemy.Column(sqlalchemy.UnicodeText())#
-    dialogue_json = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB(none_as_null=False))#
+    title = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["title"]
+    body = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["body"]
+    dialogue_html = sqlalchemy.Column(sqlalchemy.UnicodeText())# None
+    dialogue_json = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB(none_as_null=False))# json.dumps(post_dict["dialogue"])
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
 
 
