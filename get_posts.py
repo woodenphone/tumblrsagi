@@ -139,7 +139,11 @@ class tumblr_blog:
                     if page_counter > max_pages:
                         logging.warning("Reached max pages")
                         break
-                logging.debug("Loading page "+repr(page_counter)+" of posts for "+repr(self.blog_url))
+                if (page % 100 == 0):# Every hundred pages throw an info level to let us know it's still working
+                    logging.info("Loading page "+repr(page_counter)+" of posts for "+repr(self.blog_url))
+                else:
+                    logging.debug("Loading page "+repr(page_counter)+" of posts for "+repr(self.blog_url))
+
 
                 # Load API page
                 offset = page_counter*20 # Maximum posts per page is 20
