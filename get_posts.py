@@ -212,6 +212,8 @@ class tumblr_blog:
                         break
                 continue
 
+            # Once posts are about to go into the DB, update the time last saved
+            self.update_last_saved()
             # Commit changes once all posts have been proccessed
             logging.info("Finished loading posts, committing changes... "+repr(self.blog_url))
             self.session.commit()
@@ -237,6 +239,17 @@ class tumblr_blog:
             username = self.sanitized_username,
             version = 0
             )
+        return
+
+    def update_last_saved(self):
+        """Change the date_posts_last_saved field to the current time"""
+        new_timestamp = get_current_unix_time()
+        update_statement = sqlalchemy.update(twkr_blogs).\
+            where(twkr_blogs.blog_id == self.blog_id).\
+            values(
+                date_posts_last_saved = new_timestamp,
+                )
+        self.session.execute(update_statement)
         return
 
 
@@ -297,25 +310,41 @@ def list_blogs():
     """Return a list of up to maximum_blogs blogids"""
     # Connect to DB
     session = sql_functions.connect_to_db()
+    # Load new blogs
 
-    # Load rows from blogs table so we can compare reason info
-    # Order by ID
-    # Offset by offset rows
-    # maximum of maximum_blogs rows
-    select_query = sqlalchemy.select([twkr_blogs]).\
-        order_by(twkr_blogs.blog_id.asc())
 
-    blogs_rows = session.execute(select_query)
+    # date_posts_last_saved NULL
+    select_null_query = sqlalchemy.select([twkr_blogs]).\
+        where(twkr_blogs.date_posts_last_saved == sqlalchemy.null()).\
+        order_by(twkr_blogs.date_posts_last_saved.asc())
+
+    null_blogs_rows = session.execute(select_null_query)
 
     # Grab blog URLs
-    blog_urls = []
-    for blogs_row in blogs_rows:
-        blog_url = blogs_row["blog_url"]
-        blog_urls += [blog_url]
+    null_blog_urls = []
+    for null_blogs_row in null_blogs_rows:
+        null_blog_url = null_blogs_row["blog_url"]
+        null_blog_urls += [null_blog_url]
+    logging.debug("len(null_blog_urls):"+repr(len(null_blog_urls)))
+
+    # date_posts_last_saved NOT NULL
+    select_query = sqlalchemy.select([twkr_blogs]).\
+        where(twkr_blogs.date_posts_last_saved != sqlalchemy.null()).\
+        order_by(twkr_blogs.date_posts_last_saved.asc())
+
+    not_null_blogs_rows = session.execute(select_query)
+
+    # Grab blog URLs
+    not_null_blog_urls = []
+    for not_null_blogs_row in not_null_blogs_rows:
+        not_null_blog_url = not_null_blogs_row["blog_url"]
+        not_null_blog_urls += [not_null_blog_url]
+    logging.debug("len(not_null_blog_urls):"+repr(len(not_null_blog_urls)))
 
     # Disconnect from DB
     session.close()
 
+    blog_urls = null_blog_urls+not_null_blog_urls
     return blog_urls
 
 

@@ -39,6 +39,7 @@ class twkr_blogs(Base):
     background_image_media_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("media.media_id")) # Local media ID for user's background image
     tags = sqlalchemy.Column(sqlalchemy.UnicodeText())# Comma seperated tags
     reasons_added = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB)# Why was this blog added? Populated initially by URLs in todo list ["url","URL",..]
+    date_posts_last_saved  = sqlalchemy.Column(sqlalchemy.BigInteger)# Unix time of the last successful run
 
 
 
