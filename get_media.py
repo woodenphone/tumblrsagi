@@ -95,6 +95,7 @@ def list_new_posts(session,max_rows):
             post_dicts.append(post_row)
         continue
     #logging.debug("post_dicts: "+repr(post_dicts))
+    logging.info("list_new_posts() found "+repr(len(post_dicts))+" matching post rows")
     return post_dicts
 
 def process_one_thousand_posts_media():
