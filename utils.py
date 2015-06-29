@@ -32,7 +32,7 @@ import ssl # So we can turn SSL off
 
 import config# Local config
 
-def setup_logging(log_file_path,concise_log_file_path=None):
+def setup_logging(log_file_path,concise_log_file_path=None,timestamp_filename=True):
     """Setup logging (Before running any other code)
     http://inventwithpython.com/blog/2012/04/06/stop-using-print-for-debugging-a-5-minute-quickstart-guide-to-pythons-logging-module/
     """
@@ -49,6 +49,18 @@ def setup_logging(log_file_path,concise_log_file_path=None):
         if concise_log_folder is not None:
             if not os.path.exists(concise_log_folder):
                 os.makedirs(concise_log_folder)
+
+    # Add timetamp for filename if needed
+    if timestamp_filename:
+        # http://stackoverflow.com/questions/8472413/add-utc-time-to-filename-python
+        timestamp = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H%MZ")
+        # Full log
+        timestamped_log_file_name = timestamp+"_"+os.path.basename(log_file_path)
+        log_file_path = os.path.join(os.path.dirname(log_file_path),timestamped_log_file_name)
+        # short log
+        timestamped_concise_log_file_name = timestamp+"_"+os.path.basename(concise_log_file_path)
+        concise_log_file_path = os.path.join(os.path.dirname(concise_log_file_path),timestamped_concise_log_file_name)
+
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
