@@ -53,13 +53,12 @@ def setup_logging(log_file_path,concise_log_file_path=None,timestamp_filename=Tr
     # Add timetamp for filename if needed
     if timestamp_filename:
         # http://stackoverflow.com/questions/8472413/add-utc-time-to-filename-python
-        timestamp = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H%MZ")
+        timestamp_string = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H%M%Z")
         # Full log
-        timestamped_log_file_name = timestamp+"_"+os.path.basename(log_file_path)
-        log_file_path = os.path.join(os.path.dirname(log_file_path),timestamped_log_file_name)
-        # short log
-        timestamped_concise_log_file_name = timestamp+"_"+os.path.basename(concise_log_file_path)
-        concise_log_file_path = os.path.join(os.path.dirname(concise_log_file_path),timestamped_concise_log_file_name)
+        log_file_path = add_timestamp_to_log_filename(log_file_path,timestamp_string)
+        # short log (optional)
+        if concise_log_file_path is not None:
+            concise_log_file_path = add_timestamp_to_log_filename(concise_log_file_path,timestamp_string)
 
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
@@ -82,6 +81,12 @@ def setup_logging(log_file_path,concise_log_file_path=None,timestamp_filename=Tr
     logger.addHandler(ch)
     logging.info("Logging started.")
     return
+
+
+def add_timestamp_to_log_filename(log_file_path,timestamp_string):
+    """Insert a string before a file extention"""
+    base, ext = os.path.splitext(log_file_path)
+    return base+"_"+timestamp_string+ext
 
 
 def save_file(file_path,data,force_save=False,allow_fail=False):

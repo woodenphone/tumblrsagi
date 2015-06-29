@@ -662,6 +662,14 @@ def handle_video_posts(session,post_dict):
     # "unknown" - special cases?
     elif (post_dict["video_type"] == u"unknown"):
         logging.warning("API reports video type as unknown, handlers may be inappropriate or absent.")
+        # Empty player
+        try:
+            #  u'player': [{u'embed_code': u'', u'width': 250},...]
+            if post_dict["player"][0]["embed_code"] == u"":
+                logging.error("Player field in API was empty, can't save video.")
+                return []
+        except KeyError:# Permit missing fields
+            pass
         # imgur
         if "imgur-embed" in repr(post_dict["player"]):
             logging.debug("Post is imgur video")
@@ -736,12 +744,17 @@ def handle_video_posts(session,post_dict):
     # If no handler is applicable, stop for fixing
     logging.error("Unknown video type!")
     logging.error("locals(): "+repr(locals()))
-    logging.error("""post_dict: """+repr(post_dict))
+    logging.error("""handle_video_posts() post_dict: """+repr(post_dict))
     assert(False)# Not implimented
     return []
 
 
-
+def test_empty_posts(session):
+    logging.info("Testing empty/error case posts...")
+    empty_post_dict_1 = {u'reblog_key': u'0pjKMfIq', u'reblog': {u'comment': u'<p>&ldquo;Shakey&rdquo; Time-lapse</p>', u'tree_html': u''}, u'thumbnail_width': 0, u'player': [{u'width': 250, u'embed_code': u''}, {u'width': 400, u'embed_code': u''}, {u'width': 500, u'embed_code': u''}], u'id': 52558803225L, u'highlighted': [], u'format': u'html', u'post_url': u'http://stunnerart.tumblr.com/post/52558803225/shakey-time-lapse', u'recommended_source': None, u'state': u'published', u'short_url': u'http://tmblr.co/Z3VVRumylx4P', u'html5_capable': False, u'type': u'video', u'tags': [u'mlpnsfw', u'speedpaint', u'timelapse'], u'timestamp': 1370800387, u'note_count': 11, u'video_type': u'unknown', u'trail': [{u'content': u'<p>\u201cShakey\u201d Time-lapse</p>', u'content_raw': u'<p>"Shakey" Time-lapse</p>', u'is_current_item': True, u'blog': {u'theme': {u'title_font_weight': u'regular', u'header_full_height': 695, u'title_color': u'#FFFFFF', u'header_bounds': u'31,2136,671,998', u'background_color': u'#444444', u'link_color': u'#FFFFFF', u'header_image_focused': u'http://static.tumblr.com/d022ae58ea1421b83aa189dead913d77/qagpxjv/9NZnj4pj2/tumblr_static_tumblr_static_baa2qmtla5w80w0w8880os00g_focused_v3.png', u'show_description': True, u'header_full_width': 2328, u'header_focus_width': 1138, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': False, u'header_stretch': True, u'avatar_shape': u'circle', u'show_avatar': True, u'header_focus_height': 640, u'title_font': u'Helvetica Neue', u'header_image': u'http://static.tumblr.com/d022ae58ea1421b83aa189dead913d77/qagpxjv/ELLnj4piz/tumblr_static_baa2qmtla5w80w0w8880os00g.png', u'header_image_scaled': u'http://static.tumblr.com/d022ae58ea1421b83aa189dead913d77/qagpxjv/ELLnj4piz/tumblr_static_baa2qmtla5w80w0w8880os00g_2048_v2.png'}, u'name': u'stunnerart'}, u'is_root_item': True, u'post': {u'id': u'52558803225'}}], u'date': u'2013-06-09 17:53:07 GMT', u'thumbnail_height': 0, u'slug': u'shakey-time-lapse', u'blog_name': u'stunnerart', u'caption': u'<p>&ldquo;Shakey&rdquo; Time-lapse</p>', u'thumbnail_url': u''}
+    empty_result_1 = handle_video_posts(session,empty_post_dict_1)
+    logging.info("empty_result_1:"+repr(empty_result_1))
+    logging.info("Finished testing empty/error case posts")
 
 
 def test_video_handlers(session):
@@ -882,6 +895,7 @@ def test_flash_handling(session):
 def debug():
     """For WIP, debug, ect function calls"""
     session = sql_functions.connect_to_db()
+    test_empty_posts(session)
     test_video_handlers(session)
     #test_flash_handling(session)
     return

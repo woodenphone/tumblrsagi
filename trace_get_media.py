@@ -9,12 +9,13 @@
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
 
-
 import sys
 import trace
 import get_media
 
 def main():
+    # http://stackoverflow.com/questions/29257856/log-call-stack-in-python
+    # https://docs.python.org/2/library/trace.html
     # create a Trace object, telling it what to ignore, and whether to
     # do tracing or line-counting or both.
     tracer = trace.Trace(
