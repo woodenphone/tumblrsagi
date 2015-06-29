@@ -151,10 +151,19 @@ class tumblr_blog:
                     page_url = "http://api.tumblr.com/v2/blog/"+self.blog_url+"/posts/?api_key="+self.consumer_key+"&offset="+str(offset)
                 else:
                     page_url = "http://api.tumblr.com/v2/blog/"+self.blog_url+"/posts/?api_key="+self.consumer_key
-
-                # Decode JSON
                 logging.debug("page_url: "+repr(page_url))
                 page_json = get(page_url)
+                if not page_json:
+                    logging.error("Failed to load API page for this blog")
+                    self.session.rollback
+                    appendlist(
+                        blog_url,
+                        list_file_path="tumblr_failed_list.txt",
+                        initial_text="# List of failed items.\n"
+                        )
+                    return
+
+                # Decode JSON
                 page_dict = json.loads(page_json)
 
                 # Stop if bad response

@@ -98,6 +98,7 @@ def list_new_posts(session,max_rows):
     logging.info("list_new_posts() found "+repr(len(post_dicts))+" matching post rows")
     return post_dicts
 
+
 def process_one_thousand_posts_media():
     """Grab a thousand post_ids and process them using a few threads"""
     logging.info("Processing media for one thousand posts...")
