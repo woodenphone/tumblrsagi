@@ -53,7 +53,8 @@ def setup_logging(log_file_path,concise_log_file_path=None,timestamp_filename=Tr
     # Add timetamp for filename if needed
     if timestamp_filename:
         # http://stackoverflow.com/questions/8472413/add-utc-time-to-filename-python
-        timestamp_string = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H%M%Z")
+        # '2015-06-30-13.44.15'
+        timestamp_string = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H.%M.%S%Z")
         # Full log
         log_file_path = add_timestamp_to_log_filename(log_file_path,timestamp_string)
         # short log (optional)
