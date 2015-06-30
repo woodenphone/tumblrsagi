@@ -134,9 +134,11 @@ def process_all_posts_media(max_rows=1000):
     counter = 0
     while len(post_dicts) > 0:
         # Get primary keys for some new posts
+        logging.debug("Grabbing a thousand unprocessed post primary keys")
         post_dicts = list_new_posts(listing_session,max_rows)
         # Process posts
         logging.debug("Processing posts, "+repr(counter)+" done so far this run")
+        logging.debug("Starting workers")
         # http://stackoverflow.com/questions/2846653/python-multithreading-for-dummies
         # Make the Pool of workers
         pool = ThreadPool(config.number_of_media_workers)# Set to one for debugging
@@ -144,6 +146,7 @@ def process_all_posts_media(max_rows=1000):
         #close the pool and wait for the work to finish
         pool.close()
         pool.join()
+        logging.debug("All workers finished")
         logging.info("Finished proccessing this group of posts")
         counter += max_rows
         continue
@@ -158,8 +161,8 @@ def main():
             concise_log_file_path=os.path.join("debug","short_get_media_log.txt")
             )
         # Program
-        process_one_thousand_posts_media()
-        #process_all_posts_media()
+        #process_one_thousand_posts_media()
+        process_all_posts_media()
         # /Program
         logging.info("Finished, exiting.")
         return
