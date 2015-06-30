@@ -141,6 +141,9 @@ class tumblr_blog:
                         break
                 if (page_counter % 100 == 0):# Every hundred pages throw an info level to let us know it's still working
                     logging.info("Loading page "+repr(page_counter)+" of posts for "+repr(self.blog_url))
+                    logging.debug("Flushing posts to db...")
+                    self.session.flush()# Push changes to DB side temp storage
+                    logging.debug("Flushed posts to db.")
                 else:
                     logging.debug("Loading page "+repr(page_counter)+" of posts for "+repr(self.blog_url))
 
@@ -188,7 +191,7 @@ class tumblr_blog:
                         added_count += 1
                         #logging.debug("Adding post:"+repr(post_id)+" for: "+repr(self.blog_url))
                         self.save_post(post_dict)
-                #self.session.flush()# Push changes to DB side temp storage
+
                 logging.debug("Added "+repr(added_count)+" posts for "+repr(page_url))
 
                 # Exit conditions
