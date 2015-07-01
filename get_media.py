@@ -13,6 +13,7 @@ from sqlalchemy import update
 
 from multiprocessing.dummy import Pool as ThreadPool
 
+import lockfiles # MutEx lockfiles
 from utils import * # General utility functions
 import sql_functions# Database interaction
 from media_handlers import *# Media finding, extractiong, ect
@@ -161,8 +162,13 @@ def main():
             concise_log_file_path=os.path.join("debug","short_get_media_log.txt")
             )
         # Program
+        lock_file_path = os.path.join(config.lockfile_dir, "get_media.lock")
+        lockfiles.start_lock(lock_file_path)
+
         #process_one_thousand_posts_media()
         process_all_posts_media()
+
+        lockfiles.remove_lock(lock_file_path)
         # /Program
         logging.info("Finished, exiting.")
         return
