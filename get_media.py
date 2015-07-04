@@ -64,6 +64,7 @@ def process_one_new_posts_media(post_row):
     except Exception, e:
         logging.critical("Unhandled exception in save_blog()!")
         session.rollback()
+        session.close()
         logging.exception(e)
         raise
     logging.debug("About to close db connection")
@@ -78,6 +79,7 @@ def list_new_posts(session,max_rows):
     # New posts don't have a processed JSON
     posts_query = sqlalchemy.select([RawPosts]).\
         where(RawPosts.media_processed != True ).\
+        where(RawPosts.skip_processing != True ).\
         limit(max_rows)
     #logging.debug("posts_query"": "+repr(posts_query))
     post_rows = session.execute(posts_query)
@@ -112,7 +114,8 @@ def process_one_thousand_posts_media():
     logging.debug("Grabbing a thousand unprocessed post primary keys")
     post_dicts = list_new_posts(
         listing_session,
-        max_rows = 1000)
+        max_rows = 1000
+        )
 
     # Process the posts in worker threads
     logging.debug("Starting workers")

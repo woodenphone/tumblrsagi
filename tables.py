@@ -40,7 +40,7 @@ class twkr_blogs(Base):
     tags = sqlalchemy.Column(sqlalchemy.UnicodeText())# Comma seperated tags
     reasons_added = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB)# Why was this blog added? Populated initially by URLs in todo list ["url","URL",..]
     date_posts_last_saved  = sqlalchemy.Column(sqlalchemy.BigInteger)# Unix time of the last successful run
-
+    hidden = sqlalchemy.Column(sqlalchemy.Boolean())# Should this be hidden from users?
 
 
 class twkr_posts(Base):
@@ -56,6 +56,7 @@ class twkr_posts(Base):
     source_url = sqlalchemy.Column(sqlalchemy.UnicodeText()) # post_dict["post_url"]
     timestamp = sqlalchemy.Column(sqlalchemy.BigInteger()) # timestamp of post as given by API
     tags = sqlalchemy.Column(sqlalchemy.UnicodeText())# Comma seperated tags
+    hidden = sqlalchemy.Column(sqlalchemy.Boolean())# Should this be hidden from users?
 
 
 
@@ -214,6 +215,7 @@ class RawPosts(Base):# Remove underscore after fixing all references
     # Full post API data
     raw_post_json = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB)# The post's section of the API, reencoded into JSON
     media_processed = sqlalchemy.Column(sqlalchemy.Boolean)# has media been processed for this post?
+    skip_processing = sqlalchemy.Column(sqlalchemy.Boolean())# Should this be ignored for now?
 
 
 # Media tables

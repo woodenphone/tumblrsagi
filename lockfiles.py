@@ -30,7 +30,8 @@ def start_lock(lock_file_path):
 
 def remove_lock(lock_file_path):
     """Delete a lockfile"""
-    os.remove(lock_file_path)
+    if os.path.exists(lock_file_path):
+        os.remove(lock_file_path)
 
 
 def create_lock(lock_file_path):
@@ -50,12 +51,12 @@ def create_lock(lock_file_path):
 
 def test():
     lock_file_path = os.path.join("lockfiles", "test_lock.lock")
-    lockfiles.start_lock(lock_file_path)
-    lockfiles.remove_lock(lock_file_path)
+    #start_lock(lock_file_path)
+    remove_lock(lock_file_path)
 
 
 def main():
-    pass
+    test()
 
 if __name__ == '__main__':
     main()
