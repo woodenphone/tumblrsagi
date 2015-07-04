@@ -79,7 +79,7 @@ def list_new_posts(session,max_rows):
     # New posts don't have a processed JSON
     posts_query = sqlalchemy.select([RawPosts]).\
         where(RawPosts.media_processed != True ).\
-        where(RawPosts.skip_processing != True ).\
+        where((RawPosts.skip_processing == False) | (RawPosts.skip_processing == None)).\
         limit(max_rows)
     #logging.debug("posts_query"": "+repr(posts_query))
     post_rows = session.execute(posts_query)
