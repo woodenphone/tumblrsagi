@@ -608,7 +608,7 @@ def handle_flash_embed(session,post_dict):#TODO FIXME
     return media_id_list
 
 
-def handle_flikr_embed(session,post_dict):#TODO FIXME
+def handle_flikr_embed(session,post_dict):
     """Download flikr embed thumbnail given by the videos section fo the API
     Saving the full size looks like too much hassle so we're just saving the thumbnail"""
     logging.debug("Processing flikr embed")
@@ -619,6 +619,69 @@ def handle_flikr_embed(session,post_dict):#TODO FIXME
     logging.debug("Finished downloading flikr embed")
     return media_id_list
 
+
+
+def handle_facebook_videos(session,post_dict):#TODO FIXME
+    """Download facebook videos given by the videos section fo the API"""
+    logging.debug("Processing facebook video")
+    # Extract video links from post dict
+    video_urls = []
+    video_items = post_dict["player"]
+    for video_item in video_items:
+        embed_code = video_item["embed_code"]
+        # u'embed_code': u'<iframe src="https://www.facebook.com/video/embed?video_id=460003754113169" width="250" height="140" frameborder="0"></iframe>',
+        # https://www.facebook.com/video/embed?video_id=460003754113169
+        if embed_code:
+            # Process links so YT-DL can understand them
+            logging.debug("handle_facebook_videos() embed_code: "+repr(embed_code))
+            embed_url_regex ="""facebook.com/video/embed\?video_id=(\d+)"""
+            embed_url_search = re.search(embed_url_regex, embed_code, re.IGNORECASE|re.DOTALL)
+            if embed_url_search:
+                video_id = embed_url_search.group(1)
+                video_url = "https://www.facebook.com/video/embed?video_id="+video_id
+                video_urls.append(video_url)
+        continue
+    logging.debug("handle_facebook_videos() video_urls: "+repr(video_urls))
+
+    # Download videos if there are any
+    media_id_list = run_yt_dl_multiple(
+        session = session,
+        download_urls = video_urls,
+        extractor_used="video_handlers.handle_facebook_videos()",
+        )
+    logging.debug("Finished downloading facebook embeds")
+    return media_id_list
+
+
+def handle_kaltura_videos(session,post_dict):#TODO FIXME
+    """Download kaltura videos given by the videos section fo the API"""
+    logging.debug("Processing kaltura video")
+    # Extract video links from post dict
+    video_urls = []
+    video_items = post_dict["player"]
+    for video_item in video_items:
+        embed_code = video_item["embed_code"]
+        # ...data="http://www.kaltura.com/index.php/kwidget/wid/0_jzs5tgmh/uiconf_id/7342382">...
+        # http://www.kaltura.com/index.php/kwidget/wid/0_jzs5tgmh/uiconf_id/7342382
+        if embed_code:
+            # Process links so YT-DL can understand them
+            logging.debug("handle_kaltura_videos() embed_code: "+repr(embed_code))
+            embed_url_regex ="""(?:http://www.)?kaltura.com/index.php/kwidget/wid/[^"'<>]+"""
+            embed_url_search = re.search(embed_url_regex, embed_code, re.IGNORECASE|re.DOTALL)
+            if embed_url_search:
+                video_url = embed_url_search.group(0)
+                video_urls.append(video_url)
+        continue
+    logging.debug("handle_kaltura_videos() video_urls: "+repr(video_urls))
+
+    # Download videos if there are any
+    media_id_list = run_yt_dl_multiple(
+        session = session,
+        download_urls = video_urls,
+        extractor_used="video_handlers.handle_kaltura_videos()",
+        )
+    logging.debug("Finished downloading kaltura embeds")
+    return media_id_list
 
 
 def handle_video_posts(session,post_dict):
@@ -750,7 +813,14 @@ def handle_video_posts(session,post_dict):
         elif "://sketchfab.com/models" in repr(post_dict["player"]):
             logging.debug("Post looks sketchfab.com, skipping.")
             return []
-
+        # facebook
+        elif "https://www.facebook.com/video/embed?video_id=" in repr(post_dict["player"]):
+            logging.debug("Post looks facebook video.")
+            return handle_facebook_videos(session,post_dict)
+        # kaltura
+        elif "kaltura.com/index.php/kwidget" in repr(post_dict["player"]):
+            logging.debug("Post looks kaltura video, skipping.")
+            return []# handle_kaltura_videos(session,post_dict)
         # This should be last so we don't accidentally pick up other media types
         # Flash embed
         elif """.swf""" in repr(post_dict["player"]):#fuckit we;'ll just assume swf isnt a video site :(
@@ -894,11 +964,15 @@ def test_video_handlers(session):
     logging.debug("flickr_result:"+repr(flickr_result))
 
 
+    # kaltura?
+    kaltura_post_dict = {u'reblog_key': u'ein3uY3M', u'reblog': {u'comment': u'', u'tree_html': u'<p><a class="tumblr_blog" href="http://thallydraper.tumblr.com/post/23498494976" target="_blank">thallydraper</a>:</p><blockquote>\n<p><a class="tumblr_blog" href="http://arrestomomentum.tumblr.com/post/23494248051/thedailywhat-another-movie-trailer-of-the-day" target="_blank">arrestomomentum</a> <span>|\xa0</span><a class="tumblr_blog" href="http://tumblr.thedailywh.at/post/23490346044/another-movie-trailer-of-the-day-ron-burgundy-and" target="_blank">thedailywhat</a>:</p>\n<blockquote>\n<blockquote>\n<p><strong>Another Movie Trailer of the Day:</strong> Ron Burgundy and the Action News Team return to theaters in 2013 after a nine-year hiatus. Here\u2019s your first (official) look.</p>\n<p>[<a href="http://hypervocal.com/news/2012/anchorman-2-teaser-trailer/" target="_blank">hypervocal</a>]</p>\n</blockquote>\n<p><img src="http://media.tumblr.com/tumblr_m4e29kk8gG1qzfwlu.gif"/></p>\n</blockquote>\n<p>HEY AMERICA, DID YOU MISS MY HOT BREATH IN YOUR EAR?</p>\n</blockquote>'}, u'thumbnail_width': 0, u'player': [{u'width': 250, u'embed_code': u'<img style="visibility:hidden;width:0px;height:0px;" border=0 width=0 height=0 src="http://c.gigcount.com/wildfire/IMP/CXNID=2000002.11NXC/bT*xJmx*PTEzMzc2MjUyNjQxMTMmcHQ9MTMzNzYyNTI2NTMyNyZwPSZkPSZnPTImbz*5OGNmMzI*OWEyZmU*NThlYjliZTk*NWVi/ZGZhZWJjZSZvZj*w.gif" /><object name="kaltura_player_1337625260" id="kaltura_player_1337625260" type="application/x-shockwave-flash" allowScriptAccess="always" allowNetworking="all" allowFullScreen="true" height="156" width="250" data="http://www.kaltura.com/index.php/kwidget/wid/0_jzs5tgmh/uiconf_id/7342382"><param name="allowScriptAccess" value="always" /><param name="allowNetworking" value="all" /><param name="allowFullScreen" value="true" /><param name="bgcolor" value="#000000" /><param name="movie" value="http://www.kaltura.com/index.php/kwidget/wid/0_jzs5tgmh/uiconf_id/7342382"/><param name="flashVars" value=""/><a href="http://corp.kaltura.com">video platform</a><a href="http://corp.kaltura.com/video_platform/video_management">video management</a><a href="http://corp.kaltura.com/solutions/video_solution">video solutions</a><a href="http://corp.kaltura.com/video_platform/video_publishing">video player</a></object>'}, {u'width': 400, u'embed_code': u'<img style="visibility:hidden;width:0px;height:0px;" border=0 width=0 height=0 src="http://c.gigcount.com/wildfire/IMP/CXNID=2000002.11NXC/bT*xJmx*PTEzMzc2MjUyNjQxMTMmcHQ9MTMzNzYyNTI2NTMyNyZwPSZkPSZnPTImbz*5OGNmMzI*OWEyZmU*NThlYjliZTk*NWVi/ZGZhZWJjZSZvZj*w.gif" /><object name="kaltura_player_1337625260" id="kaltura_player_1337625260" type="application/x-shockwave-flash" allowScriptAccess="always" allowNetworking="all" allowFullScreen="true" height="250" width="400" data="http://www.kaltura.com/index.php/kwidget/wid/0_jzs5tgmh/uiconf_id/7342382"><param name="allowScriptAccess" value="always" /><param name="allowNetworking" value="all" /><param name="allowFullScreen" value="true" /><param name="bgcolor" value="#000000" /><param name="movie" value="http://www.kaltura.com/index.php/kwidget/wid/0_jzs5tgmh/uiconf_id/7342382"/><param name="flashVars" value=""/><a href="http://corp.kaltura.com">video platform</a><a href="http://corp.kaltura.com/video_platform/video_management">video management</a><a href="http://corp.kaltura.com/solutions/video_solution">video solutions</a><a href="http://corp.kaltura.com/video_platform/video_publishing">video player</a></object>'}, {u'width': 500, u'embed_code': u'<img style="visibility:hidden;width:0px;height:0px;" border=0 width=0 height=0 src="http://c.gigcount.com/wildfire/IMP/CXNID=2000002.11NXC/bT*xJmx*PTEzMzc2MjUyNjQxMTMmcHQ9MTMzNzYyNTI2NTMyNyZwPSZkPSZnPTImbz*5OGNmMzI*OWEyZmU*NThlYjliZTk*NWVi/ZGZhZWJjZSZvZj*w.gif" /><object name="kaltura_player_1337625260" id="kaltura_player_1337625260" type="application/x-shockwave-flash" allowScriptAccess="always" allowNetworking="all" allowFullScreen="true" height="312" width="500" data="http://www.kaltura.com/index.php/kwidget/wid/0_jzs5tgmh/uiconf_id/7342382"><param name="allowScriptAccess" value="always" /><param name="allowNetworking" value="all" /><param name="allowFullScreen" value="true" /><param name="bgcolor" value="#000000" /><param name="movie" value="http://www.kaltura.com/index.php/kwidget/wid/0_jzs5tgmh/uiconf_id/7342382"/><param name="flashVars" value=""/><a href="http://corp.kaltura.com">video platform</a><a href="http://corp.kaltura.com/video_platform/video_management">video management</a><a href="http://corp.kaltura.com/solutions/video_solution">video solutions</a><a href="http://corp.kaltura.com/video_platform/video_publishing">video player</a></object>'}], u'id': 23501299963L, u'highlighted': [], u'source_title': u'thedailywhat', u'format': u'html', u'post_url': u'http://braindamagedlikeafox.tumblr.com/post/23501299963/thallydraper-arrestomomentum-thedailywhat', u'recommended_source': None, u'state': u'published', u'short_url': u'http://tmblr.co/Z8Pw5yLuoM3x', u'html5_capable': False, u'type': u'video', u'tags': [], u'timestamp': 1337637432, u'note_count': 907, u'video_type': u'unknown', u'source_url': u'http://thedailywhat.tumblr.com/post/23490346044/another-movie-trailer-of-the-day-ron-burgundy-and', u'trail': [{u'blog': {u'theme': {u'title_font_weight': u'bold', u'header_full_height': 535, u'title_color': u'#444444', u'header_bounds': u'0,700,393,0', u'background_color': u'#F6F6F6', u'link_color': u'#529ECC', u'header_image_focused': u'http://static.tumblr.com/056c8268a81fbc5d85a49b00257475d6/j8pvugt/PN5n5lbte/tumblr_static_tumblr_static_30i9sg1dlckk4gooo4k0okc8k_focused_v3.jpg', u'show_description': True, u'header_full_width': 760, u'header_focus_width': 700, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'circle', u'show_avatar': True, u'header_focus_height': 393, u'title_font': u'Helvetica Neue', u'header_image': u'http://static.tumblr.com/056c8268a81fbc5d85a49b00257475d6/j8pvugt/0Ktn5lbtc/tumblr_static_30i9sg1dlckk4gooo4k0okc8k.jpg', u'header_image_scaled': u'http://static.tumblr.com/056c8268a81fbc5d85a49b00257475d6/j8pvugt/0Ktn5lbtc/tumblr_static_30i9sg1dlckk4gooo4k0okc8k_2048_v2.jpg'}, u'name': u'thallydraper'}, u'content': u'<p>HEY AMERICA, DID YOU MISS MY HOT BREATH IN YOUR EAR?</p>', u'post': {u'id': u'23498494976'}}], u'date': u'2012-05-21 21:57:12 GMT', u'thumbnail_height': 0, u'slug': u'thallydraper-arrestomomentum-thedailywhat', u'blog_name': u'braindamagedlikeafox', u'caption': u'<p><a class="tumblr_blog" href="http://thallydraper.tumblr.com/post/23498494976" target="_blank">thallydraper</a>:</p>\n<blockquote>\n<p><a class="tumblr_blog" href="http://arrestomomentum.tumblr.com/post/23494248051/thedailywhat-another-movie-trailer-of-the-day" target="_blank">arrestomomentum</a> <span>|\xa0</span><a class="tumblr_blog" href="http://tumblr.thedailywh.at/post/23490346044/another-movie-trailer-of-the-day-ron-burgundy-and" target="_blank">thedailywhat</a>:</p>\n<blockquote>\n<blockquote>\n<p><strong>Another Movie Trailer of the Day:</strong> Ron Burgundy and the Action News Team return to theaters in 2013 after a nine-year hiatus. Here\u2019s your first (official) look.</p>\n<p>[<a href="http://hypervocal.com/news/2012/anchorman-2-teaser-trailer/" target="_blank">hypervocal</a>]</p>\n</blockquote>\n<p><img src="http://media.tumblr.com/tumblr_m4e29kk8gG1qzfwlu.gif"/></p>\n</blockquote>\n<p>HEY AMERICA, DID YOU MISS MY HOT BREATH IN YOUR EAR?</p>\n</blockquote>', u'thumbnail_url': u''}
+    kaltura_result = handle_video_posts(session,kaltura_post_dict)
+    logging.debug("kaltura_result:"+repr(kaltura_result))
+
     # facebook
     facebook_post_dict = {u'reblog_key': u'ccnhY1gp', u'reblog': {u'comment': u'<p>Finally got around to watching this.</p>\n<p>Am I the only one that sort of wants them to adopt that thing?</p>', u'tree_html': u'<p><a class="tumblr_blog" href="http://lenguyenbum.tumblr.com/post/63558011500/gf-short-1-candy-monster" target="_blank">lenguyenbum</a>:</p><blockquote>\n<p>GF Short 1: Candy Monster</p>\n</blockquote>'}, u'thumbnail_width': 0, u'player': [{u'width': 250, u'embed_code': u'<iframe src="https://www.facebook.com/video/embed?video_id=460003754113169" width="250" height="140" frameborder="0"></iframe>'}, {u'width': 400, u'embed_code': u'<iframe src="https://www.facebook.com/video/embed?video_id=460003754113169" width="400" height="225" frameborder="0"></iframe>'}, {u'width': 500, u'embed_code': u'<iframe src="https://www.facebook.com/video/embed?video_id=460003754113169" width="500" height="281" frameborder="0"></iframe>'}], u'id': 63621803886L, u'highlighted': [], u'format': u'html', u'post_url': u'http://tenaflyviper.tumblr.com/post/63621803886/lenguyenbum-gf-short-1-candy-monster-finally', u'recommended_source': None, u'state': u'published', u'short_url': u'http://tmblr.co/ZxwY_xxG9wzk', u'html5_capable': False, u'type': u'video', u'tags': [u'Gravity Falls', u"Dipper's Guide to the Unexplained"], u'timestamp': 1381379439, u'note_count': 53, u'video_type': u'unknown', u'trail': [{u'blog': {u'theme': {u'title_font_weight': u'bold', u'header_full_height': 1200, u'title_color': u'#1323BE', u'header_bounds': u'215,1482,984,117', u'background_color': u'#FAFAFA', u'link_color': u'#529ECC', u'header_image_focused': u'http://static.tumblr.com/f39bd459332eef43c1a5ec760236c36b/s9lwzjc/f9cna2g2c/tumblr_static_tumblr_static_4cw6s0a9v18gkkk0skkkcwskg_focused_v3.png', u'show_description': False, u'header_full_width': 1600, u'header_focus_width': 1365, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'circle', u'show_avatar': True, u'header_focus_height': 769, u'title_font': u'Streetscript', u'header_image': u'http://static.tumblr.com/f39bd459332eef43c1a5ec760236c36b/s9lwzjc/Z3Tna2g28/tumblr_static_4cw6s0a9v18gkkk0skkkcwskg.png', u'header_image_scaled': u'http://static.tumblr.com/f39bd459332eef43c1a5ec760236c36b/s9lwzjc/Z3Tna2g28/tumblr_static_4cw6s0a9v18gkkk0skkkcwskg_2048_v2.png'}, u'name': u'lenguyenbum'}, u'content': u'<p>GF Short 1: Candy Monster</p>', u'post': {u'id': u'63558011500'}, u'is_root_item': True}, {u'blog': {u'theme': {u'title_font_weight': u'bold', u'title_color': u'#444444', u'header_bounds': 0, u'background_color': u'#FAFAFA', u'link_color': u'#529ECC', u'header_image_focused': u'http://assets.tumblr.com/images/default_header/optica_pattern_06.png?_v=c5e9c9bdca5f67be80d91514a36509cc', u'show_description': True, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'circle', u'show_avatar': True, u'title_font': u'Gibson', u'header_image': u'http://assets.tumblr.com/images/default_header/optica_pattern_06.png?_v=c5e9c9bdca5f67be80d91514a36509cc', u'header_image_scaled': u'http://assets.tumblr.com/images/default_header/optica_pattern_06.png?_v=c5e9c9bdca5f67be80d91514a36509cc'}, u'name': u'tenaflyviper'}, u'content': u'<p>Finally got around to watching this.</p>\n<p>Am I the only one that sort of wants them to adopt that thing?</p>', u'post': {u'id': u'63621803886'}, u'content_raw': u'<p>Finally got around to watching this.</p>\r\n<p>Am I the only one that sort of wants them to adopt that thing?</p>', u'is_current_item': True}], u'date': u'2013-10-10 04:30:39 GMT', u'thumbnail_height': 0, u'slug': u'lenguyenbum-gf-short-1-candy-monster-finally', u'blog_name': u'tenaflyviper', u'caption': u'<p><a class="tumblr_blog" href="http://lenguyenbum.tumblr.com/post/63558011500/gf-short-1-candy-monster" target="_blank">lenguyenbum</a>:</p>\n<blockquote>\n<p>GF Short 1: Candy Monster</p>\n</blockquote>\n<p>Finally got around to watching this.</p>\n<p>Am I the only one that sort of wants them to adopt that thing?</p>', u'thumbnail_url': u''}
     facebook_result = handle_video_posts(session,facebook_post_dict)
     logging.debug("facebook_result:"+repr(facebook_result))
-
 
     return
 
