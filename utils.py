@@ -407,6 +407,32 @@ def move_file(original_path,final_path,max_attempts=10):
     raise
 
 
+def delete_file(file_path,max_attempts=10):
+    """Delete a file"""
+    assert_is_string(file_path)
+
+    attempt_counter = 0
+    while attempt_counter < max_attempts:
+        attempt_counter += 1
+        if attempt_counter > 1:
+            # Pause if something went wrong, (yt-dl is a suspect, might not be closing files?)
+            time.sleep(attempt_counter)
+            logging.debug("Attempt "+repr(attempt_counter)+" to delete "+repr(file_path))
+        try:
+            # Delete file
+            os.remove(file_path)
+            assert(not os.path.exists(file_path))
+            return
+        except WindowsError, err:
+            logging.exception(err)
+            logging.error("Failed to delete file: "+repr(file_path))
+            continue
+    # If we get here we already have an exception to re-raise
+    logging.critical("delete_file() Too many failed attempts to delete a file!")
+    logging.critical("delete_file()"+repr(locals()))
+    raise
+
+
 def hash_file_data(file_data):
     """Take the data from a file and hash it for deduplication
     Return a base16 encoded hash of the data"""

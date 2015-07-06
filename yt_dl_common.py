@@ -137,7 +137,7 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
         logging.debug("Skipping previously saved video: "+repr(video_page_row))
         # Delete duplicate file if media is already saved
         logging.info("Deleting duplicate video file: "+repr(media_temp_filepath))
-        os.remove(media_temp_filepath)
+        delete_file(media_temp_filepath)
     else:
         # If media not in DB, move temp file to permanent location
         # Move file to media DL location
@@ -150,7 +150,7 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
         assert(os.path.exists(final_media_filepath))
 
     # Remove info file
-    os.remove(expected_info_path)
+    delete_file(expected_info_path)
 
     # Add video to DB
     # Build as dict to allow name differences
