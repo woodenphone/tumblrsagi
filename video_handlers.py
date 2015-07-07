@@ -684,6 +684,39 @@ def handle_kaltura_videos(session,post_dict):#TODO FIXME
     return media_id_list
 
 
+def handle_gfycat_videos(session,post_dict):#TODO FIXME
+    """Download gfycat videos given by the videos section fo the API"""
+    logging.debug("Processing gfycat video")
+    # Extract video links from post dict
+    video_urls = []
+    video_items = post_dict["player"]
+    for video_item in video_items:
+        embed_code = video_item["embed_code"]
+        # u'embed_code': u'<iframe src="http://gfycat.com/ifr/JauntyTimelyAmazontreeboa" frameborder="0" scrolling="no" width="250" height="187" style="-webkit-backface-visibility: hidden;-webkit-transform: scale(1);" ></iframe>',
+        # http://gfycat.com/ifr/JauntyTimelyAmazontreeboa
+        if embed_code:
+            # Process links so YT-DL can understand them
+            logging.debug("handle_gfycat_videos() embed_code: "+repr(embed_code))
+            embed_url_regex ="""(?:http://)?gfycat.com/ifr/([\w]+)"""
+            embed_url_search = re.search(embed_url_regex, embed_code, re.IGNORECASE|re.DOTALL)
+            if embed_url_search:
+                video_id = embed_url_search.group(1)
+                video_url = "http://gfycat.com/"+video_id
+                video_urls.append(video_url)
+        continue
+    logging.debug("handle_gfycat_videos() video_urls: "+repr(video_urls))
+    assert( len(video_urls) > 0)# We should have a video URL
+
+    # Download videos if there are any
+    media_id_list = run_yt_dl_multiple(
+        session = session,
+        download_urls = video_urls,
+        extractor_used="video_handlers.handle_gfycat_videos()",
+        )
+    logging.debug("Finished downloading gfycat embeds")
+    return media_id_list
+
+
 def handle_video_posts(session,post_dict):
     """Decide which video functions to run and pass back what they return"""
     # Check if post is a video post
@@ -834,8 +867,13 @@ def handle_video_posts(session,post_dict):
             return []
         # goanimate.com
         elif "goanimate.com/player/embed" in repr(post_dict["player"]):
-            logging.debug("Post looks goanimate.com vimeo, skipping.")
+            logging.debug("Post looks goanimate.com video, skipping.")
             return []
+        # gfycat
+        elif "gfycat.com/ifr" in repr(post_dict["player"]):
+            logging.debug("Post looks gfycat.com video..")
+            return handle_gfycat_videos(session,post_dict)
+
         # This should be last so we don't accidentally pick up other media types
         # Flash embed
         elif """.swf""" in repr(post_dict["player"]):#fuckit we;'ll just assume swf isnt a video site :(
@@ -1009,6 +1047,11 @@ def test_video_handlers(session):
     goanimate_post_dict = {u'reblog_key': u'itrHCx0s', u'reblog': {u'comment': u'<p>i waited all night to see this and now it&rsquo;s finally done<br>if i hadn&rsquo;t run to the bathroom just now I&rsquo;m pretty sure I would&rsquo;ve peed mysELF LAUGHING,,,,&nbsp;</p>', u'tree_html': u'<p><a class="tumblr_blog" href="http://kingies.tumblr.com/post/31430707952">kingies</a>:</p><blockquote>\n<p>sad oncest amv (actually my german project)</p>\n</blockquote>'}, u'thumbnail_width': 0, u'player': [{u'width': 250, u'embed_code': u'<iframe scrolling="no" allowTransparency="true" frameborder="0" width="250" height="140" src="http://goanimate.com/player/embed/0T9502e4kWaU"></iframe>'}, {u'width': 400, u'embed_code': u'<iframe scrolling="no" allowTransparency="true" frameborder="0" width="400" height="225" src="http://goanimate.com/player/embed/0T9502e4kWaU"></iframe>'}, {u'width': 500, u'embed_code': u'<iframe scrolling="no" allowTransparency="true" frameborder="0" width="500" height="281" src="http://goanimate.com/player/embed/0T9502e4kWaU"></iframe>'}], u'id': 31430907974L, u'highlighted': [], u'format': u'html', u'post_url': u'http://danadelions.tumblr.com/post/31430907974/kingies-sad-oncest-amv-actually-my-german', u'recommended_source': None, u'state': u'published', u'short_url': u'http://tmblr.co/ZMMCUvTHRPX6', u'html5_capable': False, u'type': u'video', u'tags': [], u'timestamp': 1347495660, u'note_count': 24, u'video_type': u'unknown', u'trail': [{u'blog': {u'theme': {u'title_font_weight': u'bold', u'title_color': u'#444444', u'header_bounds': u'', u'background_color': u'#FAFAFA', u'link_color': u'#529ECC', u'header_image_focused': u'http://assets.tumblr.com/images/default_header/optica_pattern_01_focused_v3.png?_v=f67ca5ac5d1c4a0526964674cb5a0605', u'show_description': True, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'square', u'show_avatar': True, u'title_font': u'Gibson', u'header_image': u'http://assets.tumblr.com/images/default_header/optica_pattern_01.png?_v=f67ca5ac5d1c4a0526964674cb5a0605', u'header_image_scaled': u'http://assets.tumblr.com/images/default_header/optica_pattern_01_focused_v3.png?_v=f67ca5ac5d1c4a0526964674cb5a0605'}, u'name': u'kingies'}, u'content': u'<p>sad oncest amv (actually my german project)</p>', u'post': {u'id': u'31430707952'}, u'is_root_item': True}, {u'blog': {u'theme': {u'title_font_weight': u'bold', u'header_full_height': 916, u'title_color': u'#df9305', u'header_bounds': u'98,1280,818,0', u'background_color': u'#ffe9b5', u'link_color': u'#e17e66', u'header_image_focused': u'http://static.tumblr.com/499d50b57f0a089bce4668b69b8f219a/cxd0hbo/IRMnfg306/tumblr_static_tumblr_static_8r6jh8pwhxk40oc0c84kwsgso_focused_v3.jpg', u'show_description': True, u'header_full_width': 1280, u'header_focus_width': 1280, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'circle', u'show_avatar': True, u'header_focus_height': 720, u'title_font': u'Streetscript', u'header_image': u'http://static.tumblr.com/499d50b57f0a089bce4668b69b8f219a/cxd0hbo/L6anfg304/tumblr_static_8r6jh8pwhxk40oc0c84kwsgso.jpg', u'header_image_scaled': u'http://static.tumblr.com/499d50b57f0a089bce4668b69b8f219a/cxd0hbo/L6anfg304/tumblr_static_8r6jh8pwhxk40oc0c84kwsgso_2048_v2.jpg'}, u'name': u'danadelions'}, u'content': u'<p>i waited all night to see this and now it\u2019s finally done<br>if i hadn\u2019t run to the bathroom just now I\u2019m pretty sure I would\u2019ve peed mysELF LAUGHING,,,,\xa0</p>', u'post': {u'id': u'31430907974'}, u'content_raw': u"<p>i waited all night to see this and now it's finally done<br>if i hadn't run to the bathroom just now I'm pretty sure I would've peed mysELF LAUGHING,,,,&nbsp;</p>", u'is_current_item': True}], u'date': u'2012-09-13 00:21:00 GMT', u'thumbnail_height': 0, u'slug': u'kingies-sad-oncest-amv-actually-my-german', u'blog_name': u'danadelions', u'caption': u'<p><a class="tumblr_blog" href="http://kingies.tumblr.com/post/31430707952">kingies</a>:</p>\n<blockquote>\n<p>sad oncest amv (actually my german project)</p>\n</blockquote>\n<p>i waited all night to see this and now it&rsquo;s finally done<br/>if i hadn&rsquo;t run to the bathroom just now I&rsquo;m pretty sure I would&rsquo;ve peed mysELF LAUGHING,,,,\xa0</p>', u'thumbnail_url': u''}
     goanimate_result = handle_video_posts(session,goanimate_post_dict)
     logging.debug("goanimate_result:"+repr(goanimate_result))
+
+    # gfycat.com
+    gfycat_post_dict = {u'reblog_key': u'53s7Las7', u'reblog': {u'comment': u'', u'tree_html': u'<p><a class="tumblr_blog" href="http://animationreferences.tumblr.com/post/98541402265/animation-test-by-james-baxter-for-spirit">animationreferences</a>:</p><blockquote>\n<p>Animation test by James Baxter for Spirit - Dreamworks Animation SKG, Inc</p>\n</blockquote>'}, u'thumbnail_width': 0, u'player': [{u'width': 250, u'embed_code': u'<iframe src="http://gfycat.com/ifr/JauntyTimelyAmazontreeboa" frameborder="0" scrolling="no" width="250" height="187" style="-webkit-backface-visibility: hidden;-webkit-transform: scale(1);" ></iframe>'}, {u'width': 400, u'embed_code': u'<iframe src="http://gfycat.com/ifr/JauntyTimelyAmazontreeboa" frameborder="0" scrolling="no" width="400" height="300" style="-webkit-backface-visibility: hidden;-webkit-transform: scale(1);" ></iframe>'}, {u'width': 500, u'embed_code': u'<iframe src="http://gfycat.com/ifr/JauntyTimelyAmazontreeboa" frameborder="0" scrolling="no" width="500" height="375" style="-webkit-backface-visibility: hidden;-webkit-transform: scale(1);" ></iframe>'}], u'id': 98618349806L, u'highlighted': [], u'format': u'html', u'post_url': u'http://feels-and-things.tumblr.com/post/98618349806/animationreferences-animation-test-by-james', u'recommended_source': None, u'state': u'published', u'short_url': u'http://tmblr.co/Z8Qbot1Rs79Zk', u'html5_capable': False, u'type': u'video', u'tags': [u'james baxter', u'spirit stallion of the cimarron'], u'timestamp': 1411891051, u'note_count': 3, u'video_type': u'unknown', u'trail': [{u'blog': {u'theme': {u'title_font_weight': u'bold', u'title_color': u'#444444', u'header_bounds': 0, u'background_color': u'#FAFAFA', u'link_color': u'#529ECC', u'header_image_focused': u'http://assets.tumblr.com/images/default_header/optica_pattern_12.png?_v=66d5962d3469ecad376c5ae8c13d5a27', u'show_description': True, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'square', u'show_avatar': True, u'title_font': u'Gibson', u'header_image': u'http://assets.tumblr.com/images/default_header/optica_pattern_12.png?_v=66d5962d3469ecad376c5ae8c13d5a27', u'header_image_scaled': u'http://assets.tumblr.com/images/default_header/optica_pattern_12.png?_v=66d5962d3469ecad376c5ae8c13d5a27'}, u'name': u'animationreferences'}, u'content': u'<p>Animation test by James Baxter for Spirit - Dreamworks Animation SKG, Inc</p>', u'post': {u'id': u'98541402265'}, u'is_root_item': True}], u'date': u'2014-09-28 07:57:31 GMT', u'thumbnail_height': 0, u'slug': u'animationreferences-animation-test-by-james', u'blog_name': u'feels-and-things', u'caption': u'<p><a class="tumblr_blog" href="http://animationreferences.tumblr.com/post/98541402265/animation-test-by-james-baxter-for-spirit">animationreferences</a>:</p>\n<blockquote>\n<p>Animation test by James Baxter for Spirit - Dreamworks Animation SKG, Inc</p>\n</blockquote>', u'thumbnail_url': u''}
+    gfycat_result = handle_video_posts(session,gfycat_post_dict)
+    logging.debug("gfycat_result:"+repr(gfycat_result))
 
     return
 
