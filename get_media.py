@@ -57,15 +57,17 @@ def process_one_new_posts_media(post_row):
         session.commit()
 
         logging.info("Finished processing new post media with primary_key: "+repr(post_primary_key))
+        session.close()
         return
 
     # Log exceptions and pass them on
     # Also rollback
     except Exception, e:
         logging.critical("Unhandled exception in save_blog()!")
+        logging.exception(e)
+        # Rollback
         session.rollback()
         session.close()
-        logging.exception(e)
         raise
     assert(False)# Thsi should never run
 
