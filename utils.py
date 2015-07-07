@@ -374,7 +374,7 @@ def uniquify(seq, idfun=None):
    return result
 
 
-def move_file(original_path,final_path,max_attempts=10):
+def move_file(original_path,final_path,max_attempts=30):
     """Move a file from one location to another"""
     assert_is_string(original_path)
     assert_is_string(final_path)
@@ -407,7 +407,7 @@ def move_file(original_path,final_path,max_attempts=10):
     raise
 
 
-def delete_file(file_path,max_attempts=10):
+def delete_file(file_path,max_attempts=30):
     """Delete a file"""
     assert_is_string(file_path)
 

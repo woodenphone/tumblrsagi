@@ -67,10 +67,7 @@ def process_one_new_posts_media(post_row):
         session.close()
         logging.exception(e)
         raise
-    logging.debug("About to close db connection")
-    session.close()
-    logging.debug("Closed db connection")
-    return
+    assert(False)# Thsi should never run
 
 
 def list_new_posts(session,max_rows):
