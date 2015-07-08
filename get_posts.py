@@ -364,14 +364,15 @@ def main():
 
         save_blogs()
 
-        lockfiles.remove_lock(lock_file_path)
         # /Program
         logging.info("Finished, exiting.")
-        return
 
     except Exception, e:# Log fatal exceptions
         logging.critical("Unhandled exception!")
         logging.exception(e)
+    finally:
+        # Remove lockfile even if we crashed
+        lockfiles.remove_lock(lock_file_path)
     return
 
 if __name__ == '__main__':

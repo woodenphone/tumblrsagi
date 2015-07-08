@@ -21,11 +21,10 @@ import config # Settings and configuration
 from tables import RawPosts
 
 
-def process_one_new_posts_media(post_row):
+def process_one_new_posts_media(session,post_row):
     """Return True if everything was fine.
     Return False if no more posts should be tried"""
     try:
-        session = sql_functions.connect_to_db()
         post_primary_key = post_row["primary_key"]
         logging.info("Processing post with primary_key: "+repr(post_primary_key))
         logging.debug("post_row"": "+repr(post_row))
@@ -57,7 +56,6 @@ def process_one_new_posts_media(post_row):
         session.commit()
 
         logging.info("Finished processing new post media with primary_key: "+repr(post_primary_key))
-        session.close()
         return
 
     # Log exceptions and pass them on
@@ -67,9 +65,18 @@ def process_one_new_posts_media(post_row):
         logging.exception(e)
         # Rollback
         session.rollback()
-        session.close()
         raise
     assert(False)# Thsi should never run
+
+
+def worker(post_row_list):
+    # Connect to DB
+    session = sql_functions.connect_to_db()
+    # Process posts
+    for post_row in post_row_list:
+        process_one_new_posts_media(session,post_row)
+    # Disconnect from DB
+    session.close()
 
 
 def list_new_posts(session,max_rows):
@@ -142,10 +149,16 @@ def process_all_posts_media(max_rows=1000):
         # Process posts
         logging.debug("Processing posts, "+repr(counter)+" done so far this run")
         logging.debug("Starting workers")
+
+        jobs = split_list(
+            list_in = post_dicts,
+            number_of_pieces = config.number_of_media_workers
+            )
+
         # http://stackoverflow.com/questions/2846653/python-multithreading-for-dummies
         # Make the Pool of workers
         pool = ThreadPool(config.number_of_media_workers)# Set to one for debugging
-        results = pool.map(process_one_new_posts_media, post_dicts)
+        results = pool.map(worker, jobs)
         #close the pool and wait for the work to finish
         pool.close()
         pool.join()
@@ -170,7 +183,6 @@ def main():
         #process_one_thousand_posts_media()
         process_all_posts_media()
 
-        lockfiles.remove_lock(lock_file_path)
         # /Program
         logging.info("Finished, exiting.")
         return
@@ -178,6 +190,9 @@ def main():
     except Exception, e:# Log fatal exceptions
         logging.critical("Unhandled exception!")
         logging.exception(e)
+    finally:
+        # Remove lockfile even if we crashed
+        lockfiles.remove_lock(lock_file_path)
     return
 
 if __name__ == '__main__':

@@ -598,8 +598,34 @@ def parse_tumblr_timsetamp_string(date_string):
     return datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S %Z")
 
 
+def split_list(list_in,number_of_pieces):
+    """Take a list and split it into segments
+    Return a list of lists
+    [1,2,3,4,5,6] -> [[1,2,3], [4,5,6]]
+    """
+    output_length = len(list_in) / number_of_pieces
+    output = []
+    piece = []
+    counter = 0
+    for list_item in list_in:
+        counter += 1
+        piece.append(list_item)
+        if counter >= output_length:
+            output.append(piece)
+            counter = 0
+            piece = []
+    # Make sure nothing is missed
+    if len(piece) > 0:
+        output.append(piece)
+    return output
+
+
 def main():
-    pass
+    # Test split_list
+    print split_list(range(7), 2)
+    print split_list(range(6), 3)
+    print split_list(range(100), 10)
+    print split_list([{1:1},{2:2},{3:3},{4:4}], 10)
     # Test get_file_extention
     print get_file_extention("http://41.media.tumblr.com/5f52121f2a8f03b086aff076a00a5e2d/tumblr_nfcz9lPRUR1qbvkmso1_1280.jpg?")# jpg
     print get_file_extention(u'https://www.tumblr.com/explore/links')# None
