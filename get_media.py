@@ -145,18 +145,18 @@ def process_all_posts_media(max_rows=1000):
 
 
 def main():
+    # Check and create lockfiles OUTSIDE trt / except block to ensure it is
+    # not removed on lock-related crash
+    lock_file_path = os.path.join(config.lockfile_dir, "get_media.lock")
+    lockfiles.start_lock(lock_file_path)
     try:
         setup_logging(
             log_file_path=os.path.join("debug","get_media_log.txt"),
             concise_log_file_path=os.path.join("debug","short_get_media_log.txt")
             )
         # Program
-        lock_file_path = os.path.join(config.lockfile_dir, "get_media.lock")
-        lockfiles.start_lock(lock_file_path)
-
         #process_one_thousand_posts_media()
         process_all_posts_media()
-
         # /Program
         logging.info("Finished, exiting.")
         return

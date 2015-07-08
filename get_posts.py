@@ -353,17 +353,17 @@ def list_blogs():
 
 
 def main():
+    # Check and create lockfiles OUTSIDE trt / except block to ensure it is
+    # not removed on lock-related crash
+    lock_file_path = os.path.join(config.lockfile_dir, "get_posts.lock")
+    lockfiles.start_lock(lock_file_path)
     try:
         setup_logging(
         log_file_path=os.path.join("debug","get_posts_log.txt"),
         concise_log_file_path=os.path.join("debug","short_get_posts_log.txt")
         )
         # Program
-        lock_file_path = os.path.join(config.lockfile_dir, "get_posts.lock")
-        lockfiles.start_lock(lock_file_path)
-
         save_blogs()
-
         # /Program
         logging.info("Finished, exiting.")
 
