@@ -26,7 +26,7 @@ def process_one_new_posts_media(session,post_row):
     Return False if no more posts should be tried"""
     try:
         post_primary_key = post_row["primary_key"]
-        logging.info("Processing post with primary_key: "+repr(post_primary_key))
+        logging.debug("Processing post with primary_key: "+repr(post_primary_key))
         logging.debug("post_row"": "+repr(post_row))
         raw_post_dict = post_row["raw_post_json"]
         blog_url = post_row["blog_domain"]
@@ -55,7 +55,7 @@ def process_one_new_posts_media(session,post_row):
 
         session.commit()
 
-        logging.info("Finished processing new post media with primary_key: "+repr(post_primary_key))
+        logging.debug("Finished processing new post media with primary_key: "+repr(post_primary_key))
         return
 
     # Log exceptions and pass them on
@@ -70,6 +70,7 @@ def process_one_new_posts_media(session,post_row):
 
 
 def worker(post_row_list):
+    logging.info("Worker started.")
     # Connect to DB
     session = sql_functions.connect_to_db()
     # Process posts
@@ -77,6 +78,8 @@ def worker(post_row_list):
         process_one_new_posts_media(session,post_row)
     # Disconnect from DB
     session.close()
+    logging.info("Worker finished.")
+    return
 
 
 def list_new_posts(session,max_rows):
