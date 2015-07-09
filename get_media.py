@@ -70,7 +70,7 @@ def process_one_new_posts_media(session,post_row):
 
 
 def worker(post_row_list):
-    logging.info("Worker started.")
+    logging.info("Worker started for "+repr(len(post_row_list))+" posts.")
     # Connect to DB
     session = sql_functions.connect_to_db()
     # Process posts
@@ -132,9 +132,12 @@ def process_all_posts_media(max_rows=1000):
         # http://stackoverflow.com/questions/2846653/python-multithreading-for-dummies
         # Make the Pool of workers
         pool = ThreadPool(config.number_of_media_workers)# Set to one for debugging
+        logging.debug("pool opened")
         results = pool.map(worker, jobs)
         #close the pool and wait for the work to finish
+        logging.debug("closing pool")
         pool.close()
+        logging.debug("Pool closed")
         pool.join()
         logging.debug("All workers finished")
         logging.info("Finished proccessing this group of posts")
@@ -152,7 +155,6 @@ def main():
     try:
         setup_logging(
             log_file_path=os.path.join("debug","get_media_log.txt"),
-            concise_log_file_path=os.path.join("debug","short_get_media_log.txt")
             )
         # Program
         #process_one_thousand_posts_media()
