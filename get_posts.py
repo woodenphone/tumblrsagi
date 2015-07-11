@@ -20,6 +20,18 @@ from tables import *# Table definitions
 import config # Settings and configuration
 import blog_themes# blog themes
 
+
+
+
+
+
+def strip_invalid_unicode_From_json(json_in):
+    """Take a JSON string and strip bad unicode"""
+    json_out = json_in.replace("\\u0000", "")
+    return json_out
+
+
+
 class tumblr_blog:
     def __init__(self,session,consumer_key,blog_url=None,):
         # Store args for later and initialise variables
@@ -156,8 +168,8 @@ class tumblr_blog:
                 else:
                     page_url = "http://api.tumblr.com/v2/blog/"+self.blog_url+"/posts/?api_key="+self.consumer_key
                 logging.debug("page_url: "+repr(page_url))
-                page_json = get(page_url)
-                if not page_json:
+                raw_page_json = get(page_url)
+                if not raw_page_json:
                     logging.error("Failed to load API page for this blog")
                     self.session.rollback
                     appendlist(
@@ -167,8 +179,10 @@ class tumblr_blog:
                         )
                     return
 
+                cleaned_page_json = strip_invalid_unicode_From_json(raw_page_json)
+
                 # Decode JSON
-                page_dict = json.loads(page_json)
+                page_dict = json.loads(cleaned_page_json)
 
                 # Stop if bad response
                 if page_dict["meta"]["status"] != 200:
