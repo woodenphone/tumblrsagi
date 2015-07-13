@@ -77,6 +77,8 @@ def remove_unwanted_links(link_list):
             continue
         if "static.tumblr.com".lower() in link.lower():
             continue
+        if "assets.tumblr.com".lower() in link.lower():
+            continue
         else:
             kept_links.append(link)
     return kept_links
@@ -87,7 +89,7 @@ def main():
             log_file_path=os.path.join("debug","find_linked_blogs_log.txt"),
             )
         # Program
-        process_posts(blog_domain="30minchallenge.tumblr.com")
+        process_posts(blog_domain="mlpgdraws.tumblr.com")
         # /Program
         logging.info("Finished, exiting.")
         return

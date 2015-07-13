@@ -151,6 +151,7 @@ def update_blog_background(session,blog_url):
 
 
 def update_blog_header_image(session,blog_url):
+    logging.warning("Header images not yet implimented!")
     logging.debug("Updating header image")
     # Find header image link
     # Save header image
