@@ -290,7 +290,7 @@ def handle_dropbox_link(session,link):
 
 
 
-def handle_fastswf_link(session,link):
+def handle_fastswf_link(session,link):# TODO FIXME
     """http://www.fastswf.com/ - Free Flash and Unity Hosting
         Supported link formats:
         http://www.fastswf.com/5MH9MZw
@@ -416,7 +416,7 @@ def handle_links(session,post_dict):# TODO FIXME
         # fastswf.com
         elif "fastswf.com" in link[0:20]:
             logging.debug("Link is fastswf.com: "+repr(link))
-            media_id_list += handle_fastswf_link(session,link)
+            #media_id_list += handle_fastswf_link(session,link)
 
 
         # -Generic-
