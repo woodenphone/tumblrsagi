@@ -157,7 +157,7 @@ def main():
     lockfiles.start_lock(lock_file_path)
     try:
         setup_logging(
-            log_file_path=os.path.join("debug","get_media_log.txt"),
+            log_file_path=os.path.join("debug","targeted_get_media_log.txt"),
             )
         # Program
         #process_one_thousand_posts_media()
