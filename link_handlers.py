@@ -216,7 +216,11 @@ def remove_tumblr_links(link_list):
 
 
 def handle_generic_link(session,link):
-    logging.debug("Genric handler")
+    logging.debug("handle_generic_link() link:"+repr(link))
+    # Ensure the protocol bit is there ("http://","ftp://"...)
+    if "://" not in link:
+        logging.debug("handle_generic_link() prepending 'http://' to link")
+        link = "http://"+link
     attempt_counter = 0
     max_attempts = 10
     while attempt_counter <= max_attempts:
@@ -458,8 +462,9 @@ def handle_links(session,post_dict):# TODO FIXME
 def debug():
     """For WIP, debug, ect function calls"""
     session = sql_functions.connect_to_db()
+    handle_generic_link(session,link="media.tumblr.com/80638dc40978c286b5d3f18b2bfcf3d6/tumblr_inline_mfb0pxs7lf1qfi5b1.gif")
 
-    fastswf_result = handle_fastswf_link(session,"http://www.fastswf.com/5MH9MZw")
+    #fastswf_result = handle_fastswf_link(session,"http://www.fastswf.com/5MH9MZw")
     return
     result = handle_links(
         session,
