@@ -362,7 +362,6 @@ def handle_links(session,post_dict):# TODO FIXME
         # e621.net
         # https://e621.net/post/show/599802
 
-
         # -Image-
         # Imgur
         if "//imgur.com/" in link:
@@ -415,6 +414,14 @@ def handle_links(session,post_dict):# TODO FIXME
 
         # http://webm.host
         # http://webm.host/ec2fc/
+        elif "webm.host/" in link[0:20]:
+            logging.debug("Link is webmup.com video: "+repr(link))
+            media_id_list += yt_dl_common.run_yt_dl_single(
+                session=session,
+                download_url=link,
+                extractor_used="link_handlers.handle_video_links:webm.host",
+                )
+            continue
 
 
         # -Audio-
