@@ -137,9 +137,9 @@ def read_file(path):
 
 def add_http(url):
     """Ensure a url starts with http://..."""
-    if "http://" in url:
+    if "http://" in url.lower():
         return url
-    elif "https://" in url:
+    elif "https://" in url.lower():
         return url
     else:
         #case //derpicdn.net/img/view/...
@@ -149,7 +149,7 @@ def add_http(url):
             return output_url
         else:
             logging.error("Error adding HTTP to URL string")
-            logging.error(repr(locals()))
+            logging.error("add_http() locals:"+repr(locals()))
             raise ValueError
 
 
