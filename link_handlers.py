@@ -260,6 +260,10 @@ def handle_generic_link(session,link):
             logging.exception(err)
             logging.debug("(locals():"+repr(locals() ) )
             break# We can't handle this link.
+        except requests.exceptions.InvalidURL, err:
+            logging.exception(err)
+            logging.debug("(locals():"+repr(locals() ) )
+            break# We can't handle this link.
     logging.error("Too many retries getting content-type, failing.")
     appendlist(
         link,
@@ -267,6 +271,7 @@ def handle_generic_link(session,link):
         initial_text="# handle_generic_link() failed.\n"
         )
     return []
+
 
 def handle_dropbox_link(session,link):
     """Supported link formats:
@@ -290,8 +295,6 @@ def handle_dropbox_link(session,link):
             initial_text="# dropbox handler failed.\n"
             )
         return []
-
-
 
 
 def handle_fastswf_link(session,link):# TODO FIXME
