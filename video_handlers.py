@@ -991,6 +991,12 @@ def handle_video_posts(session,post_dict):
             logging.debug("Post looks like a Flash embed")
             return handle_flash_embed(session,post_dict)
 
+        # If video type is "unknown" an we don't have a handler, just skip it
+        else:
+            logging.error("Unhandled video, skipping.")
+            logging.error("""handle_video_posts() post_dict: """+repr(post_dict))
+            return []
+
     # If no handler is applicable, stop for fixing
     logging.error("Unknown video type!")
     logging.error("locals(): "+repr(locals()))
