@@ -63,7 +63,7 @@ def setup_logging(log_file_path,concise_log_file_path=None,timestamp_filename=Tr
 
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    formatter = logging.Formatter("%(asctime)s - %(thread)d - %(levelname)s - %(message)s")
     # File 1, log everything
     fh = logging.FileHandler(log_file_path)
     fh.setLevel(logging.DEBUG)
