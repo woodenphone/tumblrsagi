@@ -63,6 +63,7 @@ def setup_logging(log_file_path,concise_log_file_path=None,timestamp_filename=Tr
 
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
+    # 2015-07-21 18:56:23,428 - t.11028 - INFO - ln.156 - Loading page 0 of posts for u'mlpgdraws.tumblr.com'
     formatter = logging.Formatter("%(asctime)s - t.%(thread)d - %(levelname)s - ln.%(lineno)d - %(message)s")
     # File 1, log everything
     fh = logging.FileHandler(log_file_path)
