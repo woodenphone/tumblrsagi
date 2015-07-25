@@ -184,7 +184,6 @@ def getwithinfo(url):
     assert_is_string(url)
     deescaped_url = deescape(url)
     url_with_protocol = add_http(deescaped_url)
-
     # Remove all ssl because ATC said to
     # http://stackoverflow.com/questions/19268548/python-ignore-certicate-validation-urllib2
     ctx = ssl.create_default_context()
@@ -203,6 +202,9 @@ def getwithinfo(url):
 ##                force_save = True,
 ##                allow_fail = True
 ##                )
+            request = urllib2.Request(url_with_protocol)
+            request.add_header("User-agent", "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1")
+            #request.add_header('Referer', 'http://www.tumblr.com/')
             r = urllib2.urlopen(
                 url_with_protocol,
                 context=ctx

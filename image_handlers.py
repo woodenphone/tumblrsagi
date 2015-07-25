@@ -130,6 +130,7 @@ def debug():
     result = download_image_links(session,
         media_urls = ["http://blog.crooz.jp/svc/userFrontArticle/ShowFiles/?no=1538&blog_id=53800&file_str=5380015381862e669e0073d13d4175ecae9d5a34b8ff05fe3.jpg&guid=on&vga_flg=0&y=2014&m=02&d=19&wid=480&hei=640",
             "http://static.tumblr.com/f6539f27dff5045834f7722e61c02e21/w5cnjnh/fVJnpuk9d/tumblr_static_digrsyxj0eg400so4g4kgsc4k.jpg",
+            "https://dl.dropboxusercontent.com/u/27379736/NSFWSFM/SWF/TwilightSoloLightParticles.swf"
             ]
         )
     logging.debug(result)

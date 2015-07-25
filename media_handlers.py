@@ -85,7 +85,7 @@ def save_media(session,post_dict):
     """ Main function for saving a posts media
     return post dict with links replaced by pointers to saved file in the database"""
     #logging.info("Saving post media")
-    #logging.debug("post_dict"+repr(post_dict))
+    logging.debug("save_media() post_dict"+repr(post_dict))
     # Save anything not provided directly through the tumblr API (Remote) ex. http://foo.com/image.jpg
     # I.E. Links (<a href = "http://example.com/image.png">blah</a>)
     media_id_list = []
