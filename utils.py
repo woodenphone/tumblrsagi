@@ -61,10 +61,14 @@ def setup_logging(log_file_path,timestamp_filename=True,max_log_size=104857600):
     formatter = logging.Formatter("%(asctime)s - t.%(thread)d - %(levelname)s - ln.%(lineno)d - %(message)s")
 
     # File 1, log everything
+    # https://docs.python.org/2/library/logging.handlers.html
+    # Rollover occurs whenever the current log file is nearly maxBytes in length; if either of maxBytes or backupCount is zero, rollover never occurs.
     fh = logging.handlers.RotatingFileHandler(
         filename=log_file_path,
         # https://en.wikipedia.org/wiki/Binary_prefix
-        maxBytes=max_log_size
+        # 104857600 100MiB
+        maxBytes=max_log_size,
+        backupCount=10000,# Ten thousand should be enough to crash before we reach it.
         )
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
