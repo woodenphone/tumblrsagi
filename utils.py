@@ -18,6 +18,7 @@ import re
 #import mechanize
 #import cookielib
 import logging
+import logging.handlers
 import urllib2
 import httplib
 import random
@@ -32,55 +33,49 @@ import ssl # So we can turn SSL off
 
 import config# Local config
 
-def setup_logging(log_file_path,concise_log_file_path=None,timestamp_filename=True):
+def setup_logging(log_file_path,timestamp_filename=True,max_log_size=104857600):
     """Setup logging (Before running any other code)
     http://inventwithpython.com/blog/2012/04/06/stop-using-print-for-debugging-a-5-minute-quickstart-guide-to-pythons-logging-module/
     """
     assert( len(log_file_path) > 1 )
     assert( type(log_file_path) == type("") )
     global logger
-    # Make sure output dir exists
+
+    # Make sure output dir(s) exists
     log_file_folder =  os.path.dirname(log_file_path)
     if log_file_folder is not None:
         if not os.path.exists(log_file_folder):
             os.makedirs(log_file_folder)
-    if concise_log_file_path is not None:
-        concise_log_folder = os.path.dirname(concise_log_file_path)
-        if concise_log_folder is not None:
-            if not os.path.exists(concise_log_folder):
-                os.makedirs(concise_log_folder)
 
     # Add timetamp for filename if needed
     if timestamp_filename:
         # http://stackoverflow.com/questions/8472413/add-utc-time-to-filename-python
         # '2015-06-30-13.44.15'
-        timestamp_string = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H.%M.%S%Z")
+        timestamp_string = datetime.datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S%Z")
         # Full log
         log_file_path = add_timestamp_to_log_filename(log_file_path,timestamp_string)
-        # short log (optional)
-        if concise_log_file_path is not None:
-            concise_log_file_path = add_timestamp_to_log_filename(concise_log_file_path,timestamp_string)
 
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     # 2015-07-21 18:56:23,428 - t.11028 - INFO - ln.156 - Loading page 0 of posts for u'mlpgdraws.tumblr.com'
     formatter = logging.Formatter("%(asctime)s - t.%(thread)d - %(levelname)s - ln.%(lineno)d - %(message)s")
+
     # File 1, log everything
-    fh = logging.FileHandler(log_file_path)
+    fh = logging.handlers.RotatingFileHandler(
+        filename=log_file_path,
+        # https://en.wikipedia.org/wiki/Binary_prefix
+        maxBytes=max_log_size
+        )
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
     logger.addHandler(fh)
-    # File 2, INFO and higher level for a concise log
-    if concise_log_file_path:
-        cfh = logging.FileHandler(concise_log_file_path)
-        cfh.setLevel(logging.INFO)
-        cfh.setFormatter(formatter)
-        logger.addHandler(cfh)
+
     # Console output
     ch = logging.StreamHandler()
     ch.setLevel(config.console_log_level)
     ch.setFormatter(formatter)
     logger.addHandler(ch)
+
     logging.info("Logging started.")
     return
 
