@@ -43,11 +43,23 @@ def find_url_links(html):
     # Copied from:
     # http://stackoverflow.com/questions/520031/whats-the-cleanest-way-to-extract-urls-from-a-string-using-python
     # old regex http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+
-    url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+~]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+    url_regex = """http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+~]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"""
     links = re.findall(url_regex,html, re.DOTALL)
     #logging.debug("find_url_links() links: "+repr(links))
     assert(type(links) is type([]))# Should be list
     return links
+
+
+def remove_broken_links(links):
+    # Remove invalid links (contain < or >)
+    valid_links = []
+    for link in links:
+        if ("<" in link) or (">" in link):
+            logging.debug("find_links() Skipping broken link: "+repr(link))
+            continue
+        else:
+            valid_links.append(link)
+    return valid_links
 
 
 def find_links(html):
@@ -56,7 +68,9 @@ def find_links(html):
     links = []
     links += find_links_src(html)
     links += find_url_links(html)
-    return links
+    # Remove invalid links (contain < or >)
+    valid_links = remove_broken_links(links)
+    return valid_links
 
 
 def extract_post_links(post_dict):
@@ -506,6 +520,10 @@ def debug():
     dropboxusercontent_result = handle_links(session, post_dict=dropboxusercontent_post_dict)
     logging.debug("dropboxusercontent_result:"+repr(dropboxusercontent_result))
 
+    # malformed link case
+    malformed_link_post_dict = {u'reblog_key': u'wlQEgKpb', u'reblog': {u'comment': u'', u'tree_html': u'<p><a href="http://taboolicious.tumblr.com/post/118601139146/happy-milf-day-many-thanks-for-all-those-that" class="tumblr_blog">taboolicious</a>:</p><blockquote><p>happy milf day! many thanks for all those that where present in the raffle and suggested such hot milfs :D</p><p>here is the wallpaper: 1920x1200</p><p><a href="https://dl.dropboxusercontent.com/u/1834642/milf%20paper.jpg">https://dl.dropboxusercontent.com/u/1834642/milf%20paper.jpg</a></p><p>from left to right:</p><p>bananacreamcakecomic: Jenna OC</p><p>jacquesthebird: Kate OC</p><p>damabiath: android 18</p><p>bellend08: Molly Cosset OC</p><p>vic79: Mystique</p><p>ravenlordmercenary: Grace pokemon X/Y</p><p>Th3A1chemist: Vuong OC</p><p>Evenanthy: Harley Quinn</p><p><br/></p><p>if any of the winners wants a wallpaper with just his/her requested girl, pm me :)</p></blockquote>'}, u'id': 118615261815L, u'post_url': u'http://dclzexonask.tumblr.com/post/118615261815/taboolicious-happy-milf-day-many-thanks-for', u'source_title': u'taboolicious', u'image_permalink': u'http://dclzexonask.tumblr.com/image/118615261815', u'tags': [], u'highlighted': [], u'recommended_source': None, u'state': u'published', u'short_url': u'http://tmblr.co/Z7jrQx1kU1K9t', u'type': u'photo', u'format': u'html', u'timestamp': 1431273428, u'note_count': 510, u'source_url': u'http://taboolicious.tumblr.com/post/118601139146/happy-milf-day-many-thanks-for-all-those-that', u'photos': [{u'caption': u'', u'original_size': {u'url': u'http://40.media.tumblr.com/4f98bc55f60c925f6755fa1a272ec6d7/tumblr_no4u7pEOCl1s36m6bo1_1280.jpg', u'width': 1280, u'height': 800}, u'alt_sizes': [{u'url': u'http://40.media.tumblr.com/4f98bc55f60c925f6755fa1a272ec6d7/tumblr_no4u7pEOCl1s36m6bo1_1280.jpg', u'width': 1280, u'height': 800}, {u'url': u'http://40.media.tumblr.com/4f98bc55f60c925f6755fa1a272ec6d7/tumblr_no4u7pEOCl1s36m6bo1_500.jpg', u'width': 500, u'height': 313}, {u'url': u'http://36.media.tumblr.com/4f98bc55f60c925f6755fa1a272ec6d7/tumblr_no4u7pEOCl1s36m6bo1_400.jpg', u'width': 400, u'height': 250}, {u'url': u'http://40.media.tumblr.com/4f98bc55f60c925f6755fa1a272ec6d7/tumblr_no4u7pEOCl1s36m6bo1_250.jpg', u'width': 250, u'height': 156}, {u'url': u'http://40.media.tumblr.com/4f98bc55f60c925f6755fa1a272ec6d7/tumblr_no4u7pEOCl1s36m6bo1_100.jpg', u'width': 100, u'height': 63}, {u'url': u'http://40.media.tumblr.com/4f98bc55f60c925f6755fa1a272ec6d7/tumblr_no4u7pEOCl1s36m6bo1_75sq.jpg', u'width': 75, u'height': 75}]}], u'date': u'2015-05-10 15:57:08 GMT', u'slug': u'taboolicious-happy-milf-day-many-thanks-for', u'blog_name': u'dclzexonask', u'trail': [{u'blog': {u'active': True, u'theme': {u'title_font_weight': u'bold', u'title_color': u'#ff0062', u'header_bounds': 0, u'title_font': u'Calluna Sans', u'link_color': u'#ff002b', u'header_image_focused': u'http://static.tumblr.com/d48ceb5a7ccc9b9eeffdcf3aa9972391/3jhlkdq/1DXn0hvh0/tumblr_static_splash.jpg', u'show_description': True, u'show_header_image': True, u'body_font': u'Lucida Sans', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'circle', u'show_avatar': True, u'background_color': u'#f6f6f6', u'header_image': u'http://static.tumblr.com/d48ceb5a7ccc9b9eeffdcf3aa9972391/3jhlkdq/1DXn0hvh0/tumblr_static_splash.jpg', u'header_image_scaled': u'http://static.tumblr.com/d48ceb5a7ccc9b9eeffdcf3aa9972391/3jhlkdq/1DXn0hvh0/tumblr_static_splash.jpg'}, u'name': u'taboolicious'}, u'content': u'<p>happy milf day! many thanks for all those that where present in the raffle and suggested such hot milfs :D</p><p>here is the wallpaper: 1920x1200</p><p><a href="https://dl.dropboxusercontent.com/u/1834642/milf%20paper.jpg">https://dl.dropboxusercontent.com/u/1834642/milf%20paper.jpg</a></p><p>from left to right:</p><p>bananacreamcakecomic: Jenna OC</p><p>jacquesthebird: Kate OC</p><p>damabiath: android 18</p><p>bellend08: Molly Cosset OC</p><p>vic79: Mystique</p><p>ravenlordmercenary: Grace pokemon X/Y</p><p>Th3A1chemist: Vuong OC</p><p>Evenanthy: Harley Quinn</p><p><br></p><p>if any of the winners wants a wallpaper with just his/her requested girl, pm me :)</p>', u'post': {u'id': u'118601139146'}, u'is_root_item': True}], u'caption': u'<p><a href="http://taboolicious.tumblr.com/post/118601139146/happy-milf-day-many-thanks-for-all-those-that" class="tumblr_blog">taboolicious</a>:</p>\n\n<blockquote><p>happy milf day! many thanks for all those that where present in the raffle and suggested such hot milfs :D</p><p>here is the wallpaper: 1920x1200</p><p><a href="https://dl.dropboxusercontent.com/u/1834642/milf%20paper.jpg">https://dl.dropboxusercontent.com/u/1834642/milf%20paper.jpg</a></p><p>from left to right:</p><p>bananacreamcakecomic: Jenna OC</p><p>jacquesthebird: Kate OC</p><p>damabiath: android 18</p><p>bellend08: Molly Cosset OC</p><p>vic79: Mystique</p><p>ravenlordmercenary: Grace pokemon X/Y</p><p>Th3A1chemist: Vuong OC</p><p>Evenanthy: Harley Quinn</p><p><br/></p><p>if any of the winners wants a wallpaper with just his/her requested girl, pm me :)</p></blockquote>'}
+    malformed_link_result = handle_links(session, post_dict = malformed_link_post_dict)
+    logging.debug("malformed_link_result:"+repr(malformed_link_result))
 
 
 
