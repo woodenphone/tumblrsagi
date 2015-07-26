@@ -210,7 +210,7 @@ def getwithinfo(url):
             request.add_header("User-agent", "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1")
             #request.add_header('Referer', 'http://www.tumblr.com/')
             r = urllib2.urlopen(
-                url_with_protocol,
+                request,
                 context=ctx
                 )
             info = r.info()
