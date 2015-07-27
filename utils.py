@@ -51,7 +51,7 @@ def setup_logging(log_file_path,timestamp_filename=True,max_log_size=104857600):
     if timestamp_filename:
         # http://stackoverflow.com/questions/8472413/add-utc-time-to-filename-python
         # '2015-06-30-13.44.15'
-        timestamp_string = datetime.datetime.utcnow().strftime("%Y-%m-%d %H-%M-%S%Z")
+        timestamp_string = datetime.datetime.utcnow().strftime("%Y-%m-%d %H.%M.%S%Z")
         # Full log
         log_file_path = add_timestamp_to_log_filename(log_file_path,timestamp_string)
 
@@ -198,7 +198,7 @@ def getwithinfo(url):
         attemptcount = attemptcount + 1
         if attemptcount > 1:
             delay(retry_delay)
-            logging.debug( "Attempt "+repr(attemptcount)+" for URL: "+repr(url) )
+        logging.debug( "Attempt "+repr(attemptcount)+" for URL: "+repr(url) )
         try:
 ##            save_file(
 ##                file_path = os.path.join("debug","get_last_url.txt"),

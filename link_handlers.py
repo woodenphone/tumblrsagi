@@ -292,7 +292,6 @@ def handle_dropbox_link(session,link):
         https://dl.dropboxusercontent.com/s/cdxam7r5iwv3ax6/test.swf
         https://www.dropbox.com/s/npga7y1r24a5dqo/comma%20seperated%20tags.PNG?dl=0
         https://dl.dropboxusercontent.com/u/27379736/NSFWSFM/SWF/TwilightSoloLightParticles.swf
-
         """
     assert( ("dropbox.com" in link) or ("dropboxusercontent.com" in link) )# Make sure the link is actually for dropbox
 
@@ -324,7 +323,7 @@ def handle_dropbox_link(session,link):
         initial_text="# dropbox handler failed.\n"
         )
     logging.error( "handle_dropbox_link() locals()"+repr(locals()) )
-    assert(False)# Stop so we know to fix it
+    #assert(False)# Stop so we know to fix it
     return []
 
 

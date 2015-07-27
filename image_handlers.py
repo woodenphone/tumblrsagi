@@ -28,14 +28,14 @@ def download_image_link(session,media_url):
     then add an entry to the DB for the URL
     and if no match is found for the hash, save the file to disk"""
     media_already_saved = None # Init var to unknown
-    logging.debug("download_image_link() ""Processing image: "+repr(media_url))
+    logging.debug("download_image_link() Processing image: "+repr(media_url))
 
     # Check if URL is in the DB already, if so return hash.
     url_check_row_dict = sql_functions.check_if_media_url_in_DB(session,media_url)
     if url_check_row_dict:
         media_already_saved = True
         return [url_check_row_dict["media_id"]]
-
+    logging.debug("URL is not in DB, loading URL")
     # Load URL
     request_tuple = getwithinfo(media_url)
     if not request_tuple:
