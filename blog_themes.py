@@ -50,7 +50,12 @@ def update_blog_avatar(session,blog_url):
     # Grab small avatar image from API
     current_small_avatar_api_url = "http://api.tumblr.com/v2/blog/"+blog_url+"/avatar"
     logging.debug("small_avatar_api_url:"+repr(current_small_avatar_api_url))
-    current_small_avatar, small_avatar_info, small_avatar_request = getwithinfo(current_small_avatar_api_url)
+    current_small_avatar_request_tuple = getwithinfo(current_small_avatar_api_url)
+    if current_small_avatar_request_tuple is None: # sometimes this 403s
+        logging.error("Error loading avatar, skipping avatar update.")
+        return
+    current_small_avatar, small_avatar_info, small_avatar_request = current_small_avatar_request_tuple
+
     # Get values to compare from current small avatar
     current_small_avatar_real_url = small_avatar_request.geturl()
     current_small_avatar_sha512base16_hash = hash_file_data(current_small_avatar)

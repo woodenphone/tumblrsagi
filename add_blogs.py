@@ -126,10 +126,7 @@ def add_blogs(list_file_path="tumblr_todo_list.txt"):
 
 def main():
     try:
-        setup_logging(
-        log_file_path=os.path.join("debug","add_blogs_log.txt"),
-        concise_log_file_path=os.path.join("debug","short_add_blogs_log.txt")
-        )
+        setup_logging(log_file_path=os.path.join("debug","add_blogs_log.txt"))
         # Program
         #classy_play()
         add_blogs(list_file_path=config.blog_list_path)
