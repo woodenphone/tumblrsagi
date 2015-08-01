@@ -30,6 +30,7 @@ import string
 import hashlib# Needed to hash file data
 import base64 # Needed to do base32 encoding of filenames
 import ssl # So we can turn SSL off
+import requests # Because urllib2 has a hang issue
 
 import config# Local config
 
@@ -173,13 +174,16 @@ def get(url):
     else:
         return
 
-
 def getwithinfo(url):
-    """Try to retreive a url. If unable to return None objects
+    """Try to retreive a url.
+    If successful return (reply,info,request)
+    If unable to return None objects
     Example useage:
     html = get("")
         if html:
     """
+    logging.critical("getwithinfo(url) is depricated!")
+    asseert(False)# Depricated because of hang issues; use get_requests instead
     attemptcount = 0
     max_attempts = 10
     retry_delay = 10
@@ -298,6 +302,54 @@ def getwithinfo(url):
     return
 
 
+
+
+
+
+def get(url):
+    #try to retreive a url. If unable to return None object
+    #Example useage:
+    #html = get("")
+    #if html:
+    #logging.debug( "getting url ", locals())
+    get_tuple = get_requests(url)
+    if get_tuple:
+        reply, request = get_tuple
+        return reply
+    else:
+        return
+
+def get_requests(url):
+    """foo"""
+    max_attempts = 10
+    attempt_counter = 0
+    while attempt_counter <= max_attempts:
+        attempt_counter += 1
+        if attempt_counter > 1:
+            logging.debug("Attempt "+repr(attempt_counter)+" to open URL: "+repr(url))
+        try:
+
+            response = requests.get(
+                url,
+                timeout=10,# fail if no communication for 10 seconds
+                )
+            response.raise_for_status()
+            return (response.content, response)
+
+        except requests.ConnectionError, err:
+            logging.exception(err)
+            logging.error("Connection error getting content-type!")
+            logging.debug("(locals():"+repr(locals() ) )
+            continue
+        except requests.exceptions.InvalidSchema, err:
+            logging.exception(err)
+            logging.debug("(locals():"+repr(locals() ) )
+            break# We can't handle this link.
+        except requests.exceptions.InvalidURL, err:
+            logging.exception(err)
+            logging.debug("(locals():"+repr(locals() ) )
+            break# We can't handle this link.
+    return
 
 
 def assert_is_string(object_to_test):
