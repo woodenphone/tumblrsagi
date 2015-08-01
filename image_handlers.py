@@ -34,6 +34,7 @@ def download_image_link(session,media_url):
     url_check_row_dict = sql_functions.check_if_media_url_in_DB(session,media_url)
     if url_check_row_dict:
         media_already_saved = True
+        logging.debug("URL already saved, skipping")
         return [url_check_row_dict["media_id"]]
     logging.debug("URL is not in DB, loading URL")
     # Load URL
