@@ -11,8 +11,8 @@
 import sqlalchemy
 from sqlalchemy import update
 
-#from multiprocessing import Pool
-from multiprocessing.dummy import Pool as ThreadPool
+from multiprocessing import Pool
+#from multiprocessing.dummy import Pool
 
 import lockfiles # MutEx lockfiles
 from utils import * # General utility functions
@@ -132,8 +132,10 @@ def process_all_posts_media(max_rows=1000):
 
         # http://stackoverflow.com/questions/2846653/python-multithreading-for-dummies
         # Make the Pool of workers
-        pool = ThreadPool(config.number_of_media_workers)# Set to one for debugging
-        #pool = Pool(processes=config.number_of_media_workers)# For some reason this doesn't run througg IDLE ort pyscripter?
+
+        # For some reason multiprocessing.Pool doesn't run through IDLE or pyscripter?
+        #pool = ThreadPool(config.number_of_media_workers)# Set to one for debugging
+        pool = Pool(processes=config.number_of_media_workers)
         logging.debug("pool opened")
         results = pool.map(worker, jobs)
         #close the pool and wait for the work to finish
