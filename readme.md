@@ -11,7 +11,7 @@ To save the blogs in the DB takes several steps
 
 Raw post text/JSON must be collected first by running get_posts.py
 
-To fetch media related to posts and prepare posts for display, get_media.py must be run
+To fetch media related to posts and prepare posts for display, get_media.py must be run.
 
 WARNING:
 Do not run multiple instances of any script at once!
