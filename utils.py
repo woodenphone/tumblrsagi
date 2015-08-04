@@ -30,7 +30,7 @@ import string
 import hashlib# Needed to hash file data
 import base64 # Needed to do base32 encoding of filenames
 import ssl # So we can turn SSL off
-import requests # Because urllib2 has a hang issue
+#import requests # Because urllib2 has a hang issue
 
 import config# Local config
 
@@ -182,13 +182,10 @@ def getwithinfo(url):
     html = get("")
         if html:
     """
-    logging.critical("getwithinfo(url) is depricated!")
-    asseert(False)# Depricated because of hang issues; use get_requests instead
     attemptcount = 0
     max_attempts = 10
     retry_delay = 10
     request_delay = 0.5#avoid hammering the site too hard
-
     assert_is_string(url)
     deescaped_url = deescape(url)
     url_with_protocol = add_http(deescaped_url)

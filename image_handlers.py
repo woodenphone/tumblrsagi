@@ -34,12 +34,11 @@ def download_image_link(session,media_url):
     url_check_row_dict = sql_functions.check_if_media_url_in_DB(session,media_url)
     if url_check_row_dict:
         media_already_saved = True
-        logging.debug("URL already saved, skipping")
         return [url_check_row_dict["media_id"]]
-    logging.debug("URL is not in DB, loading URL")
+
     # Load URL
-    request_tuple = get_requests(url)(media_url)
-    if not request_tuple:
+    request_tuple = getwithinfo(media_url)
+    if request_tuple is None:
         logging.error("Could not load image URL!")
         appendlist(
             media_url,
@@ -47,12 +46,12 @@ def download_image_link(session,media_url):
             initial_text="# List of completed items.\n"
             )
         return []
-    file_data, request = request_tuple
-##    # Reject HTML responses
-##    if r.headers.getmaintype() == "text":
-##        logging.error("download_image_link() Link was not an image: "+repr(media_url))
-##        logging.debug("download_image_link() r.headers.dict: "+repr(r.headers.dict))
-##        return []
+    file_data, info, r = request_tuple
+    # Reject HTML responses
+    if r.headers.getmaintype() == "text":
+        logging.error("download_image_link() Link was not an image: "+repr(media_url))
+        logging.debug("download_image_link() r.headers.dict: "+repr(r.headers.dict))
+        return []
 
     time_of_retreival = get_current_unix_time()
 
@@ -144,6 +143,7 @@ def main():
     except Exception, e:# Log fatal exceptions
         logging.critical("Unhandled exception!")
         logging.exception(e)
+    logging.info("Finished, exiting.")
     return
 
 if __name__ == '__main__':

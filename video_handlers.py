@@ -719,6 +719,42 @@ def handle_gfycat_videos(session,post_dict):#TODO FIXME
     return media_id_list
 
 
+def handle_vevo_videos(session,post_dict):#TODO FIXME
+    """Download vevo videos given by the videos section fo the API"""
+    logging.debug("Processing vevo video")
+    # Extract video links from post dict
+    video_urls = []
+    video_items = post_dict["player"]
+    for video_item in video_items:
+        embed_code = video_item["embed_code"]
+        # u'embed_code': u'<iframe src="https://scache.vevo.com/m/html/embed.html?video=USUV71302227&playerType=embedded" width="250" height="140" frameborder="0"></iframe>',
+        # vevo\.com/m/html/embed\.html\?video=(\w+)\&
+        # USUV71302227
+        # http://www.vevo.com/watch/watch/USUV71302227
+        if embed_code:
+            # Process links so YT-DL can understand them
+            logging.debug("handle_vevo_videos() embed_code: "+repr(embed_code))
+            embed_url_regex ="""vevo\.com/m/html/embed\.html\?video=(\w+)\&"""
+            embed_url_search = re.search(embed_url_regex, embed_code, re.IGNORECASE|re.DOTALL)
+            if embed_url_search:
+                video_id = embed_url_search.group(1)
+                video_url = "http://www.vevo.com/watch/watch/"+video_id
+                video_urls.append(video_url)
+        continue
+    logging.debug("handle_vevo_videos() video_urls: "+repr(video_urls))
+    assert( len(video_urls) > 0)# We should have a video URL
+
+    # Download videos if there are any
+    media_id_list = run_yt_dl_multiple(
+        session = session,
+        download_urls = video_urls,
+        extractor_used="video_handlers.handle_vevo_videos()",
+        )
+    logging.debug("Finished downloading vevo embeds")
+    return media_id_list
+
+
+
 def handle_video_posts(session,post_dict):
     """Decide which video functions to run and pass back what they return"""
     # Check if post is a video post
@@ -789,6 +825,10 @@ def handle_video_posts(session,post_dict):
     elif post_dict["video_type"] == u"wedgies":
         logging.debug("Post is wedgies.com poll service. skipping.")
         return []
+    # vevo
+    elif post_dict["video_type"] == u"vevo":
+        logging.debug("Post is vevo video")
+        return handle_vevo_videos(session,post_dict)
 
     # "unknown" - special cases?
     elif (post_dict["video_type"] == u"unknown"):
@@ -1308,6 +1348,11 @@ def test_video_handlers(session):
     twitvid_dict = {u'reblog_key': u'8YRf38H3', u'reblog': {u'comment': u'<p><a href="http://teamfreewill-.tumblr.com/post/6211462427" target="_blank">teamfreewill-</a>:</p>\n<blockquote>\n<p><a href="http://castiel-angelofthelord.tumblr.com/post/6210935260" target="_blank">castiel-angelofthelord</a>:</p>\n<blockquote>\n<p><img src="http://media.tumblr.com/tumblr_lmbjy0X3Qz1qfyie2.png"></p>\n<p>Has anyone put this vid up yet?</p>\n</blockquote>\n<p>dhjfkhsijfsughbfs THE WAY HE PRONOUNCES &ldquo;CICADA&rdquo;</p>\n<p>It keeps messing with my head! Do all American&rsquo;s pronounce it like that?</p>\n</blockquote>', u'tree_html': u''}, u'thumbnail_width': 0, u'player': [{u'width': 250, u'embed_code': u'<iframe title="Twitvid video player" class="twitvid-player" type="text/html" width="250" height="187" src="http://www.twitvid.com/embed.php?guid=T1NN2&autoplay=0" frameborder="0"></iframe>'}, {u'width': 400, u'embed_code': u'<iframe title="Twitvid video player" class="twitvid-player" type="text/html" width="400" height="300" src="http://www.twitvid.com/embed.php?guid=T1NN2&autoplay=0" frameborder="0"></iframe>'}, {u'width': 500, u'embed_code': u'<iframe title="Twitvid video player" class="twitvid-player" type="text/html" width="500" height="375" src="http://www.twitvid.com/embed.php?guid=T1NN2&autoplay=0" frameborder="0"></iframe>'}], u'id': 6211487608L, u'highlighted': [], u'format': u'html', u'post_url': u'http://braindamagedlikeafox.tumblr.com/post/6211487608/teamfreewill-castiel-angelofthelord-has', u'recommended_source': None, u'state': u'published', u'short_url': u'http://tmblr.co/Z8Pw5y5oEyTu', u'html5_capable': False, u'type': u'video', u'tags': [], u'timestamp': 1307281933, u'note_count': 81, u'video_type': u'unknown', u'trail': [{u'blog': {u'theme': {u'title_font_weight': u'bold', u'title_color': u'#444444', u'header_bounds': 0, u'background_color': u'#52ADC0', u'link_color': u'#000000', u'header_image_focused': u'http://static.tumblr.com/6f0b009fb1b53afd52abd5b706bbd741/jhr3ykf/znin589b0/tumblr_static_filename_2048_v2.jpg', u'show_description': True, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'square', u'show_avatar': True, u'title_font': u'Gibson', u'header_image': u'http://static.tumblr.com/6f0b009fb1b53afd52abd5b706bbd741/jhr3ykf/znin589b0/tumblr_static_filename.jpg', u'header_image_scaled': u'http://static.tumblr.com/6f0b009fb1b53afd52abd5b706bbd741/jhr3ykf/znin589b0/tumblr_static_filename_2048_v2.jpg'}, u'name': u'braindamagedlikeafox'}, u'content': u'<p><a href="http://teamfreewill-.tumblr.com/post/6211462427" target="_blank">teamfreewill-</a>:</p>\n<blockquote>\n<p><a href="http://castiel-angelofthelord.tumblr.com/post/6210935260" target="_blank">castiel-angelofthelord</a>:</p>\n<blockquote>\n<p><img src="http://media.tumblr.com/tumblr_lmbjy0X3Qz1qfyie2.png"></p>\n<p>Has anyone put this vid up yet?</p>\n</blockquote>\n<p>dhjfkhsijfsughbfs THE WAY HE PRONOUNCES \u201cCICADA\u201d</p>\n<p>It keeps messing with my head! Do all American\u2019s pronounce it like that?</p>\n</blockquote>', u'post': {u'id': u'6211487608'}, u'content_raw': u'<p><a href="http://teamfreewill-.tumblr.com/post/6211462427">teamfreewill-</a>:</p>\r\n<blockquote>\r\n<p><a href="http://castiel-angelofthelord.tumblr.com/post/6210935260">castiel-angelofthelord</a>:</p>\r\n<blockquote>\r\n<p><img src="http://media.tumblr.com/tumblr_lmbjy0X3Qz1qfyie2.png"></p>\r\n<p>Has anyone put this vid up yet?</p>\r\n</blockquote>\r\n<p>dhjfkhsijfsughbfs THE WAY HE PRONOUNCES &ldquo;CICADA&rdquo;</p>\r\n<p>It keeps messing with my head! Do all American&rsquo;s pronounce it like that?</p>\r\n</blockquote>', u'is_current_item': True}], u'date': u'2011-06-05 13:52:13 GMT', u'thumbnail_height': 0, u'slug': u'teamfreewill-castiel-angelofthelord-has', u'blog_name': u'braindamagedlikeafox', u'caption': u'<p><a href="http://teamfreewill-.tumblr.com/post/6211462427" target="_blank">teamfreewill-</a>:</p>\n<blockquote>\n<p><a href="http://castiel-angelofthelord.tumblr.com/post/6210935260" target="_blank">castiel-angelofthelord</a>:</p>\n<blockquote>\n<p><img src="http://media.tumblr.com/tumblr_lmbjy0X3Qz1qfyie2.png"/></p>\n<p>Has anyone put this vid up yet?</p>\n</blockquote>\n<p>dhjfkhsijfsughbfs THE WAY HE PRONOUNCES \u201cCICADA\u201d</p>\n<p>It keeps messing with my head! Do all American\u2019s pronounce it like that?</p>\n</blockquote>', u'thumbnail_url': u''}
     twitvid_result = handle_video_posts(session,twitvid_dict)
     logging.debug("twitvid_result:"+repr(twitvid_result))
+
+    # vevo
+    vevo_post_dict = {u'reblog_key': u'IaZRHp2o', u'reblog': {u'comment': u'<p><strong>Fall Out Boy - Love, Sex, Death</strong></p>', u'tree_html': u''}, u'thumbnail_width': 540, u'player': [{u'width': 250, u'embed_code': u'<iframe src="https://scache.vevo.com/m/html/embed.html?video=USUV71302227&playerType=embedded" width="250" height="140" frameborder="0"></iframe>'}, {u'width': 400, u'embed_code': u'<iframe src="https://scache.vevo.com/m/html/embed.html?video=USUV71302227&playerType=embedded" width="400" height="225" frameborder="0"></iframe>'}, {u'width': 500, u'embed_code': u'<iframe src="https://scache.vevo.com/m/html/embed.html?video=USUV71302227&playerType=embedded" width="500" height="281" frameborder="0"></iframe>'}], u'id': 62780109735L, u'highlighted': [], u'format': u'html', u'post_url': u'http://saliantsunbreeze.tumblr.com/post/62780109735/fall-out-boy-love-sex-death', u'recommended_source': None, u'state': u'published', u'short_url': u'http://tmblr.co/ZawKPwwT-7Ed', u'html5_capable': True, u'type': u'video', u'tags': [u'music video', u'Fall Out Boy', u'Love Sex Death', u'single', u'punk'], u'timestamp': 1380597548, u'note_count': 4, u'video_type': u'vevo', u'trail': [{u'content': u'<p><strong>Fall Out Boy - Love, Sex, Death</strong></p>', u'content_raw': u'<p><strong>Fall Out Boy - Love, Sex, Death</strong></p>', u'is_current_item': True, u'blog': {u'theme': {u'title_font_weight': u'bold', u'header_full_height': 3508, u'title_color': u'#888888', u'header_bounds': u'1158,2480,2553,0', u'background_color': u'#000000', u'link_color': u'#529ECC', u'header_image_focused': u'http://static.tumblr.com/2aad734e060acc84077de5e5bf8ba4a3/enmqoj5/vZAn9ui1x/tumblr_static_tumblr_static_15bkobzy37wg4s4oswssswkog_focused_v3.jpg', u'show_description': True, u'header_full_width': 2480, u'header_focus_width': 2048, u'show_header_image': True, u'body_font': u'Helvetica Neue', u'show_title': True, u'header_stretch': True, u'avatar_shape': u'square', u'show_avatar': True, u'header_focus_height': 1152, u'title_font': u'Gibson', u'header_image': u'http://static.tumblr.com/2aad734e060acc84077de5e5bf8ba4a3/enmqoj5/rgjn9ui1l/tumblr_static_15bkobzy37wg4s4oswssswkog.jpg', u'header_image_scaled': u'http://static.tumblr.com/2aad734e060acc84077de5e5bf8ba4a3/enmqoj5/rgjn9ui1l/tumblr_static_15bkobzy37wg4s4oswssswkog_2048_v2.jpg'}, u'name': u'saliantsunbreeze'}, u'is_root_item': True, u'post': {u'id': u'62780109735'}}], u'date': u'2013-10-01 03:19:08 GMT', u'thumbnail_height': 304, u'permalink_url': u'http://www.vevo.com/watch/watch/USUV71302227', u'slug': u'fall-out-boy-love-sex-death', u'blog_name': u'saliantsunbreeze', u'caption': u'<p><strong>Fall Out Boy - Love, Sex, Death</strong></p>', u'thumbnail_url': u'https://scache.vevo.com/Content/VevoImages/video/74645A15EC304CC0046F49AB9AFEF70C2013269232653564.jpg?width=540&height=304&crop=auto'}
+    vevo_result = handle_video_posts(session,vevo_post_dict)
+    logging.debug("vevo_result:"+repr(vevo_result))
 
     return
 
