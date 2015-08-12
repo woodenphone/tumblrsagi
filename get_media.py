@@ -160,12 +160,14 @@ def main():
         setup_logging(
             log_file_path=os.path.join("debug","get_media_log.txt"),
             )
+
         # Program
-        #process_one_thousand_posts_media()
-        process_all_posts_media()
+        process_all_posts_media(
+            max_rows=(posts_per_worker*number_of_media_workers)
+            )
         # /Program
+
         logging.info("Finished, exiting.")
-        return
 
     except Exception, e:# Log fatal exceptions
         logging.critical("Unhandled exception!")
