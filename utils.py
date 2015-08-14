@@ -161,10 +161,10 @@ def deescape(html):
     return deescaped_string
 
 
-def get(url):
+def get_url(url):
     #try to retreive a url. If unable to return None object
     #Example useage:
-    #html = get("")
+    #html = get_url("")
     #if html:
     #logging.debug( "getting url ", locals())
     gettuple = getwithinfo(url)
@@ -179,7 +179,7 @@ def getwithinfo(url):
     If successful return (reply,info,request)
     If unable to return None objects
     Example useage:
-    html = get("")
+    html = get_url("")
         if html:
     """
     attemptcount = 0
@@ -303,10 +303,10 @@ def getwithinfo(url):
 
 
 
-def get(url):
+def get_url(url):
     #try to retreive a url. If unable to return None object
     #Example useage:
-    #html = get("")
+    #html = get_url("")
     #if html:
     #logging.debug( "getting url ", locals())
     get_tuple = get_requests(url)

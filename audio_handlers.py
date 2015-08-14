@@ -139,7 +139,7 @@ def handle_tumblr_audio(session,post_dict):
         return [media_id]
 
     # Load the media file
-    file_data = get(media_url)
+    file_data = get_url(media_url)
     if not file_data:
         logging.error("handle_tumblr_audio() Could not load data for"+repr(media_url))
         return []

@@ -20,7 +20,7 @@ from tables import *# Table definitions
 def check_if_alive(blog_url):
     # Load API page
     info_url = "http://api.tumblr.com/v2/blog/"+blog_url+"/info?api_key="+config.consumer_key
-    info_json = get(info_url)
+    info_json = get_url(info_url)
     if not info_json:# If no response from web request
         logging.error("Cannot load info page! (Maybe blog URL is wrong?)")
         logging.error("locals(): "+repr(locals()))

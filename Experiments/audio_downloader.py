@@ -23,7 +23,7 @@ def download(post_id,username):# ln 54
     # Load api JSON for page
     api_url = "https://api.tumblr.com/v2/blog/" + username + ".tumblr.com/posts" + "?api_key=" + API_KEY + "&id=" + post_id#ln 56
     logging.debug("api_url: "+repr(api_url))
-    api_json = get(api_url)# ln 58-62
+    api_json = get_url(api_url)# ln 58-62
     api_dict = json.loads(api_json)["response"]
     logging.debug("api_dict: "+repr(api_dict))
 
@@ -55,12 +55,12 @@ def download(post_id,username):# ln 54
     # http://www.xkit.info/seven/helpers/audioget.php?fln=" + m_url + "&id=" + m_id + "\"
     download_link = "http://www.xkit.info/seven/helpers/audioget.php?fln=" + urllib.quote(m_url) + "&id=" + urllib.quote(m_id)# ln 97-98
     logging.debug("download_link: "+repr(download_link))
-    xkit_media_file_data = get(download_link)
+    xkit_media_file_data = get_url(download_link)
     file_path = os.path.join("download", "test", "xkit_server_test.mp3")
     save_file(filenamein=file_path,data=xkit_media_file_data,force_save=True)
 
     logging.debug("m_url: "+repr(m_url))
-    tumblr_media_file_data = get(m_url)
+    tumblr_media_file_data = get_url(m_url)
     file_path = os.path.join("download", "test", "tumblr_server_test.mp3")
     save_file(filenamein=file_path,data=tumblr_media_file_data,force_save=True)
 

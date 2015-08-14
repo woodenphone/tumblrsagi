@@ -125,7 +125,7 @@ def update_blog_background(session,blog_url):
     logging.debug("Updating background image for blog:"+repr(blog_url))
     # Load blog page
     blog_homepage_url = "http://"+blog_url+""
-    page_html = get(blog_homepage_url)
+    page_html = get_url(blog_homepage_url)
     if not page_html:
         logging.error("Could not get page html, skipping background")
         return

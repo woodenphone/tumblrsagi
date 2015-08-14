@@ -69,7 +69,7 @@ class tumblr_blog:
     def load_info(self):
         """Load data from API /info"""
         info_url = "http://api.tumblr.com/v2/blog/"+self.blog_url+"/info?api_key="+self.consumer_key
-        info_json = get(info_url)
+        info_json = get_url(info_url)
         if not info_json:
             logging.error("Cannot load info page! (Maybe blog URL is wrong?)")
             logging.error("locals(): "+repr(locals()))
@@ -168,7 +168,7 @@ class tumblr_blog:
                 else:
                     page_url = "http://api.tumblr.com/v2/blog/"+self.blog_url+"/posts/?api_key="+self.consumer_key
                 logging.debug("page_url: "+repr(page_url))
-                raw_page_json = get(page_url)
+                raw_page_json = get_url(page_url)
                 if not raw_page_json:
                     logging.error("Failed to load API page for this blog")
                     self.session.rollback
