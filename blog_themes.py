@@ -137,6 +137,9 @@ def update_blog_background(session,blog_url):
     if background_image_search:
         background_image_url = background_image_search.group(1)
         logging.debug("update_blog_background() background_image_url:"+repr(background_image_url))
+        if "http" not in background_image_url:
+            logging.error("URL not valid, skipping.")
+            return
         # Save background image
         background_image_media_id_list = image_handlers.download_image_link(
             session = session,
