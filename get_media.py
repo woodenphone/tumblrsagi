@@ -11,7 +11,8 @@
 import sqlalchemy
 from sqlalchemy import update
 
-from multiprocessing import Pool
+import multiprocessing
+#from multiprocessing import Pool
 #from multiprocessing.dummy import Pool
 
 import lockfiles # MutEx lockfiles
@@ -21,6 +22,8 @@ from media_handlers import *# Media finding, extractiong, ect
 import config # Settings and configuration
 from tables import RawPosts
 
+
+import mp_logging_setup
 
 def process_one_new_posts_media(session,post_row):
     """Return True if everything was fine.
@@ -83,7 +86,47 @@ def worker(post_row_list):
     return
 
 
-def list_new_posts(session,max_rows):
+def post_consumer_process(log_queue, log_configurer, post_queue):
+    """Consume post dicts"""
+    log_configurer(log_queue)# Start logging for this process
+    process_name = multiprocessing.current_process().name
+    logging.info('post_consumer_process started: %s' % process_name)
+    # Connect to DB
+    database_session = sql_functions.connect_to_db()
+    # Process posts
+    c = 0
+    while True:
+        c += 1
+        if c%100 == 0:
+            logging.info(repr(c)+" posts processed by this process")
+
+        post_row = post_queue.get(timeout=600)
+        process_one_new_posts_media(database_session,post_row)
+        continue
+    # Disconnect from DB
+    database_session.close()
+    logging.info("post_consumer_process finished.")
+    return
+
+
+def post_producer_process(log_queue, configurer, post_queue):
+    """Provide post dicts"""
+    configurer(log_queue)
+    process_name = multiprocessing.current_process().name
+    logging.info('post_producer_process started: %s' % process_name)
+    database_session = sql_functions.connect_to_db()
+    while True:
+        if post_queue.qsize() < 100:
+            logging.info("Adding more posts to post queue")
+            new_posts = list_new_posts(database_session, max_rows=1000)
+            for new_post in new_posts:
+                assert(post_queue.full() is False)
+                post_queue.put(new_post)
+        else:
+            time.sleep(1)
+
+
+def list_new_posts(database_session,max_rows):
     logging.info("Getting list of new posts")
     # Select new posts
     # New posts don't have a processed JSON
@@ -92,7 +135,7 @@ def list_new_posts(session,max_rows):
         where((RawPosts.skip_processing == False) | (RawPosts.skip_processing == None)).\
         limit(max_rows)
     #logging.debug("posts_query"": "+repr(posts_query))
-    post_rows = session.execute(posts_query)
+    post_rows = database_session.execute(posts_query)
     #logging.debug("post_rows"": "+repr(post_rows))
 
     # List rows to grab
@@ -110,6 +153,37 @@ def list_new_posts(session,max_rows):
     #logging.debug("post_dicts: "+repr(post_dicts))
     logging.info("list_new_posts() found "+repr(len(post_dicts))+" matching post rows")
     return post_dicts
+
+
+def mp_process_posts(log_queue,worker_configurer):
+    logging.info("Starting workers...")
+    # Start workers
+    post_queue = multiprocessing.Queue(-1)
+    # Start post provider
+    provider = multiprocessing.Process(target=post_producer_process,
+                                       args=(log_queue, worker_configurer, post_queue))
+    provider.daemon = True# Make sure process is killed on exit
+    provider.start()
+    logging.info("Post provider started.")
+
+    # Start post processors/consumers
+    number_of_workers = config.number_of_media_workers
+    workers = []
+    for i in range(number_of_workers):
+        worker = multiprocessing.Process(
+            target=post_consumer_process,
+            args=(log_queue, worker_configurer, post_queue)
+            )
+        worker.daemon = True# Make sure process is killed on exit
+        workers.append(worker)
+        worker.start()
+    logging.info("All consumers started.")
+    # Wait until processed finish
+    for w in workers:
+        w.join()
+    provider.join()
+    logging.info("Finished processing posts.")
+    return
 
 
 def process_all_posts_media(max_rows=1000):
@@ -157,14 +231,15 @@ def main():
     lock_file_path = os.path.join(config.lockfile_dir, "get_media.lock")
     lockfiles.start_lock(lock_file_path)
     try:
-        setup_logging(
-            log_file_path=os.path.join("debug","get_media_log.txt"),
-            )
+        # Start logging
+        log_queue = multiprocessing.Queue(-1)
+        log_listener = multiprocessing.Process(target=mp_logging_setup.listener_process,
+                                           args=(log_queue, mp_logging_setup.listener_configurer))
+        log_listener.start()
+        mp_logging_setup.worker_configurer(log_queue)# Log in main process as well
 
         # Program
-        process_all_posts_media(
-            max_rows=(posts_per_worker*number_of_media_workers)
-            )
+        mp_process_posts(log_queue,worker_configurer=mp_logging_setup.worker_configurer)
         # /Program
 
         logging.info("Finished, exiting.")
@@ -175,7 +250,10 @@ def main():
     finally:
         # Remove lockfile even if we crashed
         lockfiles.remove_lock(lock_file_path)
-    return
+        # Finsih logging
+        log_queue.put_nowait(None)
+        log_listener.join()
+        return
 
 if __name__ == '__main__':
     main()
