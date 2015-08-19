@@ -11,6 +11,7 @@
 
 import sqlalchemy
 from multiprocessing.dummy import Pool as ThreadPool
+import requests
 
 import lockfiles # MutEx lockfiles
 from utils import * # General utility functions

@@ -169,9 +169,11 @@ def listener_process(log_queue, configurer):
                 break
             logger = logging.getLogger(record.name)
             logger.handle(record) # No level or filter logic applied - just do it!
-        except (KeyboardInterrupt, SystemExit):
+        except (KeyboardInterrupt, SystemExit), err:
+            logging.exception(err)
             raise
-        except:
+        except err:
+            logging.exception(err)
             import sys, traceback
             print >> sys.stderr, 'Whoops! Problem:'
             traceback.print_exc(file=sys.stderr)

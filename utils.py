@@ -34,6 +34,14 @@ import ssl # So we can turn SSL off
 
 import config# Local config
 
+
+
+
+
+
+
+
+
 def setup_logging(log_file_path,timestamp_filename=True,max_log_size=104857600):
     """Setup logging (Before running any other code)
     http://inventwithpython.com/blog/2012/04/06/stop-using-print-for-debugging-a-5-minute-quickstart-guide-to-pythons-logging-module/
@@ -82,7 +90,7 @@ def setup_logging(log_file_path,timestamp_filename=True,max_log_size=104857600):
     logger.addHandler(ch)
 
     logging.info("Logging started.")
-    return
+    return logger
 
 
 def add_timestamp_to_log_filename(log_file_path,timestamp_string):
@@ -303,50 +311,50 @@ def getwithinfo(url):
 
 
 
-def get_url(url):
-    #try to retreive a url. If unable to return None object
-    #Example useage:
-    #html = get_url("")
-    #if html:
-    #logging.debug( "getting url ", locals())
-    get_tuple = get_requests(url)
-    if get_tuple:
-        reply, request = get_tuple
-        return reply
-    else:
-        return
+# def get_url(url):
+#     #try to retreive a url. If unable to return None object
+#     #Example useage:
+#     #html = get_url("")
+#     #if html:
+#     #logging.debug( "getting url ", locals())
+#     get_tuple = get_requests(url)
+#     if get_tuple:
+#         reply, request = get_tuple
+#         return reply
+#     else:
+#         return
 
-def get_requests(url):
-    """foo"""
-    max_attempts = 10
-    attempt_counter = 0
-    while attempt_counter <= max_attempts:
-        attempt_counter += 1
-        if attempt_counter > 1:
-            logging.debug("Attempt "+repr(attempt_counter)+" to open URL: "+repr(url))
-        try:
+# def get_requests(url):
+#     """foo"""
+#     max_attempts = 10
+#     attempt_counter = 0
+#     while attempt_counter <= max_attempts:
+#         attempt_counter += 1
+#         if attempt_counter > 1:
+#             logging.debug("Attempt "+repr(attempt_counter)+" to open URL: "+repr(url))
+#         try:
 
-            response = requests.get(
-                url,
-                timeout=10,# fail if no communication for 10 seconds
-                )
-            response.raise_for_status()
-            return (response.content, response)
+#             response = requests.get(
+#                 url,
+#                 timeout=10,# fail if no communication for 10 seconds
+#                 )
+#             response.raise_for_status()
+#             return (response.content, response)
 
-        except requests.ConnectionError, err:
-            logging.exception(err)
-            logging.error("Connection error getting content-type!")
-            logging.debug("(locals():"+repr(locals() ) )
-            continue
-        except requests.exceptions.InvalidSchema, err:
-            logging.exception(err)
-            logging.debug("(locals():"+repr(locals() ) )
-            break# We can't handle this link.
-        except requests.exceptions.InvalidURL, err:
-            logging.exception(err)
-            logging.debug("(locals():"+repr(locals() ) )
-            break# We can't handle this link.
-    return
+#         except requests.ConnectionError, err:
+#             logging.exception(err)
+#             logging.error("Connection error getting content-type!")
+#             logging.debug("(locals():"+repr(locals() ) )
+#             continue
+#         except requests.exceptions.InvalidSchema, err:
+#             logging.exception(err)
+#             logging.debug("(locals():"+repr(locals() ) )
+#             break# We can't handle this link.
+#         except requests.exceptions.InvalidURL, err:
+#             logging.exception(err)
+#             logging.debug("(locals():"+repr(locals() ) )
+#             break# We can't handle this link.
+#     return
 
 
 def assert_is_string(object_to_test):
