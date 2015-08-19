@@ -75,57 +75,70 @@ def process_one_new_posts_media(session,post_row):
     assert(False)# Thsi should never run
 
 
-def worker(post_row_list):
-    logging.info("Worker started for "+repr(len(post_row_list))+" posts.")
-    # Connect to DB
-    session = sql_functions.connect_to_db()
-    # Process posts
-    for post_row in post_row_list:
-        process_one_new_posts_media(session,post_row)
-    # Disconnect from DB
-    session.close()
-    logging.info("Worker finished.")
-    return
-
-
-def post_consumer_process(log_queue, log_configurer, post_queue):
-    """Consume post dicts"""
-    log_configurer(log_queue)# Start logging for this process
-    logging.info("post_consumer_process started:")
+def post_consumer(post_queue):
+    "Process posts for  a queue-like object containing post dicts"
     # Connect to DB
     database_session = sql_functions.connect_to_db()
-    # Process posts
+    # Process posts from the queue
     c = 0
     while True:
         c += 1
         if c%100 == 0:
             logging.info(repr(c)+" posts processed by this process")
-
         post_row = post_queue.get(timeout=600)
+        if post_row is None:# Stop if None object is put into the queue
+            #logging.crtitical("Post consumer recieved None object as exit signal")
+            break
         process_one_new_posts_media(database_session,post_row)
         continue
     # Disconnect from DB
     database_session.close()
+    return
+
+
+def post_consumer_process(log_queue, log_configurer, post_queue):
+    """Multiprocessing wrapper for post_consumer"""
+    # Setup logging for this process
+    log_configurer(log_queue)
+    logging.info("post_consumer_process started:")
+    # Do work
+    post_consumer(post_queue)
+    # Exit process
     logging.info("post_consumer_process finished.")
     return
 
 
-def post_producer_process(log_queue, configurer, post_queue):
-    """Provide post dicts"""
-    configurer(log_queue)
-    logging.info("post_producer_process started")
+def post_producer(post_queue):
+    """Keep a queue-like object filled with post dicts"""
+    # Connect to the DB
     database_session = sql_functions.connect_to_db()
+    # Keep the queue supplied with posts
     counter = 0
     while True:
         if post_queue.qsize() < 100:
             logging.info("Adding more posts to post queue. Posts added so far: "+repr(counter))
             new_posts = list_new_posts(database_session, max_rows=1000)
+            if len(new_posts) == 0:
+                # Tell consumers to stop by flooding the queue with None objects
+                #logging.error("No more posts to process, exiting.")
+                for n in xrange(100):
+                    post_queue.put(None)
+                return
             for new_post in new_posts:
                 assert(post_queue.full() is False)
                 counter += 1
                 post_queue.put(new_post)
         else:
             time.sleep(1)
+
+
+def post_producer_process(log_queue, configurer, post_queue):
+    """Multiprocessing wrapper for post_producer"""
+    # Setup logging for this process
+    configurer(log_queue)
+    logging.info("post_producer_process started")
+    # Supply posts
+    post_producer(post_queue)
 
 
 def list_new_posts(database_session,max_rows):
@@ -195,10 +208,8 @@ def mt_process_posts():
     # Start workers
     post_queue = Queue.Queue(-1)
     # Start post provider
-    log_queue=1#Dummy
-    worker_configurer=int#Dummy
-    provider = threading.Thread(target=post_producer_process,
-                                       args=(log_queue, worker_configurer, post_queue))
+    provider = threading.Thread(target=post_producer,
+       args=(post_queue,))
     provider.start()
     logging.info("Post provider started.")
 
@@ -207,8 +218,8 @@ def mt_process_posts():
     workers = []
     for i in range(number_of_workers):
         worker = threading.Thread(
-            target=post_consumer_process,
-            args=(log_queue, worker_configurer, post_queue)
+            target=post_consumer,
+            args=(post_queue,)
             )
         workers.append(worker)
         worker.start()
@@ -218,46 +229,6 @@ def mt_process_posts():
         w.join()
     provider.join()
     logging.info("Finished processing posts.")
-    return
-
-
-
-def process_all_posts_media(max_rows=1000):
-    # Connect to DB
-    listing_session = sql_functions.connect_to_db()
-    post_dicts = ["dummy"]
-    counter = 0
-    while len(post_dicts) > 0:
-        # Get primary keys for some new posts
-        logging.debug("Grabbing a thousand unprocessed post primary keys")
-        post_dicts = list_new_posts(listing_session,max_rows)
-        # Process posts
-        logging.debug("Processing posts, "+repr(counter)+" done so far this run")
-        logging.debug("Starting workers")
-
-        jobs = split_list(
-            list_in = post_dicts,
-            number_of_pieces = config.number_of_media_workers
-            )
-
-        # http://stackoverflow.com/questions/2846653/python-multithreading-for-dummies
-        # Make the Pool of workers
-
-        # For some reason multiprocessing.Pool doesn't run through IDLE or pyscripter?
-        #pool = ThreadPool(config.number_of_media_workers)# Set to one for debugging
-        pool = Pool(processes=config.number_of_media_workers)
-        logging.debug("pool opened")
-        results = pool.map(worker, jobs)
-        #close the pool and wait for the work to finish
-        logging.debug("closing pool")
-        pool.close()
-        logging.debug("Pool closed")
-        pool.join()
-        logging.debug("All workers finished")
-        logging.info("Finished proccessing this group of posts")
-        counter += max_rows
-        continue
-    logging.info("Finished processing posts for media")
     return
 
 
