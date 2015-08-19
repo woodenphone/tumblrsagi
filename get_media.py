@@ -115,12 +115,14 @@ def post_producer_process(log_queue, configurer, post_queue):
     configurer(log_queue)
     logging.info("post_producer_process started")
     database_session = sql_functions.connect_to_db()
+    counter = 0
     while True:
         if post_queue.qsize() < 100:
-            logging.info("Adding more posts to post queue")
+            logging.info("Adding more posts to post queue. Posts added so far: "+repr(counter))
             new_posts = list_new_posts(database_session, max_rows=1000)
             for new_post in new_posts:
                 assert(post_queue.full() is False)
+                counter += 1
                 post_queue.put(new_post)
         else:
             time.sleep(1)
