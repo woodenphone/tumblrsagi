@@ -71,6 +71,9 @@ def save_imgur_images(session,link):
     image_id_search = re.search("""imgur.com/([a-zA-Z0-9,]+)""", link, re.DOTALL)
     if image_id_search:
         unprocessed_image_ids = image_id_search.group(1)
+    elif (link[-10:] == "imgur.com/"):# Handle links that are to imgur non-image pages
+        logging.debug("Link is to an imgur non-image page, skipping: "+repr(link))
+        return []
     else:
         logging.error("Could not parse image(s) link! "+repr(link))
         assert(False)# we need to fix things if this happens
