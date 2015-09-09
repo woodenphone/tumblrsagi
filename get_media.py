@@ -75,24 +75,46 @@ def process_one_new_posts_media(session,post_row):
     assert(False)# Thsi should never run
 
 
+
+class kill_thread_exception(Exception):
+    """Dummy exception for killing threads that have hanged"""
+    pass
+
+def kill_thread():
+    """try to kill the current thread with an exception"""
+    raise(kill_thread_exception)
+
+
+
 def post_consumer(post_queue):
     "Process posts for  a queue-like object containing post dicts"
+    logging.debug("Consumer function started.")
     # Connect to DB
     database_session = sql_functions.connect_to_db()
     # Process posts from the queue
-    c = 0
+    c = 0# Counter for number of posts processed
     while True:
         c += 1
         if c%100 == 0:
             logging.info(repr(c)+" posts processed by this process")
         post_row = post_queue.get(timeout=600)
         if post_row is None:# Stop if None object is put into the queue
-            #logging.crtitical("Post consumer recieved None object as exit signal")
-            break
-        process_one_new_posts_media(database_session,post_row)
+            logging.crtitical("Post consumer recieved None object as exit signal")
+            break# Stop doing work and exit thread/process        
+        try:
+            watchdog_timer = threading.Timer(3,kill_thread)# Stop this thread if it hangs
+            watchdog_timer.start()
+            time.sleep(5)# Make sure the thread dies
+            #process_one_new_posts_media(database_session,post_row)
+            watchdog_timer.cancel()# Remove watchdog after work is done
+        except kill_thread_exception:# If watchdog fired
+            logging.error("Work took too long, killing thread.")
+            break# Stop doing work and exit thread/process
+
         continue
     # Disconnect from DB
     database_session.close()
+    logging.debug("Consumer function exiting.")
     return
 
 
@@ -215,14 +237,17 @@ def mt_process_posts():
 
     # Start post processors/consumers
     number_of_workers = config.number_of_media_workers
+    logging.debug("Starting "+repr(number_of_workers)+" consumer threads...")
     workers = []
     for i in range(number_of_workers):
+        logging.debug("Starting worker "+repr(i))
         worker = threading.Thread(
             target=post_consumer,
             args=(post_queue,)
             )
         workers.append(worker)
         worker.start()
+        logging.debug("Worker "+repr(i)+" started.")
     logging.info("All consumers started.")
     # Wait until processed finish
     for w in workers:
