@@ -552,8 +552,9 @@ def get_blog_media_settings(session,blog_id):
         blog_settings_dict = {}
         blog_settings_dict["save_external_links"] = True# settings_row["save_external_links"]
         blog_settings_dict["save_photos"] = True# settings_row["save_photos"]
-        blog_settings_dict["save_videos"] = settings_row["save_videos"]
+        blog_settings_dict["save_videos"] = (settings_row["save_videos"] == True)
         blog_settings_dict["save_audio"] = True# settings_row["save_audio"]
+    logging.debug("blog_settings_dict: "+repr(blog_settings_dict))
     return blog_settings_dict
 
 # /Blogs table
@@ -571,6 +572,8 @@ def debug():
     for blog_url in blog_urls:
         dummy_blog_id = add_blog(session,blog_url)
         logging.debug("dummy_blog_id: "+repr(dummy_blog_id))
+        blog_media_settings_dict = get_blog_media_settings(session,dummy_blog_id)
+        logging.debug("blog_media_settings_dict: "+repr(blog_media_settings_dict))
         #update_blog_theme(session,blog_url)
         continue
     #return
