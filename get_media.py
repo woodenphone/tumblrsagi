@@ -75,17 +75,6 @@ def process_one_new_posts_media(session,post_row):
     assert(False)# Thsi should never run
 
 
-
-class kill_thread_exception(Exception):
-    """Dummy exception for killing threads that have hanged"""
-    pass
-
-def kill_thread():
-    """try to kill the current thread with an exception"""
-    raise(kill_thread_exception)
-
-
-
 def post_consumer(post_queue):
     "Process posts for  a queue-like object containing post dicts"
     logging.debug("Consumer function started.")
@@ -101,16 +90,7 @@ def post_consumer(post_queue):
         if post_row is None:# Stop if None object is put into the queue
             logging.crtitical("Post consumer recieved None object as exit signal")
             break# Stop doing work and exit thread/process        
-        try:
-            watchdog_timer = threading.Timer(3,kill_thread)# Stop this thread if it hangs
-            watchdog_timer.start()
-            time.sleep(5)# Make sure the thread dies
-            #process_one_new_posts_media(database_session,post_row)
-            watchdog_timer.cancel()# Remove watchdog after work is done
-        except kill_thread_exception:# If watchdog fired
-            logging.error("Work took too long, killing thread.")
-            break# Stop doing work and exit thread/process
-
+        process_one_new_posts_media(database_session,post_row)
         continue
     # Disconnect from DB
     database_session.close()
