@@ -41,7 +41,7 @@ def process_one_new_posts_media(session,post_row):
         blog_id = sql_functions.add_blog(session,blog_url)
 
         # Handle links for the post
-        media_id_list = save_media(session,raw_post_dict)
+        media_id_list = save_media(session,raw_post_dict,blog_id)
         logging.debug("media_id_list"": "+repr(media_id_list))
         session.commit()# Media can be safely persisted without the post
 
@@ -88,7 +88,7 @@ def post_consumer(post_queue):
             logging.info(repr(c)+" posts processed by this process")
         post_row = post_queue.get(timeout=600)
         if post_row is None:# Stop if None object is put into the queue
-            logging.crtitical("Post consumer recieved None object as exit signal")
+            logging.info("Post consumer recieved None object as exit signal")
             break# Stop doing work and exit thread/process        
         process_one_new_posts_media(database_session,post_row)
         continue

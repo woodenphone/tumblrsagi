@@ -81,30 +81,38 @@ def handle_tumblr_photos(session,post_dict):
     return media_id_list
 
 
-def save_media(session,post_dict):
+
+
+
+
+
+def save_media(session,post_dict,blog_id=None):
     """ Main function for saving a posts media
     return post dict with links replaced by pointers to saved file in the database"""
     #logging.info("Saving post media")
     logging.debug("save_media() post_dict"+repr(post_dict))
+    blog_settings_dict = sql_functions.get_blog_media_settings(session,blog_id)
+
+
     # Save anything not provided directly through the tumblr API (Remote) ex. http://foo.com/image.jpg
     # I.E. Links (<a href = "http://example.com/image.png">blah</a>)
     media_id_list = []
-    if config.save_external_links:
-        remote_link_id_list = link_handlers.handle_links(session,post_dict)# TODO FIXME
+    if blog_settings_dict["save_external_links"]:
+        remote_link_id_list = link_handlers.handle_links(session,post_dict,blog_settings_dict)# TODO FIXME
         media_id_list += remote_link_id_list
 
     # Save photos sections (Tumblr)
-    if config.save_photos:
+    if blog_settings_dict["save_photos"]:
         tumblr_photos_link_id_list = handle_tumblr_photos(session,post_dict)# {link:hash}
         media_id_list += tumblr_photos_link_id_list
 
     # Save videos, both tumblr and youtube (Tumblr & Youtube)
-    if config.save_videos:
+    if blog_settings_dict["save_videos"]:
         video_embed_id_list = video_handlers.handle_video_posts(session,post_dict)
         media_id_list += video_embed_id_list
 
     # Save audio
-    if config.save_audio:
+    if blog_settings_dict["save_audio"]:
         audio_embed_id_list = audio_handlers.handle_audio_posts(session,post_dict)
         media_id_list += audio_embed_id_list
 

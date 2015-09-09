@@ -25,6 +25,13 @@ from image_handlers import *
 import yt_dl_common
 import imgur
 
+# Constants
+DEFAULT_BLOG_MEDIA_SETTINGS = {
+    "save_external_links":True,
+    "save_photos":True,
+    "save_videos":False,
+    "save_audio":True,
+}
 
 
 def find_links_src(html):
@@ -361,7 +368,7 @@ def handle_fastswf_link(session,link):# TODO FIXME
     return media_id_list
 
 
-def handle_links(session,post_dict):# TODO FIXME
+def handle_links(session,post_dict,blog_settings_dict=DEFAULT_BLOG_MEDIA_SETTINGS):# TODO FIXME
     """Call other functions to handle non-tumblr API defined links and pass data from them back"""
     logging.debug("Handling external links...")
     logging.warning("External links handling not yet implimented, fix this!")# TODO FIXME
@@ -406,61 +413,61 @@ def handle_links(session,post_dict):# TODO FIXME
             media_id_list += imgur.save_imgur(session,link)
 
         # -Video-
-        # Youtube
-        if ("youtube.com" in link[0:100]) or ("youtu.be" in link[0:100]):
-            continue
-            logging.debug("Link is youtube video: "+repr(link))
-            media_id_list += yt_dl_common.run_yt_dl_single(
-                session=session,
-                download_url=link,
-                extractor_used="link_handlers.handle_video_links:youtube.com",
-                )
-            continue
+        if blog_settings_dict["save_videos"] == True:
+            # Youtube
+            if ("youtube.com" in link[0:100]) or ("youtu.be" in link[0:100]):
+                continue
+                logging.debug("Link is youtube video: "+repr(link))
+                media_id_list += yt_dl_common.run_yt_dl_single(
+                    session=session,
+                    download_url=link,
+                    extractor_used="link_handlers.handle_video_links:youtube.com",
+                    )
+                continue
 
-        # gfycat.com
-        #https://gfycat.com/MatureSilkyEwe
-        elif "gfycat.com/" in link[0:20]:
-            logging.debug("Link is gfycat video: "+repr(link))
-            media_id_list += yt_dl_common.run_yt_dl_single(
-                session=session,
-                download_url=link,
-                extractor_used="link_handlers.handle_video_links:gfycat.com",
-                )
-            continue
+            # gfycat.com
+            #https://gfycat.com/MatureSilkyEwe
+            elif "gfycat.com/" in link[0:20]:
+                logging.debug("Link is gfycat video: "+repr(link))
+                media_id_list += yt_dl_common.run_yt_dl_single(
+                    session=session,
+                    download_url=link,
+                    extractor_used="link_handlers.handle_video_links:gfycat.com",
+                    )
+                continue
 
-        # http://webmshare.com
-        elif "webmshare.com" in link[0:20]:
-            logging.debug("Link is webmshare video: "+repr(link))
-            media_id_list += yt_dl_common.run_yt_dl_single(
-                session=session,
-                download_url=link,
-                extractor_used="link_handlers.handle_video_links:webmshare.com",
-                )
-            continue
+            # http://webmshare.com
+            elif "webmshare.com" in link[0:20]:
+                logging.debug("Link is webmshare video: "+repr(link))
+                media_id_list += yt_dl_common.run_yt_dl_single(
+                    session=session,
+                    download_url=link,
+                    extractor_used="link_handlers.handle_video_links:webmshare.com",
+                    )
+                continue
 
-        # webmup.com
-        # http://webmup.com/c8197/
-        elif "webmup.com/" in link[0:20]:
-            logging.debug("Link is webmup.com video: "+repr(link))
-            media_id_list += yt_dl_common.run_yt_dl_single(
-                session=session,
-                download_url=link,
-                extractor_used="link_handlers.handle_video_links:webmup.com",
-                )
-            continue
+            # webmup.com
+            # http://webmup.com/c8197/
+            elif "webmup.com/" in link[0:20]:
+                logging.debug("Link is webmup.com video: "+repr(link))
+                media_id_list += yt_dl_common.run_yt_dl_single(
+                    session=session,
+                    download_url=link,
+                    extractor_used="link_handlers.handle_video_links:webmup.com",
+                    )
+                continue
 
-        # http://webm.host
-        # http://webm.host/ec2fc/
-        elif "webm.host/" in link[0:20]:
-            logging.debug("Link is webmup.com video: "+repr(link))
-            media_id_list += yt_dl_common.run_yt_dl_single(
-                session=session,
-                download_url=link,
-                extractor_used="link_handlers.handle_video_links:webm.host",
-                )
-            continue
-
-
+            # http://webm.host
+            # http://webm.host/ec2fc/
+            elif "webm.host/" in link[0:20]:
+                logging.debug("Link is webmup.com video: "+repr(link))
+                media_id_list += yt_dl_common.run_yt_dl_single(
+                    session=session,
+                    download_url=link,
+                    extractor_used="link_handlers.handle_video_links:webm.host",
+                    )
+                continue
+        # /video
         # -Audio-
 
 
@@ -471,21 +478,20 @@ def handle_links(session,post_dict):# TODO FIXME
             #media_id_list += handle_fastswf_link(session,link)
 
         # -Generic-
-        desired_extentions = [
-            # Image
-            "jpg","jpeg",
-            "gif",
-            "png",
-            # Audio
-            "mp3",
-            # Video
-            "wmv",
-            "mp4",
-            "mov",
-            # Flash
-            "fla",
-            "swf",
-            ]
+        image_extentions = ["jpg","jpeg","gif","png","psd",]
+        audio_extentions = ["mp3","wma","wav","ogg",]
+        video_extentions = ["wmv","mp4","mov",]
+        flash_extentions = ["fla","swf",]
+
+        desired_extentions = []+flash_extentions
+        if blog_settings_dict["save_videos"] == True:
+            desired_extentions += video_extentions
+        if blog_settings_dict["save_photos"] == True:
+            desired_extentions += image_extentions
+        if blog_settings_dict["save_audio"] == True:
+            desired_extentions += audio_extentions
+        logging.debug("desired_extentions: "+repr(desired_extentions))
+
         link_extention = get_file_extention(link)
         logging.debug("link_extention:"+repr(link_extention))
         if link_extention in desired_extentions:

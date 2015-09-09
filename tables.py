@@ -41,6 +41,7 @@ class twkr_blogs(Base):
     reasons_added = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB)# Why was this blog added? Populated initially by URLs in todo list ["url","URL",..]
     date_posts_last_saved  = sqlalchemy.Column(sqlalchemy.BigInteger)# Unix time of the last successful run
     hidden = sqlalchemy.Column(sqlalchemy.Boolean())# Should this be hidden from users?
+    save_videos = sqlalchemy.Column(sqlalchemy.Boolean())# Should videos be saved for this blog?
 
 
 class twkr_posts(Base):

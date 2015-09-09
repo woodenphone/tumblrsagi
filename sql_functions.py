@@ -530,7 +530,31 @@ def add_blog(session,blog_url):
 
 
 
-
+def get_blog_media_settings(session,blog_id):
+    """Get settings for this blog from the blogs table"""
+    DEFAULT_BLOG_MEDIA_SETTINGS = {
+    "save_external_links":True,
+    "save_photos":True,
+    "save_videos":False,
+    "save_audio":True,} 
+    if blog_id is None:
+        logging.warning("No blog ID given! Using default settings for media.")
+        # Hardcoded defaults as temporary thing during coding
+        blog_settings_dict = DEFAULT_BLOG_MEDIA_SETTINGS
+    else:
+        # Look up settings from DB
+        settings_query = sqlalchemy.select([twkr_blogs]).where(twkr_blogs.blog_id == blog_id)
+        settings_rows = session.execute(settings_query)
+        settings_row = settings_rows.fetchone()
+        if settings_row is None:
+            logging.error("Can't load media settings from DB!")
+            raise ValueError
+        blog_settings_dict = {}
+        blog_settings_dict["save_external_links"] = True# settings_row["save_external_links"]
+        blog_settings_dict["save_photos"] = True# settings_row["save_photos"]
+        blog_settings_dict["save_videos"] = settings_row["save_videos"]
+        blog_settings_dict["save_audio"] = True# settings_row["save_audio"]
+    return blog_settings_dict
 
 # /Blogs table
 
