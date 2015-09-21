@@ -48,7 +48,8 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
     logging.debug("download_url: "+repr(download_url))
 
     temp_id_timestamp = str(get_current_unix_time())# For filenames in the temp dir
-    temp_id_hash = hash_file_data(str(download_url))# For filenames in the temp dir
+    sanitized_download_url_for_hash = download_url.encode("ascii","ignore")
+    temp_id_hash = hash_file_data(sanitized_download_url_for_hash)# For filenames in the temp dir
     temp_id = temp_id_timestamp+"."+temp_id_hash
 
     # Check that URL is not already saved
