@@ -325,6 +325,66 @@ def handle_dropbox_link(session,link):
     return []
 
 
+def handle_postimg_link(session,link):
+    """Try to save all images from a postimg.org link
+    Example urls:
+    http://postimg.org/gallery/1g80elqce/
+    """
+    # Check if we were given /gallery/ or /image/
+    if "/gallery/".lower() in link[0:30].lower():
+        return save_postimg_gallery(session,link)
+    elif "/image/".lower() in link[0:30].lower():
+        return save_postimg_image(session,link)
+    else:
+        logging.error("Unexpected link format for postimg!")
+        logging.debug("locals(): "+repr(locals()))
+        assert(False)# Stop so we know to fix this
+
+def save_postimg_gallery(session,link):
+    """Save a postimg gallery"""
+    # Load gallery page
+    gallery_page_html = get_url(link)
+    if gallery_page_html is None:
+        logging.error("Could not load postimg gallery page: "+repr(link))
+        return []
+    # Find links
+    gallery_links_regex = """<td\sid\s*=\s*["'][\w]+["']>\s*<a\shref\s*=\s*["'](https?://postimg.org/image/\w+/)["']"""
+    gallery_links = re.findall(gallery_links_regex, gallery_page_html, re.IGNORECASE|re.DOTALL)
+    logging.debug("gallery_links: "+repr(gallery_links))
+    # Iterate over gallery links to save them
+    media_id_list = []
+    for image_page_link in gallery_links:
+        media_id_list += save_postimg_image(session,image_page_link)
+    return media_id_list
+
+def save_postimg_image(session,link):
+    """Save a single image page from postimg.org
+    Exaple URLs:
+    http://postimg.org/image/c5ha6o11p/full/#codes
+    http://postimg.org/image/48s7kp07h/
+    """
+    # Load image page
+    image_page_html = get_url(link)
+    if image_page_html is None:
+        logging.error("Could not load postimg iamge page: "+repr(link))
+        return []
+    # Find link to full image
+    # <td><textarea onmouseover="this.focus()" onfocus="this.select()" id="code_2" scrolling="no" wrap="off">http://s22.postimg.org/a0wx5kzf5/c1blastfacial_bonus.png</textarea></td>
+    # id="code_2" scrolling="no">http://s22.postimg.org/a0wx5kzf5/c1blastfacial_bonus.png</textarea></td>
+    # full sized link appears to always be associated with "code_2"
+    full_image_link_regex = """id="code_2"[^><]+>([^><]+)<"""
+    full_image_link_search = re.search(full_image_link_regex, image_page_html, re.IGNORECASE|re.DOTALL)
+    if full_image_link_search:
+        full_image_link = full_image_link_search.group(1)
+        logging.debug("full_image_link:"+repr(full_image_link))
+        # Save image and return id
+        return download_image_links(session,[full_image_link])
+    else:
+        logging.error("Could not find full image link!")
+        logging.debug("locals(): "+repr(locals()))
+        assert(False)# Stop so we know to fix this
+
+
 def handle_fastswf_link(session,link):# TODO FIXME
     """http://www.fastswf.com/ - Free Flash and Unity Hosting
         Supported link formats:
@@ -448,7 +508,10 @@ def handle_links(session,post_dict,blog_settings_dict=DEFAULT_BLOG_MEDIA_SETTING
 def debug():
     """For WIP, debug, ect function calls"""
     session = sql_functions.connect_to_db()
-    handle_generic_link(session,link="media.tumblr.com/80638dc40978c286b5d3f18b2bfcf3d6/tumblr_inline_mfb0pxs7lf1qfi5b1.gif")
+    postimg_result = save_postimg_gallery(session,link="http://postimg.org/gallery/1g80elqce/")
+    logging.debug("postimg_result")
+    return
+    #handle_generic_link(session,link="media.tumblr.com/80638dc40978c286b5d3f18b2bfcf3d6/tumblr_inline_mfb0pxs7lf1qfi5b1.gif")
 
     #fastswf_result = handle_fastswf_link(session,"http://www.fastswf.com/5MH9MZw")
     #return
