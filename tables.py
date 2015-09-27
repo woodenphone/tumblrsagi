@@ -284,53 +284,6 @@ class meta_requests(Base):
     ip = sqlalchemy.Column(sqlalchemy.UnicodeText())
     time  = sqlalchemy.Column(sqlalchemy.BigInteger)
 # /Admin tables
-
-
-
-# Tables on the server we need to be able to handle
-class vm_RawPosts(Base):# Live DB on server uses this
-    """The raw post dicts for a blog
-    Used to back up and stage posts
-    Write-once Read-many"""
-    __tablename__ = "vm_raw_posts"
-    # Columns
-    # Local stuff
-    primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Is used only as primary key
-    version = sqlalchemy.Column(sqlalchemy.BigInteger) # The version of this post this row is associated with
-    date_saved = sqlalchemy.Column(sqlalchemy.BigInteger)# The unix time the post was saved
-    link_to_hash_dict = sqlalchemy.Column(sqlalchemy.UnicodeText())# mapping of links in the post to hashes of associated media
-    # Who does this post belong to?
-    poster_username = sqlalchemy.Column(sqlalchemy.UnicodeText())# username for a blog, as given by the API "tsitra360"
-    blog_domain = sqlalchemy.Column(sqlalchemy.UnicodeText())# domain for the blog"tsitra360.tumblr.com"
-    # Post identity from the post
-    all_posts_id = sqlalchemy.Column(sqlalchemy.BigInteger)# Number	The post's unique ID
-    all_posts_post_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# String	The location of the post
-    # Full post API data
-    raw_post_json = sqlalchemy.Column(sqlalchemy.UnicodeText())# The post's section of the API, reencoded into JSON
-    processed_post_json = sqlalchemy.Column(sqlalchemy.UnicodeText())# The post's section of the API, reencoded into JSON, after we've fucked with it
-
-
-
-class vm_Media(Base):# Live DB on server uses this
-     """Class that defines the media table in the DB"""
-     __tablename__ = "vm_media"
-     # Columns
-     # Locally generated
-     primary_key = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)# Only used as a primary key
-     date_added = sqlalchemy.Column(sqlalchemy.BigInteger)# The unix time the media was saved
-     media_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# Should have a constant length since it's a hash
-     sha512base64_hash = sqlalchemy.Column(sqlalchemy.String(88))
-     sha512base64_hash = sqlalchemy.Column(sqlalchemy.dialects.postgresql.CHAR(88))
-     local_filename = sqlalchemy.Column(sqlalchemy.String(250))# Filename on local storage, file path is deterministically generated from this
-     remote_filename = sqlalchemy.Column(sqlalchemy.UnicodeText())# Filename from original location (If any)
-     file_extention = sqlalchemy.Column(sqlalchemy.String(25))# ex. png, jpeg
-     extractor_used = sqlalchemy.Column(sqlalchemy.String(250))# internal name of the extractor used (function name of extractor)
-     # Video and Audio use these
-     yt_dl_info_json = sqlalchemy.Column(sqlalchemy.UnicodeText())
-     video_id = sqlalchemy.Column(sqlalchemy.UnicodeText())# The ID of the video used by the originating site
-     audio_id = sqlalchemy.Column(sqlalchemy.UnicodeText())# The ID of the audio used by the originating site
-     annotations = sqlalchemy.Column(sqlalchemy.UnicodeText())
-# /live server tables
 # /SQLAlchemy table setup
 
 
