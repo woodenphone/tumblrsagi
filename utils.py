@@ -680,6 +680,7 @@ def split_list(list_in,number_of_pieces):
 
 
 def generate_md5b64_for_file(file_path):
+    """Generate 4chan-style bd5base64 hashes from files"""
     #http://stackoverflow.com/questions/30478972/hashing-files-with-python
     assert(os.path.exists(file_path))
     blocksize = 65536
@@ -694,6 +695,13 @@ def generate_md5b64_for_file(file_path):
     return md5base64_hash
 
 
+def generate_md5b64_for_memory(file_data):
+    """Generate 4chan-style bd5base64 hashes from objects in memory"""
+    m = hashlib.md5()
+    m.update(file_data)
+    raw_hash = m.digest()
+    md5base64_hash = base64.b64encode(raw_hash)
+    return md5base64_hash
 
 
 def main():
