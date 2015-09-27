@@ -679,6 +679,23 @@ def split_list(list_in,number_of_pieces):
     return output
 
 
+def generate_md5b64_for_file(file_path):
+    #http://stackoverflow.com/questions/30478972/hashing-files-with-python
+    assert(os.path.exists(file_path))
+    blocksize = 65536
+    with open(file_path, "rb") as f:
+        hasher = hashlib.md5()
+        buf = f.read(blocksize)
+        while len(buf)>0:
+            hasher.update(buf)
+            buf = f.read(blocksize)
+        raw_hash =  hasher.digest()
+    md5base64_hash = base64.b64encode(raw_hash)
+    return md5base64_hash
+
+
+
+
 def main():
     # Test split_list
     print split_list(range(7), 2)
