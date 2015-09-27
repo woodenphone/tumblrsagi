@@ -73,8 +73,8 @@ def add_blog(session,raw_blog_url):
     blog_id = sql_functions.add_blog(session, sanitized_blog_url)
 
     # Load row from blogs table so we can compare reason info
-    select_query = sqlalchemy.select([twkr_blogs]).\
-            where(twkr_blogs.blog_id == blog_id)
+    select_query = sqlalchemy.select([blogs]).\
+            where(blogs.blog_id == blog_id)
     blogs_rows = session.execute(select_query)
     blogs_row = blogs_rows.fetchone()
 
@@ -88,8 +88,8 @@ def add_blog(session,raw_blog_url):
     logging.debug("New reasons_added:"+repr(reasons_added))
 
     # Update data in the row
-    update_statement = sqlalchemy.update(twkr_blogs).\
-        where(twkr_blogs.blog_id == blog_id).\
+    update_statement = sqlalchemy.update(blogs).\
+        where(blogs.blog_id == blog_id).\
         values(
             reasons_added = reasons_added
             )

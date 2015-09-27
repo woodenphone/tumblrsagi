@@ -108,8 +108,8 @@ class tumblr_blog:
         """Update this blog's row in the blogs table"""
         logging.debug("About to update blog metadata for: "+repr(self.blog_url))
         # Load row from blogs table so we can compare reason info
-        select_query = sqlalchemy.select([twkr_blogs]).\
-                where(twkr_blogs.blog_id == self.blog_id)
+        select_query = sqlalchemy.select([blogs]).\
+                where(blogs.blog_id == self.blog_id)
         blogs_rows = self.session.execute(select_query)
         blogs_row = blogs_rows.fetchone()
 
@@ -121,8 +121,8 @@ class tumblr_blog:
             reasons_added += [self.raw_blog_url]
 
         # Update data in the row
-        update_statement = sqlalchemy.update(twkr_blogs).\
-            where(twkr_blogs.blog_id == self.blog_id).\
+        update_statement = sqlalchemy.update(blogs).\
+            where(blogs.blog_id == self.blog_id).\
             values(
                 title = self.info_title,
                 updated = self.info_updated,
@@ -263,8 +263,8 @@ class tumblr_blog:
     def update_last_saved(self):
         """Change the date_posts_last_saved field to the current time"""
         new_timestamp = get_current_unix_time()
-        update_statement = sqlalchemy.update(twkr_blogs).\
-            where(twkr_blogs.blog_id == self.blog_id).\
+        update_statement = sqlalchemy.update(blogs).\
+            where(blogs.blog_id == self.blog_id).\
             values(
                 date_posts_last_saved = new_timestamp,
                 )
@@ -309,7 +309,7 @@ def save_blog(blog_url):
 
 
 def save_blogs():
-    """Save tumblr blogs from the DB twkr_blogs table"""
+    """Save tumblr blogs from the DB blogs table"""
     logging.info("Saving posts for blogs in DB")
     blog_url_list = list_blogs()
     logging.info("Blogs about to be checked for posts: "+repr(blog_url_list))
@@ -333,9 +333,9 @@ def list_blogs():
 
 
     # date_posts_last_saved NULL
-    select_null_query = sqlalchemy.select([twkr_blogs]).\
-        where(twkr_blogs.date_posts_last_saved == sqlalchemy.null()).\
-        order_by(twkr_blogs.date_posts_last_saved.asc())
+    select_null_query = sqlalchemy.select([blogs]).\
+        where(blogs.date_posts_last_saved == sqlalchemy.null()).\
+        order_by(blogs.date_posts_last_saved.asc())
 
     null_blogs_rows = session.execute(select_null_query)
 
@@ -347,9 +347,9 @@ def list_blogs():
     logging.debug("len(null_blog_urls):"+repr(len(null_blog_urls)))
 
     # date_posts_last_saved NOT NULL
-    select_query = sqlalchemy.select([twkr_blogs]).\
-        where(twkr_blogs.date_posts_last_saved != sqlalchemy.null()).\
-        order_by(twkr_blogs.date_posts_last_saved.asc())
+    select_query = sqlalchemy.select([blogs]).\
+        where(blogs.date_posts_last_saved != sqlalchemy.null()).\
+        order_by(blogs.date_posts_last_saved.asc())
 
     not_null_blogs_rows = session.execute(select_query)
 

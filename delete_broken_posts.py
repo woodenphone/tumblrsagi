@@ -31,16 +31,16 @@ def delete_broken_posts():
     # The rawposts row must have media_processed == True
 
     # Choose a blog
-    blog_statement = sqlalchemy.select([twkr_blogs]).\
-        where(twkr_blogs.blog_id < 100)
+    blog_statement = sqlalchemy.select([blogs]).\
+        where(blogs.blog_id < 100)
     blog_rows = session.execute(blog_statement)
     blog_row = blog_rows.fetchone()
     logging.debug(repr(blog_row))
     blog_id = 1
 
     # For each post from this blog
-    select_posts_statement = sqlalchemy.select([twkr_posts]).\
-        where(twkr_posts.blog_id == blog_id).\
+    select_posts_statement = sqlalchemy.select([posts]).\
+        where(posts.blog_id == blog_id).\
         limit(100)
     post_rows = session.execute(select_posts_statement)
     for post_row in post_rows:
@@ -61,8 +61,8 @@ def delete_broken_posts():
             logging.debug("Bad")
 
             # Delete post
-            delete_post_statement = sqlalchemy.select([twkr_posts]).\
-                where(twkr_posts.post_id == post_id)
+            delete_post_statement = sqlalchemy.select([posts]).\
+                where(posts.post_id == post_id)
             session.execute(delete_post_statement)
 
             continue
@@ -87,17 +87,17 @@ def delete_broken_posts():
     # -Posts without Rawposts row-
 
 ##                [
-##                twkr_posts,
-##                twkr_posts_photo,
-##                twkr_posts_photo_text,
-##                twkr_posts_link,
-##                twkr_posts_answer,
-##                twkr_posts_text,
-##                twkr_posts_quote,
-##                twkr_posts_chat,
-##                twkr_post_reblog_trail,
-##                twkr_post_audio,
-##                twkr_post_video,
+##                posts,
+##                posts_photo,
+##                posts_photo_text,
+##                posts_link,
+##                posts_answer,
+##                posts_text,
+##                posts_quote,
+##                posts_chat,
+##                post_reblog_trail,
+##                post_audio,
+##                post_video,
 ##                media_associations,
 ##                ]).\
 

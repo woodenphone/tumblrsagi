@@ -26,8 +26,8 @@ def update_blog_avatar(session,blog_url):
     this is too messy"""
     # -Avatar-
     # Get the ids for this user's avatar image at both small and large sizes
-    avatar_media_id_query = sqlalchemy.select([twkr_blogs]).\
-        where(twkr_blogs.blog_url == blog_url)
+    avatar_media_id_query = sqlalchemy.select([blogs]).\
+        where(blogs.blog_url == blog_url)
     avatar_media_id_rows = session.execute(avatar_media_id_query)
     avatar_media_id_row = avatar_media_id_rows.fetchone()
     small_avatar_media_id = avatar_media_id_row["user_thumbnail_64_media_id"]
@@ -97,7 +97,7 @@ def update_blog_avatar(session,blog_url):
             logging.debug("Updating large avatar record")
             current_large_avatar_media_id = current_large_avatar_media_id_list[0]
             # Update large avatar record
-            update_statement = sqlalchemy.update(twkr_blogs).where(twkr_blogs.blog_id == blog_id).\
+            update_statement = sqlalchemy.update(blogs).where(blogs.blog_id == blog_id).\
                 values(user_thumbnail_512_media_id = current_large_avatar_media_id)
             session.execute(update_statement)
     else:
@@ -112,7 +112,7 @@ def update_blog_avatar(session,blog_url):
         logging.debug("Updating small avatar record")
         current_small_avatar_media_id = current_small_avatar_media_id_list[0]
         # Update small avatar record
-        update_statement = sqlalchemy.update(twkr_blogs).where(twkr_blogs.blog_id == blog_id).\
+        update_statement = sqlalchemy.update(blogs).where(blogs.blog_id == blog_id).\
             values(user_thumbnail_64_media_id = current_small_avatar_media_id,)
         session.execute(update_statement)
 
@@ -149,7 +149,7 @@ def update_blog_background(session,blog_url):
             return
         background_image_media_id = background_image_media_id_list[0]
         # Update blog row with background image
-        update_statement = sqlalchemy.update(twkr_blogs).where(twkr_blogs.blog_url == blog_url).\
+        update_statement = sqlalchemy.update(blogs).where(blogs.blog_url == blog_url).\
             values(background_image_media_id = background_image_media_id,)
         session.execute(update_statement)
         return

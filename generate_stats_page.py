@@ -38,19 +38,19 @@ def generate_stats_page():
     # Get rowcounts
     raw_posts_rowcount = session.query(sqlalchemy.func.count(RawPosts.primary_key)).scalar()
     media_rowcount = session.query(sqlalchemy.func.count(Media.media_id)).scalar()
-    twkr_posts_rowcount = session.query(sqlalchemy.func.count(twkr_posts.post_id)).scalar()
-    twkr_blogs_rowcount = session.query(sqlalchemy.func.count(twkr_blogs.blog_id)).scalar()
+    posts_rowcount = session.query(sqlalchemy.func.count(posts.post_id)).scalar()
+    blogs_rowcount = session.query(sqlalchemy.func.count(blogs.blog_id)).scalar()
     # Add values to page
     page_html += "raw_posts: "+splitthousands(str(raw_posts_rowcount))+"\r\n"
-    page_html += "twkr_posts: "+splitthousands(str(twkr_posts_rowcount))+"\r\n"
-    page_html += "twkr_blogs: "+splitthousands(str(twkr_blogs_rowcount))+"\r\n"
+    page_html += "posts: "+splitthousands(str(posts_rowcount))+"\r\n"
+    page_html += "blogs: "+splitthousands(str(blogs_rowcount))+"\r\n"
     page_html += "Media: "+splitthousands(str(media_rowcount))+"\r\n"
     page_html += "\r\n"
     page_html += "\r\n"
     page_html += "\r\n"
     page_html += "Ratios:"+"\r\n"
-    page_html += "raw_posts/twkr_posts: "+repr((raw_posts_rowcount/twkr_posts_rowcount))+"\r\n"
-    page_html += "raw_posts: "+splitthousands(str(raw_posts_rowcount))+", twkr_posts: "+splitthousands(str(twkr_posts_rowcount))+"\r\n"
+    page_html += "raw_posts/posts: "+repr((raw_posts_rowcount/posts_rowcount))+"\r\n"
+    page_html += "raw_posts: "+splitthousands(str(raw_posts_rowcount))+", posts: "+splitthousands(str(posts_rowcount))+"\r\n"
     logging.debug(page_html)
     save_file(
             file_path="stats.txt",

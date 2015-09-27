@@ -20,9 +20,9 @@ Base = declarative_base()
 
 
 # Twkr's new tables
-class twkr_blogs(Base):
+class blogs(Base):
     """Class Info, functionality, purpose"""
-    __tablename__ = "twkr_blogs"
+    __tablename__ = "blogs"
     # Columns
     blog_id = sqlalchemy.Column(sqlalchemy.BigInteger, primary_key=True)# referenced by sub-tables
     blog_username = sqlalchemy.Column(sqlalchemy.UnicodeText())# UNUSED! REMOVE
@@ -44,14 +44,14 @@ class twkr_blogs(Base):
     save_videos = sqlalchemy.Column(sqlalchemy.Boolean())# Should videos be saved for this blog?
 
 
-class twkr_posts(Base):
+class posts(Base):
     """Class Info, functionality, purpose"""
-    __tablename__ = "twkr_posts"
+    __tablename__ = "posts"
     # Columns
     # Local stuff
     post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# referenced by sub-tables
     date_saved = sqlalchemy.Column(sqlalchemy.BigInteger())# The unix time the post was saved
-    blog_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_blogs.blog_id")) #
+    blog_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("blogs.blog_id")) #
     source_id = sqlalchemy.Column(sqlalchemy.BigInteger()) # ID number tumblr gave us for the post
     post_type = sqlalchemy.Column(sqlalchemy.SmallInteger()) # numerical identifier for what kind of post this is
     source_url = sqlalchemy.Column(sqlalchemy.UnicodeText()) # post_dict["post_url"]
@@ -61,9 +61,9 @@ class twkr_posts(Base):
 
 
 
-class twkr_posts_photo(Base):
+class posts_photo(Base):
     """Class Info, functionality, purpose"""
-    __tablename__ = "twkr_posts_photo"
+    __tablename__ = "posts_photo"
     # Columns
     # Local stuff
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
@@ -71,34 +71,34 @@ class twkr_posts_photo(Base):
     url = sqlalchemy.Column(sqlalchemy.UnicodeText())# photo["original_size"]["url"]
     order = sqlalchemy.Column(sqlalchemy.BigInteger()) # starting from 1 ex. 1, 2, 3...
     media_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("media.media_id")) # Local media ID
-    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("posts.post_id")) # Local post ID
 
 
-class twkr_posts_photo_text(Base):# Blame ATC
+class posts_photo_text(Base):# Blame ATC
     """Class Info, functionality, purpose"""
-    __tablename__ = "twkr_posts_photo_text"
+    __tablename__ = "posts_photo_text"
     # Columns
     # Local stuff
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
     caption = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["caption"]
-    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("posts.post_id")) # Local post ID
 
 
-class twkr_posts_link(Base):
+class posts_link(Base):
     """Class Info, functionality, purpose"""
-    __tablename__ = "twkr_posts_link"
+    __tablename__ = "posts_link"
     # Columns
     # Local stuff
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
     source_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["url"]
     source_title = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["title"]
     description = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["description"]
-    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("posts.post_id")) #
 
 
-class twkr_posts_answer(Base):
+class posts_answer(Base):
     """Class Info, functionality, purpose"""
-    __tablename__ = "twkr_posts_answer"
+    __tablename__ = "posts_answer"
     # Columns
     # Local stuff
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
@@ -106,25 +106,25 @@ class twkr_posts_answer(Base):
     asking_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["asking_url"]
     question = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["question"]
     answer = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["answer"]
-    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("posts.post_id")) #
 
 
 
-class twkr_posts_text(Base):
+class posts_text(Base):
     """Class Info, functionality, purpose"""
-    __tablename__ = "twkr_posts_text"
+    __tablename__ = "posts_text"
     # Columns
     # Local stuff
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
     title = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["title"]
     body = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["body"]
-    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("posts.post_id")) #
 
 
 
-class twkr_posts_quote(Base):
+class posts_quote(Base):
     """Class Info, functionality, purpose"""
-    __tablename__ = "twkr_posts_quote"
+    __tablename__ = "posts_quote"
     # Columns
     # Local stuff
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
@@ -132,13 +132,13 @@ class twkr_posts_quote(Base):
     source_title = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["source_title"] (optional)
     source = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["source"] source text (the guy who is being quoted)
     text = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["text"] text from whoever made this post
-    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("posts.post_id")) #
 
 
 
-class twkr_posts_chat(Base):
+class posts_chat(Base):
     """Class Info, functionality, purpose"""
-    __tablename__ = "twkr_posts_chat"
+    __tablename__ = "posts_chat"
     # Columns
     # Local stuff
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
@@ -146,27 +146,27 @@ class twkr_posts_chat(Base):
     body = sqlalchemy.Column(sqlalchemy.UnicodeText())# post_dict["body"]
     dialogue_html = sqlalchemy.Column(sqlalchemy.UnicodeText())# None
     dialogue_json = sqlalchemy.Column(sqlalchemy.dialects.postgresql.JSONB(none_as_null=False))# json.dumps(post_dict["dialogue"])
-    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("posts.post_id")) #
 
 
 
-class twkr_post_reblog_trail(Base):# Blame ATC
+class post_reblog_trail(Base):# Blame ATC
     """Class Info, functionality, purpose"""
-    __tablename__ = "twkr_post_reblog_trail"
+    __tablename__ = "post_reblog_trail"
     # Columns
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
-    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) #Local post id
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("posts.post_id")) #Local post id
     depth = sqlalchemy.Column(sqlalchemy.BigInteger())# Starting at 1 for the first reply, how deep is this?
     content = sqlalchemy.Column(sqlalchemy.UnicodeText())# ["response"]["posts"]["trail"][depth-1]["content']
 
 
 
-class twkr_post_audio(Base):# Blame ATC
+class post_audio(Base):# Blame ATC
     """Class Info, functionality, purpose"""
-    __tablename__ = "twkr_post_audio"
+    __tablename__ = "post_audio"
     # Columns
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
-    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("posts.post_id")) # Local post ID
     caption = sqlalchemy.Column(sqlalchemy.UnicodeText())# from API, beyond that uncertain
     artist = sqlalchemy.Column(sqlalchemy.UnicodeText())# Artist name
     track_name = sqlalchemy.Column(sqlalchemy.UnicodeText())# Track name
@@ -178,12 +178,12 @@ class twkr_post_audio(Base):# Blame ATC
 
 
 
-class twkr_post_video(Base):# Blame ATC
+class post_video(Base):# Blame ATC
     """Class Info, functionality, purpose"""
-    __tablename__ = "twkr_post_video"
+    __tablename__ = "post_video"
     # Columns
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
-    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("posts.post_id")) # Local post ID
     caption = sqlalchemy.Column(sqlalchemy.UnicodeText())# from API, beyond that uncertain
     video_type = sqlalchemy.Column(sqlalchemy.UnicodeText())# from API, beyond that uncertain
     permalink_url = sqlalchemy.Column(sqlalchemy.UnicodeText())# from API, beyond that uncertain
@@ -245,7 +245,7 @@ class media_associations(Base):
     """Tell a post what media it has saved"""
     __tablename__ = "media_associations"
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)# Is used only as primary key
-    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_posts.post_id")) # Local post ID
+    post_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("posts.post_id")) # Local post ID
     media_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("media.media_id")) # Local media ID
 # /Media
 # Media Extractors
@@ -255,7 +255,7 @@ class handler_api_youtube(Base):#not yet used
     of the API youtube emebed media handler"""
     __tablename__ = "handler_api_youtube"
     primary_key = sqlalchemy.Column(sqlalchemy.BigInteger(), primary_key=True)
-    blog_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("twkr_blogs.blog_id")) #
+    blog_id = sqlalchemy.Column(sqlalchemy.BigInteger(), sqlalchemy.ForeignKey("blogs.blog_id")) #
     extractor_version = sqlalchemy.Column(sqlalchemy.BigInteger)# Which is the highest version of the extractor that has been used on this post?
 # /Media Extractors
 

@@ -25,12 +25,12 @@ def display_post(session,source_id=None,post_id=None,output_path=os.path.join("d
     if source_id:
         page = "Tumblr post number:"+repr(source_id)+"\r\n"
 
-        post_query = sqlalchemy.select([twkr_posts]).\
-            where(twkr_posts.source_id == source_id)
+        post_query = sqlalchemy.select([posts]).\
+            where(posts.source_id == source_id)
     else:
         page = "local postid number:"+repr(source_id)+"\r\n"
-        post_query = sqlalchemy.select([twkr_posts]).\
-            where(twkr_posts.post_id == post_id)
+        post_query = sqlalchemy.select([posts]).\
+            where(posts.post_id == post_id)
 
     post_rows = session.execute(post_query)
     post_row = post_rows.fetchone()
@@ -48,8 +48,8 @@ def display_post(session,source_id=None,post_id=None,output_path=os.path.join("d
 
     # 1: u'text',
     if post_row.post_type == 1:
-        text_query = sqlalchemy.select([twkr_posts_text]).\
-            where(twkr_posts_text.post_id == source_id)
+        text_query = sqlalchemy.select([posts_text]).\
+            where(posts_text.post_id == source_id)
         text_rows = session.execute(text_query)
         text_row = text_rows.fetchone()
         logging.debug("text_row:"+repr(text_row))
@@ -64,8 +64,8 @@ def display_post(session,source_id=None,post_id=None,output_path=os.path.join("d
     # 8: u'answer'
 
     # Get blog row
-    blog_query = sqlalchemy.select([twkr_blogs]).\
-        where(twkr_blogs.blog_id == post_row.blog_id)
+    blog_query = sqlalchemy.select([blogs]).\
+        where(blogs.blog_id == post_row.blog_id)
     blog_rows = session.execute(blog_query)
     blog_row = blog_rows.fetchone()
     logging.debug("blog_row:"+repr(blog_row))
@@ -115,15 +115,15 @@ def list_domain_posts(session,blog_domain,output_path=os.path.join("debug","list
     page = "Posts for blog:"+repr(blog_domain)+"\r\n"
 
     # Get blog id
-    blog_query = sqlalchemy.select([twkr_blogs]).\
-        where(twkr_blogs.blog_url == blog_domain)
+    blog_query = sqlalchemy.select([blogs]).\
+        where(blogs.blog_url == blog_domain)
     blog_rows = session.execute(blog_query)
     blog_row = blog_rows.fetchone()
     page +="blog_row:"+repr(blog_row)+"\r\n"
 
     # Find all posts for this blog
-    post_query = sqlalchemy.select([twkr_posts]).\
-        where(twkr_posts.blog_id == blog_row.blog_id)
+    post_query = sqlalchemy.select([posts]).\
+        where(posts.blog_id == blog_row.blog_id)
     post_rows = session.execute(post_query)
     for post_row in post_rows:
         # Add hash info to page
@@ -144,7 +144,7 @@ def list_blogs(session,output_path=os.path.join("debug","blog_list.txt")):
     page = "Blogs:"+"\r\n"
 
     # Find blogs
-    blog_query = sqlalchemy.select([twkr_blogs])
+    blog_query = sqlalchemy.select([blogs])
     blog_rows = session.execute(blog_query)
     for blog_row in blog_rows:
         # Add hash info to page
@@ -182,7 +182,7 @@ def list_all_media(session,output_path=os.path.join("debug","media_list.txt")):
 
 def build_all_posts(session):
     # Find blogs
-    blog_query = sqlalchemy.select([twkr_blogs])
+    blog_query = sqlalchemy.select([blogs])
     blog_rows = session.execute(blog_query)
     for blog_row in blog_rows:
         # Get blog id
@@ -190,8 +190,8 @@ def build_all_posts(session):
         blog_url = blog_row["blog_url"]
         logging.debug("blog_url:"+repr(blog_url))
         # Find all posts for this blog
-        post_query = sqlalchemy.select([twkr_posts]).\
-            where(twkr_posts.blog_id == blog_row.blog_id)
+        post_query = sqlalchemy.select([posts]).\
+            where(posts.blog_id == blog_row.blog_id)
         post_rows = session.execute(post_query)
         for post_row in post_rows:
             post_id = post_row["post_id"]

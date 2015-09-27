@@ -235,11 +235,11 @@ def insert_photoset(session,post_id,post_dict,media_url_id_pairs):
     logging.debug("insert_photos() media_url_id_pairs:"+repr(media_url_id_pairs))
     logging.debug("insert_photos() post_dict:"+repr(post_dict))
     # Add root level stuff for this post
-    twkr_posts_photo_text_row = twkr_posts_photo_text(
+    posts_photo_text_row = posts_photo_text(
         post_id = post_id,
         caption = post_dict["caption"]
         )
-    session.add(twkr_posts_photo_text_row)
+    session.add(posts_photo_text_row)
 
     # Add each photo to a row in the photos table
     photos = post_dict["photos"]
@@ -263,7 +263,7 @@ def insert_photoset(session,post_id,post_dict,media_url_id_pairs):
                 )
         posts_photo_dict["post_id"] = post_id
 
-        posts_photo_row = twkr_posts_photo(**posts_photo_dict)
+        posts_photo_row = posts_photo(**posts_photo_dict)
         session.add(posts_photo_row)
         logging.debug("Added photo "+repr(photo_num)+" : "+repr(posts_photo_dict))
         continue
@@ -292,12 +292,12 @@ def insert_reblog_trail(session,post_id,post_dict):
             logging.error("locals: "+repr(locals()))
             assert(False)# We should stop so this can be noticed and fixed.
 
-        twkr_post_reblog_trail_row = twkr_post_reblog_trail(
+        post_reblog_trail_row = post_reblog_trail(
                 post_id = post_id,
                 depth = trail_depth,
                 content = content_field,
                 )
-        session.add(twkr_post_reblog_trail_row)
+        session.add(post_reblog_trail_row)
         continue
     return
 
@@ -315,10 +315,10 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
     try:
         if prevent_duplicates:
             # Ensure post is not already in DB
-            pre_insert_check_query = sqlalchemy.select([twkr_posts]).\
-                where(twkr_posts.blog_id == blog_id).\
-                where(twkr_posts.source_id == post_dict["id"]).\
-                where(twkr_posts.timestamp == post_dict["timestamp"])
+            pre_insert_check_query = sqlalchemy.select([posts]).\
+                where(posts.blog_id == blog_id).\
+                where(posts.source_id == post_dict["id"]).\
+                where(posts.timestamp == post_dict["timestamp"])
             pre_insert_check_rows = session.execute(pre_insert_check_query)
             pre_insert_check_row = pre_insert_check_rows.fetchone()
             if pre_insert_check_row:
@@ -330,7 +330,7 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
         else:
             logging.warning("insert_one_post() duplicate check disabled!")
 
-        # Insert into twkr_posts table
+        # Insert into posts table
         posts_row_dict = {}
         #posts_dict["field"] = "value" # Example of setting a field
         posts_row_dict["date_saved"] = get_current_unix_time() # Unix time to millisecond precision
@@ -346,7 +346,7 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
         tags_string = tags_string[:-1]
         posts_row_dict["tags"] = tags_string
 
-        posts_row = twkr_posts(**posts_row_dict)
+        posts_row = posts(**posts_row_dict)
         session.add(posts_row)
 
         # Flush to let us get the local post_id
@@ -391,7 +391,7 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
             posts_link_dict["description"] = post_dict["description"]
             posts_link_dict["post_id"] = post_id
 
-            posts_link_row = twkr_posts_link(**posts_link_dict)
+            posts_link_row = posts_link(**posts_link_dict)
             session.add(posts_link_row)
 
         # If answer, insert into posts_answer table
@@ -405,7 +405,7 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
             posts_answer_dict["answer"] = post_dict["answer"]
             posts_answer_dict["post_id"] = post_id
 
-            posts_answer_row = twkr_posts_answer(**posts_answer_dict)
+            posts_answer_row = posts_answer(**posts_answer_dict)
             session.add(posts_answer_row)
 
         # If text, insert into posts_text table
@@ -417,7 +417,7 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
             posts_text_dict["body"] = post_dict["body"]
             posts_text_dict["post_id"] = post_id
 
-            posts_text_row = twkr_posts_text(**posts_text_dict)
+            posts_text_row = posts_text(**posts_text_dict)
             session.add(posts_text_row)
 
         # If quote, insert into posts_quote table
@@ -433,7 +433,7 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
             posts_quote_dict["text"] = post_dict["text"]
             posts_quote_dict["post_id"] = post_id
 
-            posts_quote_row = twkr_posts_quote(**posts_quote_dict)
+            posts_quote_row = posts_quote(**posts_quote_dict)
             session.add(posts_quote_row)
 
         # If chat, insert into posts_chat table
@@ -447,52 +447,52 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
             posts_chat_dict["dialogue_json"] = json.dumps(post_dict["dialogue"])
             posts_chat_dict["post_id"] = post_id
 
-            posts_chat_row = twkr_posts_chat(**posts_chat_dict)
+            posts_chat_row = posts_chat(**posts_chat_dict)
             session.add(posts_chat_row)
 
         # If audio
         if (post_dict["type"] == "audio"):
-            logging.debug("twkr_post_audio")
-            twkr_post_audio_dict = {}
-            twkr_post_audio_dict["post_id"] = post_id,
+            logging.debug("post_audio")
+            post_audio_dict = {}
+            post_audio_dict["post_id"] = post_id,
 
             if "audio_source_url" in post_dict.keys():
-                twkr_post_audio_dict["audio_source_url"] = post_dict["audio_source_url"]
+                post_audio_dict["audio_source_url"] = post_dict["audio_source_url"]
             if "album_art" in post_dict.keys():
                 album_art_url = post_dict["album_art"]
             if "caption" in post_dict.keys():
-                twkr_post_audio_dict["caption"] = post_dict["caption"]
+                post_audio_dict["caption"] = post_dict["caption"]
             if "artist" in post_dict.keys():
-                twkr_post_audio_dict["artist"] = post_dict["artist"]
+                post_audio_dict["artist"] = post_dict["artist"]
             if "track_name" in post_dict.keys():
-                twkr_post_audio_dict["track_name"] = post_dict["track_name"]
+                post_audio_dict["track_name"] = post_dict["track_name"]
             if "audio_type" in post_dict.keys():
-                twkr_post_audio_dict["audio_type"] = post_dict["audio_type"]
+                post_audio_dict["audio_type"] = post_dict["audio_type"]
             if "source_title" in post_dict.keys():
-                twkr_post_audio_dict["source_title"] = post_dict["source_title"]
+                post_audio_dict["source_title"] = post_dict["source_title"]
             if "artist" in post_dict.keys():
-                twkr_post_audio_dict["artist"] = post_dict["artist"]
+                post_audio_dict["artist"] = post_dict["artist"]
 
-            twkr_post_audio_row = twkr_post_audio(**twkr_post_audio_dict)
-            session.add(twkr_post_audio_row)
+            post_audio_row = post_audio(**post_audio_dict)
+            session.add(post_audio_row)
 
         # If video
         if (post_dict["type"] == "video"):
             logging.debug("posts_video")
-            twkr_post_video_dict = {}
+            post_video_dict = {}
 
-            twkr_post_video_dict["post_id"] = post_id,
+            post_video_dict["post_id"] = post_id,
             if "caption" in post_dict.keys():
-                twkr_post_video_dict["caption"] = post_dict["caption"],
+                post_video_dict["caption"] = post_dict["caption"],
             if "video_type" in post_dict.keys():
-                twkr_post_video_dict["video_type"] = post_dict["video_type"],
+                post_video_dict["video_type"] = post_dict["video_type"],
             if "permalink_url" in post_dict.keys():
-                twkr_post_video_dict["permalink_url"] = post_dict["permalink_url"],
+                post_video_dict["permalink_url"] = post_dict["permalink_url"],
             if "thumbnail_url" in post_dict.keys():
-                twkr_post_video_dict["thumbnail_url"] = post_dict["thumbnail_url"],
+                post_video_dict["thumbnail_url"] = post_dict["thumbnail_url"],
 
-            twkr_post_video_row = twkr_post_video(**twkr_post_video_dict)
-            session.add(twkr_post_video_row)
+            post_video_row = post_video(**post_video_dict)
+            session.add(post_video_row)
 
         return True
     except:# Rollback if something is fucked up
@@ -504,12 +504,12 @@ def insert_one_post(session,post_dict,blog_id,media_id_list,prevent_duplicates=T
 
 # Blogs table
 def add_blog(session,blog_url):
-    """Make sure a blog is in the twkr_blogs table
+    """Make sure a blog is in the blogs table
     return the internal ID number assigned to that blog"""
     logging.debug("making sure blog is in db: "+repr(blog_url))
 
     # Check if blog is already in DB, if it is return the id
-    blog_id_query = sqlalchemy.select([twkr_blogs.blog_id]).where(twkr_blogs.blog_url == blog_url)
+    blog_id_query = sqlalchemy.select([blogs.blog_id]).where(blogs.blog_url == blog_url)
     blog_id_rows = session.execute(blog_id_query)
     blog_id_row = blog_id_rows.fetchone()
     if blog_id_row:
@@ -521,7 +521,7 @@ def add_blog(session,blog_url):
         # Create entry
         blog_dict = {}
         blog_dict["blog_url"] = blog_url
-        blogs_row = twkr_blogs(**blog_dict)
+        blogs_row = blogs(**blog_dict)
         session.add(blogs_row)
         session.commit()
 
@@ -543,7 +543,7 @@ def get_blog_media_settings(session,blog_id):
         blog_settings_dict = DEFAULT_BLOG_MEDIA_SETTINGS
     else:
         # Look up settings from DB
-        settings_query = sqlalchemy.select([twkr_blogs]).where(twkr_blogs.blog_id == blog_id)
+        settings_query = sqlalchemy.select([blogs]).where(blogs.blog_id == blog_id)
         settings_rows = session.execute(settings_query)
         settings_row = settings_rows.fetchone()
         if settings_row is None:
