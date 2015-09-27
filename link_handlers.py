@@ -459,9 +459,14 @@ def handle_links(session,post_dict,blog_settings_dict=DEFAULT_BLOG_MEDIA_SETTING
 
         # -Image-
         # Imgur
-        if "//imgur.com/" in link:
+        if "//imgur.com/" in link.lower():
             logging.debug("Link is imgur: "+repr(link))
             media_id_list += imgur.save_imgur(session,link)
+
+        # http://postimg.org
+        elif "//postimg.org/" in link.lower():
+            logging.debug("Link is postimg: "+repr(link))
+            media_id_list += handle_postimg_link(session,link)
 
         # -Video-
         if blog_settings_dict["save_videos"] == True:
