@@ -125,10 +125,10 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
 
     # Generate hash for media file
     sha512base16_hash = hash_file(media_temp_filepath)
-    md5base64_hash = generate_md5b64_for_file(file_path)
+    md5base64_hash = generate_md5b64_for_file(media_temp_filepath)
 
     # Get size of file
-    file_size_in_bytes = find_file_size(file_path)
+    file_size_in_bytes = find_file_size(media_temp_filepath)
     
     # Pause to make sure file is not in use
     time.sleep(10)

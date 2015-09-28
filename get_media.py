@@ -163,7 +163,7 @@ def list_new_posts(database_session,max_rows,target_blog=None):
         posts_query = sqlalchemy.select([RawPosts]).\
             where(RawPosts.media_processed != True ).\
             where((RawPosts.skip_processing == False) | (RawPosts.skip_processing == None)).\
-            where((RawPosts.blog_domain == blog_domain)).\
+            where((RawPosts.blog_domain == target_blog)).\
             limit(max_rows)        
     #logging.debug("posts_query"": "+repr(posts_query))
     post_rows = database_session.execute(posts_query)
