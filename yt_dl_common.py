@@ -125,7 +125,11 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
 
     # Generate hash for media file
     sha512base16_hash = hash_file(media_temp_filepath)
+    md5base64_hash = generate_md5b64_for_file(file_path)
 
+    # Get size of file
+    file_size_in_bytes = find_file_size(file_path)
+    
     # Pause to make sure file is not in use
     time.sleep(10)
 
@@ -164,6 +168,8 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
     row_dict["date_added"] = time_of_retreival
     row_dict["extractor_used"] = extractor_used
     row_dict["yt_dl_info_json"] = info_json
+    row_dict["md5base64_hash"] = md5base64_hash
+    row_dict["file_size_in_bytes"] = file_size_in_bytes
     # Optional values
     if audio_id:
         row_dict["audio_id"] = audio_id

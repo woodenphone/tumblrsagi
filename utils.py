@@ -704,6 +704,12 @@ def generate_md5b64_for_memory(file_data):
     return md5base64_hash
 
 
+def find_file_size(file_path):
+    size_in_bytes = os.path.getsize(file_path)
+    return size_in_bytes
+
+
+
 def main():
     # Test split_list
     print split_list(range(7), 2)

@@ -147,7 +147,8 @@ def handle_tumblr_audio(session,post_dict):
     time_of_retreival = get_current_unix_time()
 
     # Check if file is saved already using file hash
-    sha512base16_hash = hash_file_data(file_data)
+    sha512base16_hash = hash_file_data(file_data)# Used for filenames and dedupe
+    md5base64_hash = generate_md5b64_for_memory(file_data)# For comparison only
     logging.debug("handle_tumblr_audio() sha512base16_hash: "+repr(sha512base16_hash))
 
     # Check if hash is in DB
@@ -181,6 +182,9 @@ def handle_tumblr_audio(session,post_dict):
             data=file_data,
             force_save=False
             )
+        
+    # Get size of file
+    file_size_in_bytes = find_file_size(file_path)
 
     # Add new row to DB
     new_media_row = Media(
@@ -190,6 +194,8 @@ def handle_tumblr_audio(session,post_dict):
         date_added = time_of_retreival,
         file_extention = "mp3",
         extractor_used="audio_handlers.handle_tumblr_audio()",
+        md5base64_hash=md5base64_hash,
+        file_size_in_bytes=file_size_in_bytes,
         )
     session.add(new_media_row)
     session.commit()

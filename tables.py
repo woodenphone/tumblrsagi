@@ -233,6 +233,8 @@ class Media(Base):
     remote_filename = sqlalchemy.Column(sqlalchemy.UnicodeText())# Filename from original location (If any)
     file_extention = sqlalchemy.Column(sqlalchemy.String(25))# ex. png, jpeg
     extractor_used = sqlalchemy.Column(sqlalchemy.String(250))# internal name of the extractor used (function name of extractor)
+    md5base64_hash = sqlalchemy.Column(sqlalchemy.dialects.postgresql.CHAR(24))# MD5 hash of the file, in base 64
+    file_size_in_bytes = sqlalchemy.Column(sqlalchemy.BigInteger)# Size of the file in bytes
     # Video and Audio use these
     yt_dl_info_json = sqlalchemy.Column(sqlalchemy.UnicodeText())
     video_id = sqlalchemy.Column(sqlalchemy.UnicodeText())# The ID of the video used by the originating site

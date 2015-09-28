@@ -56,7 +56,8 @@ def download_image_link(session,media_url):
     time_of_retreival = get_current_unix_time()
 
     # Generate hash
-    sha512base16_hash = hash_file_data(file_data)
+    sha512base16_hash = hash_file_data(file_data)# Used for filenames and dedupe
+    md5base64_hash = generate_md5b64_for_memory(file_data)# For comparison only
 
     # Generate filename for output file (With extention)
     cropped_full_image_url = media_url.split("?")[0]# Remove after ?
@@ -77,19 +78,6 @@ def download_image_link(session,media_url):
         media_already_saved = True
         local_filename = hash_check_row_dict["local_filename"]
 
-    # Add new row
-    new_media_row = Media(
-        media_url=media_url,
-        sha512base16_hash=sha512base16_hash,
-        local_filename=local_filename,
-        remote_filename = remote_filename,
-        file_extention=file_extention,
-        date_added=time_of_retreival,
-        extractor_used="image_handlers.download_image_link()",
-        )
-    session.add(new_media_row)
-    session.commit()
-
     # If hash was already in DB, don't bother saving file
     if media_already_saved:
         logging.debug("Hash already in DB, no need to save file to disk")
@@ -102,6 +90,23 @@ def download_image_link(session,media_url):
             force_save=False,
             allow_fail=False
             )
+    
+    # Get size of file
+    file_size_in_bytes = find_file_size(file_path)
+
+    # Add new row
+    new_media_row = Media(
+        media_url=media_url,
+        sha512base16_hash=sha512base16_hash,
+        local_filename=local_filename,
+        remote_filename = remote_filename,
+        file_extention=file_extention,
+        date_added=time_of_retreival,
+        extractor_used="image_handlers.download_image_link()",
+        md5base64_hash=md5base64_hash,
+        file_size_in_bytes=file_size_in_bytes,
+        )
+    session.add(new_media_row)
     session.commit()
 
     # Get the id back
