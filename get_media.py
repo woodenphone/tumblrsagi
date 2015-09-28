@@ -110,7 +110,7 @@ def post_consumer_process(log_queue, log_configurer, post_queue):
     return
 
 
-def post_producer(post_queue):
+def post_producer(post_queue,target_blog=None):
     """Keep a queue-like object filled with post dicts"""
     # Connect to the DB
     database_session = sql_functions.connect_to_db()
@@ -119,7 +119,12 @@ def post_producer(post_queue):
     while True:
         if post_queue.qsize() < 100:
             logging.info("Adding more posts to post queue. Posts added so far: "+repr(counter))
-            new_posts = list_new_posts(database_session, max_rows=1000)
+            new_posts = list_new_posts(
+                database_session=database_session,
+                max_rows=1000, 
+                target_blog=target_blog
+                )
+
             if len(new_posts) == 0:
                 # Tell consumers to stop by flooding the queue with None objects
                 #logging.error("No more posts to process, exiting.")
@@ -134,23 +139,32 @@ def post_producer(post_queue):
             time.sleep(1)
 
 
-def post_producer_process(log_queue, configurer, post_queue):
+def post_producer_process(log_queue, configurer, post_queue, target_blog):
     """Multiprocessing wrapper for post_producer"""
     # Setup logging for this process
     configurer(log_queue)
     logging.info("post_producer_process started")
     # Supply posts
-    post_producer(post_queue)
+    post_producer(post_queue,target_blog)
 
 
-def list_new_posts(database_session,max_rows):
+def list_new_posts(database_session,max_rows,target_blog=None):
     logging.info("Getting list of new posts")
     # Select new posts
     # New posts don't have a processed JSON
-    posts_query = sqlalchemy.select([RawPosts]).\
-        where(RawPosts.media_processed != True ).\
-        where((RawPosts.skip_processing == False) | (RawPosts.skip_processing == None)).\
-        limit(max_rows)
+    if target_blog is None:
+        # Target all unprocessed posts
+        posts_query = sqlalchemy.select([RawPosts]).\
+            where(RawPosts.media_processed != True ).\
+            where((RawPosts.skip_processing == False) | (RawPosts.skip_processing == None)).\
+            limit(max_rows)
+    else:
+        # Target a specific blog
+        posts_query = sqlalchemy.select([RawPosts]).\
+            where(RawPosts.media_processed != True ).\
+            where((RawPosts.skip_processing == False) | (RawPosts.skip_processing == None)).\
+            where((RawPosts.blog_domain == blog_domain)).\
+            limit(max_rows)        
     #logging.debug("posts_query"": "+repr(posts_query))
     post_rows = database_session.execute(posts_query)
     #logging.debug("post_rows"": "+repr(post_rows))
@@ -172,14 +186,14 @@ def list_new_posts(database_session,max_rows):
     return post_dicts
 
 
-def mp_process_posts(log_queue,worker_configurer):
+def mp_process_posts(log_queue,worker_configurer,target_blog=None):
     """Run workers as seperate processes"""
     logging.info("Starting workers...")
     # Start workers
     post_queue = multiprocessing.Queue(-1)
     # Start post provider
     provider = multiprocessing.Process(target=post_producer_process,
-                                       args=(log_queue, worker_configurer, post_queue))
+        args=(log_queue, worker_configurer, post_queue, target_blog))
     provider.daemon = True# Make sure process is killed on exit
     provider.start()
     logging.info("Post provider started.")
@@ -204,14 +218,14 @@ def mp_process_posts(log_queue,worker_configurer):
     return
 
 
-def mt_process_posts():
+def mt_process_posts(target_blog=None):
     """Clone of mp_process_posts() using threading instead so we can use normal logging"""
     logging.info("Starting workers...")
     # Start workers
     post_queue = Queue.Queue(-1)
     # Start post provider
     provider = threading.Thread(target=post_producer,
-       args=(post_queue,))
+       args=(post_queue,target_blog))
     provider.start()
     logging.info("Post provider started.")
 
@@ -255,7 +269,7 @@ def main():
 
         # Program
         #mp_process_posts(log_queue,worker_configurer=mp_logging_setup.worker_configurer)
-        mt_process_posts()
+        mt_process_posts(target_blog=None)
         # /Program
 
         logging.info("Finished, exiting.")
