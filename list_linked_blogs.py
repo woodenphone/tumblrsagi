@@ -55,10 +55,12 @@ def process_posts(blog_domain):
     output_list = uniquify(kept_blog_links)
     logging.debug("output_list: "+repr(output_list))
 
+    timestamp_string = datetime.datetime.utcnow().strftime("%Y-%m-%d %H.%M.%S%Z")
+
     # Save found links to file
     appendlist(
         output_list,
-        list_file_path="linked_blogs.txt",
+        list_file_path="linked_blogs_"+blog_domain+"_"+timestamp_string+".txt",
         initial_text="# List of found blog_links.\n"
         )
     return
@@ -89,7 +91,10 @@ def main():
             log_file_path=os.path.join("debug","find_linked_blogs_log.txt"),
             )
         # Program
-        process_posts(blog_domain="mlpgdraws.tumblr.com")
+        print "Enter target blog"
+        target_blog = raw_input("Target blog?")
+        logging.debug("target_blog: "+repr(target_blog))
+        process_posts(blog_domain=target_blog)
         # /Program
         logging.info("Finished, exiting.")
         return
