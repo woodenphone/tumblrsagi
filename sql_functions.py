@@ -552,7 +552,7 @@ def get_blog_media_settings(session,blog_id):
         blog_settings_dict = {}
         blog_settings_dict["save_external_links"] = True# settings_row["save_external_links"]
         blog_settings_dict["save_photos"] = True# settings_row["save_photos"]
-        save_videos = (settings_row["save_videos"] == True)# Default to False if NULL
+        save_videos = settings_row["save_videos"]
         logging.debug("save_videos for blog_id "+repr(blog_id)+" :"+repr(save_videos))
         blog_settings_dict["save_videos"] = save_videos
         blog_settings_dict["save_audio"] = True# settings_row["save_audio"]

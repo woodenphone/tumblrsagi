@@ -81,13 +81,18 @@ def handle_tumblr_photos(session,post_dict):
     return media_id_list
 
 
-def save_media(session,post_dict,blog_id=None):
+def save_media(session,post_dict,blog_id=None,blog_settings_dict=None):
     """ Main function for saving a posts media
     return post dict with links replaced by pointers to saved file in the database"""
     #logging.info("Saving post media")
     logging.debug("save_media() post_dict"+repr(post_dict))
-    blog_settings_dict = sql_functions.get_blog_media_settings(session,blog_id)
-
+    if blog_settings_dict is None:# Allow passing in this data to use less DB calls
+        blog_settings_dict = sql_functions.get_blog_media_settings(session,blog_id)
+    assert(
+        (blog_settings_dict["save_videos"] is True) or
+        (blog_settings_dict["save_videos"] is False)
+        )
+    assert(blog_settings_dict["save_videos"] is not None)
 
     # Save anything not provided directly through the tumblr API (Remote) ex. http://foo.com/image.jpg
     # I.E. Links (<a href = "http://example.com/image.png">blah</a>)

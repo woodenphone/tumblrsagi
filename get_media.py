@@ -40,8 +40,19 @@ def process_one_new_posts_media(session,post_row):
         # Get blog_id
         blog_id = sql_functions.add_blog(session,blog_url)
 
+        # Skip blogs which haven't got the video enable/disable option set
+        blog_settings_dict = sql_functions.get_blog_media_settings(session,blog_id)
+        if blog_settings_dict["save_videos"] is None:
+            logging.warning("Skipping this post because the blog does not have save_videos configured yet.")
+            return
+
         # Handle links for the post
-        media_id_list = save_media(session,raw_post_dict,blog_id)
+        media_id_list = save_media(
+            session = session,
+            post_dict = raw_post_dict,
+            blog_id = blog_id,
+            blog_settings_dict = blog_settings_dict,
+            )
         logging.debug("media_id_list"": "+repr(media_id_list))
         session.commit()# Media can be safely persisted without the post
 
@@ -50,7 +61,7 @@ def process_one_new_posts_media(session,post_row):
                 session = session,
                 post_dict = raw_post_dict,
                 blog_id = blog_id,
-                media_id_list = media_id_list
+                media_id_list = media_id_list,
                 )
 
         # Modify origin row to show media has been processed
