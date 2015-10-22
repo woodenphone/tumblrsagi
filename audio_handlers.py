@@ -165,6 +165,10 @@ def handle_tumblr_audio(session,post_dict):
     if media_already_saved:
         # Use filename from DB
         local_filename = existing_filename
+        file_path = generate_path(
+            root_path=config.root_path,
+            filename=local_filename
+            )
     else:
         # Generate filename
         local_filename = generate_filename(
@@ -182,7 +186,7 @@ def handle_tumblr_audio(session,post_dict):
             data=file_data,
             force_save=False
             )
-        
+    
     # Get size of file
     file_size_in_bytes = find_file_size(file_path)
 
