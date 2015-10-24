@@ -92,7 +92,13 @@ def download_image_link(session,media_url):
             )
     
     # Get size of file
-    file_size_in_bytes = find_file_size(file_path)
+    
+    try:
+        file_size_in_bytes = find_file_size(file_path)
+    except WindowsError, err:
+        logging.debug("Problem getting file size, retrying...")
+        time.sleep(1)
+        file_size_in_bytes = find_file_size(file_path)
 
     # Add new row
     new_media_row = Media(
