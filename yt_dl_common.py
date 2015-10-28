@@ -61,6 +61,10 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
         logging.debug("Skipping previously saved video: "+repr(video_page_row))
         return [video_page_row["media_id"]]
 
+    # make sure url is encoded right for the command line
+    encoded_download_url = download_url.encode(sys.getfilesystemencoding())
+    logging.info("encoded_download_url: "+repr(encoded_download_url))
+
     # Form command to run
     # Define arguments. see this url for help
     # https://github.com/rg3/youtube-dl
@@ -84,7 +88,7 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
         info_json_arg,
         description_arg,
         output_arg, output_template,
-        download_url
+        encoded_download_url
         ]
     logging.debug("command: "+repr(command))
     # Call youtube-dl
@@ -95,7 +99,7 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
     # Verify download worked
     if command_result != 0:
         logging.error("Command did not return 0, this means something went wrong.")
-        logging.error("Failed to save media: "+repr(download_url))
+        logging.error("Failed to save media, encoded_download_url: "+repr(encoded_download_url))
         logging.error(repr(locals()))
         return {}
 
@@ -129,7 +133,7 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
 
     # Get size of file
     file_size_in_bytes = find_file_size(media_temp_filepath)
-    
+
     # Pause to make sure file is not in use
     time.sleep(10)
 
@@ -154,7 +158,9 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
         move_file(media_temp_filepath,final_media_filepath)
         assert(os.path.exists(final_media_filepath))
 
-    # Remove info file
+    # Remove info files
+    delete_file(expected_info_path)
+    expected_annotations_path = os.path.join(output_dir, temp_id+".annotations.xml")
     delete_file(expected_info_path)
 
     # Add video to DB
@@ -196,7 +202,16 @@ def update_yt_dl():# TODO
 def debug():
     """For WIP, debug, ect function calls"""
     session = sql_functions.connect_to_db()
-
+    # unusual url u'http://fallfeatherspony.tumblr.com/post/109567450555/askloona-\u1d1b-\u029c-\u1d07-\u028f-\u1d21-\u1d07-\u0280-\u1d07'
+    strange_url_result_1 = run_yt_dl_single(
+        session,
+        download_url = u'http://fallfeatherspony.tumblr.com/post/109567450555/askloona-\u1d1b-\u029c-\u1d07-\u028f-\u1d21-\u1d07-\u0280-\u1d07',
+        extractor_used = "DEBUG:strange",
+        audio_id=None,
+        video_id=None
+        )
+    logging.info("strange_url_result_1: "+repr(strange_url_result_1))
+    #return
     # gfycat
     gfycat_result = run_yt_dl_single(
         session,
@@ -214,6 +229,8 @@ def debug():
         audio_id=None,
         video_id=None
         )
+    return
+
 
 
 
