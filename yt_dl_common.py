@@ -62,6 +62,7 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
         return [video_page_row["media_id"]]
 
     # make sure url is encoded right for the command line
+    # http://stackoverflow.com/questions/2595448/unicode-filename-to-python-subprocess-call
     encoded_download_url = download_url.encode(sys.getfilesystemencoding())
     logging.info("encoded_download_url: "+repr(encoded_download_url))
 
@@ -161,7 +162,7 @@ def run_yt_dl_single(session,download_url,extractor_used,audio_id=None,video_id=
     # Remove info files
     delete_file(expected_info_path)
     expected_annotations_path = os.path.join(output_dir, temp_id+".annotations.xml")
-    delete_file(expected_info_path)
+    delete_file(expected_annotations_path)
 
     # Add video to DB
     # Build as dict to allow name differences
