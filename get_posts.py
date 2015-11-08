@@ -65,6 +65,9 @@ class tumblr_blog:
                 session=self.session,
                 blog_url=self.blog_url
                 )
+        else:
+            # If the blog is dead, update the time last saved so we don't scan it again too soon
+            self.update_last_saved()
         return
 
     def load_info(self):
