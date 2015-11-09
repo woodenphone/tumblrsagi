@@ -20,6 +20,7 @@ from media_handlers import *# Media finding, extractiong, ect
 from tables import *# Table definitions
 import config # Settings and configuration
 import blog_themes# blog themes
+import threading
 
 
 
@@ -382,8 +383,9 @@ def list_blogs():
 def main():
     # Check and create lockfiles OUTSIDE trt / except block to ensure it is
     # not removed on lock-related crash
-    lock_file_path = os.path.join(config.lockfile_dir, "get_posts.lock")
-    lockfiles.start_lock(lock_file_path)
+    global LOCK_FILE_PATH
+    LOCK_FILE_PATH = os.path.join(config.lockfile_dir, "get_posts.lock")
+    lockfiles.start_lock(LOCK_FILE_PATH)
     try:
         setup_logging(
         log_file_path=os.path.join("debug","get_posts_log.txt"),
@@ -398,7 +400,7 @@ def main():
         logging.exception(e)
     finally:
         # Remove lockfile even if we crashed
-        lockfiles.remove_lock(lock_file_path)
+        lockfiles.remove_lock(LOCK_FILE_PATH)
     return
 
 if __name__ == '__main__':

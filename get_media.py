@@ -270,8 +270,9 @@ def mt_process_posts(target_blog=None):
 def main():
     # Check and create lockfiles OUTSIDE trt / except block to ensure it is
     # not removed on lock-related crash
-    lock_file_path = os.path.join(config.lockfile_dir, "get_media.lock")
-    lockfiles.start_lock(lock_file_path)
+    global LOCK_FILE_PATH
+    LOCK_FILE_PATH = os.path.join(config.lockfile_dir, "get_media.lock")
+    lockfiles.start_lock(LOCK_FILE_PATH)
     try:
         # Start logging
         setup_logging(
@@ -295,7 +296,7 @@ def main():
         logging.exception(e)
     finally:
         # Remove lockfile even if we crashed
-        lockfiles.remove_lock(lock_file_path)
+        lockfiles.remove_lock(LOCK_FILE_PATH)
         # # Finsih logging
         # log_queue.put_nowait(None)
         # log_listener.join()

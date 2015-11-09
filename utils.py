@@ -712,6 +712,7 @@ def find_file_size(file_path):
 def suicider():
     """Force script to exit but give a log message first"""
     logging.critical("suicider(): Exiting.")
+    lockfiles.remove_lock(LOCK_FILE_PATH)
     sys.exit()
 
 
