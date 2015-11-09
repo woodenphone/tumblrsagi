@@ -296,8 +296,13 @@ def save_blog(blog_url):
                 )
             return
 
+        suicide_timer = threading.Timer(1200, suicider)# Kill after 20 minutes (1200 seconds)
+        suicide_timer.start()
+
         # Add new posts for the blog
         posts = blog.save_new_posts(config.max_pages_to_check)
+
+        suicide_timer.cancel()# Remove suicide timer after each post
 
         logging.info("Finished saving blog: "+repr(blog_url))
         appendlist(blog_url,list_file_path=config.done_list_path,initial_text="# List of completed items.\n")
@@ -368,6 +373,10 @@ def list_blogs():
 
     blog_urls = null_blog_urls+not_null_blog_urls
     return blog_urls
+
+
+
+
 
 
 def main():

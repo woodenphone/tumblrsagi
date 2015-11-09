@@ -97,11 +97,16 @@ def post_consumer(post_queue):
         c += 1
         if c%100 == 0:
             logging.info(repr(c)+" posts processed by this process")
+
+        suicide_timer = threading.Timer(1200, suicider)# Kill after 20 minutes (1200 seconds)
+        suicide_timer.start()
+
         post_row = post_queue.get(timeout=600)
         if post_row is None:# Stop if None object is put into the queue
             logging.info("Post consumer recieved None object as exit signal")
-            break# Stop doing work and exit thread/process        
+            break# Stop doing work and exit thread/process
         process_one_new_posts_media(database_session,post_row)
+        suicide_timer.cancel()# Remove suicide timer after each post
         continue
     # Disconnect from DB
     database_session.close()
@@ -132,7 +137,7 @@ def post_producer(post_queue,target_blog=None):
             logging.info("Adding more posts to post queue. Posts added so far: "+repr(counter))
             new_posts = list_new_posts(
                 database_session=database_session,
-                max_rows=1000, 
+                max_rows=1000,
                 target_blog=target_blog
                 )
 
@@ -175,7 +180,7 @@ def list_new_posts(database_session,max_rows,target_blog=None):
             where(RawPosts.media_processed != True ).\
             where((RawPosts.skip_processing == False) | (RawPosts.skip_processing == None)).\
             where((RawPosts.blog_domain == target_blog)).\
-            limit(max_rows)        
+            limit(max_rows)
     #logging.debug("posts_query"": "+repr(posts_query))
     post_rows = database_session.execute(posts_query)
     #logging.debug("post_rows"": "+repr(post_rows))

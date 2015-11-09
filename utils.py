@@ -709,6 +709,11 @@ def find_file_size(file_path):
     return size_in_bytes
 
 
+def suicider():
+    """Force script to exit but give a log message first"""
+    logging.critical("suicider(): Exiting.")
+    sys.exit()
+
 
 def main():
     # Test split_list
