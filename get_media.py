@@ -23,9 +23,12 @@ import sql_functions# Database interaction
 from media_handlers import *# Media finding, extractiong, ect
 import config # Settings and configuration
 from tables import RawPosts
-
-
 import mp_logging_setup
+
+
+global LOCK_FILE_PATH
+LOCK_FILE_PATH = os.path.join(config.lockfile_dir, "get_media.lock")
+
 
 def process_one_new_posts_media(session,post_row):
     """Return True if everything was fine.
@@ -270,8 +273,7 @@ def mt_process_posts(target_blog=None):
 def main():
     # Check and create lockfiles OUTSIDE trt / except block to ensure it is
     # not removed on lock-related crash
-    global LOCK_FILE_PATH
-    LOCK_FILE_PATH = os.path.join(config.lockfile_dir, "get_media.lock")
+
     lockfiles.start_lock(LOCK_FILE_PATH)
     try:
         # Start logging

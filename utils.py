@@ -33,8 +33,7 @@ import ssl # So we can turn SSL off
 #import requests # Because urllib2 has a hang issue
 
 import config# Local config
-
-
+import lockfiles
 
 
 
@@ -712,8 +711,9 @@ def find_file_size(file_path):
 def suicider():
     """Force script to exit but give a log message first"""
     logging.critical("suicider(): Exiting.")
-    lockfiles.remove_lock(LOCK_FILE_PATH)
-    sys.exit()
+    #lockfiles.remove_lock(LOCK_FILE_PATH)
+    #sys.exit()
+    raise (KeyboardInterrupt)
 
 
 def main():

@@ -23,7 +23,8 @@ import blog_themes# blog themes
 import threading
 
 
-
+global LOCK_FILE_PATH
+LOCK_FILE_PATH = os.path.join(config.lockfile_dir, "get_posts.lock")
 
 
 
@@ -383,8 +384,7 @@ def list_blogs():
 def main():
     # Check and create lockfiles OUTSIDE trt / except block to ensure it is
     # not removed on lock-related crash
-    global LOCK_FILE_PATH
-    LOCK_FILE_PATH = os.path.join(config.lockfile_dir, "get_posts.lock")
+
     lockfiles.start_lock(LOCK_FILE_PATH)
     try:
         setup_logging(
