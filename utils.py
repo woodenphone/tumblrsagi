@@ -76,7 +76,7 @@ def setup_logging(log_file_path,timestamp_filename=True,max_log_size=104857600):
         # https://en.wikipedia.org/wiki/Binary_prefix
         # 104857600 100MiB
         maxBytes=max_log_size,
-        backupCount=10000,# Ten thousand should be enough to crash before we reach it.
+        backupCount=10,# Ten should be enough to debug but not use too mcuh storage
         )
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
@@ -708,12 +708,7 @@ def find_file_size(file_path):
     return size_in_bytes
 
 
-def suicider():
-    """Force script to exit but give a log message first"""
-    logging.critical("suicider(): Exiting.")
-    #lockfiles.remove_lock(LOCK_FILE_PATH)
-    #sys.exit()
-    raise (KeyboardInterrupt)
+
 
 
 def main():
