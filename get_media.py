@@ -30,6 +30,13 @@ global LOCK_FILE_PATH
 LOCK_FILE_PATH = os.path.join(config.lockfile_dir, "get_media.lock")
 
 
+def suicider_media():
+    """Force script to exit but give a log message first"""
+    logging.critical("suicider_media(): Exiting.")
+    lockfiles.remove_lock(LOCK_FILE_PATH)
+    sys.exit()
+
+
 def process_one_new_posts_media(session,post_row):
     """Return True if everything was fine.
     Return False if no more posts should be tried"""
@@ -101,7 +108,7 @@ def post_consumer(post_queue):
         if c%100 == 0:
             logging.info(repr(c)+" posts processed by this process")
 
-        suicide_timer = threading.Timer(1200, suicider)# Kill after 20 minutes (1200 seconds)
+        suicide_timer = threading.Timer(1200, suicider_media)# Kill after 20 minutes (1200 seconds)
         suicide_timer.start()
 
         post_row = post_queue.get(timeout=600)
