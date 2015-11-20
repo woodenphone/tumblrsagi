@@ -108,15 +108,15 @@ def post_consumer(post_queue):
         if c%100 == 0:
             logging.info(repr(c)+" posts processed by this process")
 
-        suicide_timer = threading.Timer(1200, suicider_media)# Kill after 20 minutes (1200 seconds)
-        suicide_timer.start()
+        #suicide_timer = threading.Timer(1200, suicider_media)# Kill after 20 minutes (1200 seconds)
+        #suicide_timer.start()
 
         post_row = post_queue.get(timeout=600)
         if post_row is None:# Stop if None object is put into the queue
             logging.info("Post consumer recieved None object as exit signal")
             break# Stop doing work and exit thread/process
         process_one_new_posts_media(database_session,post_row)
-        suicide_timer.cancel()# Remove suicide timer after each post
+        #suicide_timer.cancel()# Remove suicide timer after each post
         continue
     # Disconnect from DB
     database_session.close()
