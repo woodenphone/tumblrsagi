@@ -21,7 +21,7 @@ from tables import *# Table definitions
 import config # Settings and configuration
 import blog_themes# blog themes
 import threading
-
+import Queue
 
 global LOCK_FILE_PATH
 LOCK_FILE_PATH = os.path.join(config.lockfile_dir, "get_posts.lock")
@@ -325,22 +325,89 @@ def save_blog(blog_url):
     return
 
 
-def save_blogs():
-    """Save tumblr blogs from the DB blogs table"""
-    logging.info("Saving posts for blogs in DB")
-    blog_url_list = list_blogs()
-    logging.info("Blogs about to be checked for posts: "+repr(blog_url_list))
-    # Run workers
-    # http://stackoverflow.com/questions/2846653/python-multithreading-for-dummies
-    # Make the Pool of workers
-    pool = ThreadPool(config.number_of_post_grab_workers)# Set to one for debugging
-    results = pool.map(save_blog, blog_url_list)
-    #close the pool and wait for the work to finish
-    pool.close()
-    pool.join()
-    logging.info("Finished downloading blogs list")
+# def save_blogs():
+#     """Save tumblr blogs from the DB blogs table"""
+#     logging.info("Saving posts for blogs in DB")
+#     blog_url_list = list_blogs()
+#     logging.info("Blogs about to be checked for posts: "+repr(blog_url_list))
+#     # Run workers
+#     # http://stackoverflow.com/questions/2846653/python-multithreading-for-dummies
+#     # Make the Pool of workers
+#     pool = ThreadPool(config.number_of_post_grab_workers)# Set to one for debugging
+#     results = pool.map(save_blog, blog_url_list)
+#     #close the pool and wait for the work to finish
+#     pool.close()
+#     pool.join()
+#     logging.info("Finished downloading blogs list")
+#     return
+
+
+
+
+# Multithreading new shit 2015-11-14
+def blog_consumer(blog_url_queue):
+    "Process posts for  a queue-like object containing blog URLs"
+    logging.debug("Consumer function started.")
+    # Connect to DB
+    database_session = sql_functions.connect_to_db()
+    # Process posts from the queue
+    c = 0# Counter for number of posts processed
+    while True:
+        c += 1
+        if c%100 == 0:
+            logging.info(repr(c)+" posts processed by this process")
+
+        #suicide_timer = threading.Timer(1200, suicider_media)# Kill after 20 minutes (1200 seconds)
+        #suicide_timer.start()
+
+        blog_url = blog_url_queue.get(timeout=600)
+        if blog_url is None:# Stop if None object is put into the queue
+            logging.info("Post consumer recieved None object as exit signal")
+            break# Stop doing work and exit thread/process
+        save_blog(blog_url)
+        #suicide_timer.cancel()# Remove suicide timer after each blog
+        continue
+    # Disconnect from DB
+    database_session.close()
+    logging.debug("Consumer function exiting.")
     return
 
+
+def mt_process_blogs(target_blog=None):
+    """write stuff here later"""
+    logging.info("Starting workers...")
+    # Fill post Queue
+    if target_blog:
+        blog_url_list = [target_blog]
+    else:
+        blog_url_list = list_blogs()
+    blog_url_queue = Queue.Queue(-1)
+    for blog_url in blog_url_list:
+        blog_url_queue.put(blog_url)
+    # To kill workers once jobs are done
+    for n in xrange(100):
+        blog_url_queue.put(None)
+    # Start workers    
+    # Start post processors/consumers
+    number_of_workers = config.number_of_media_workers
+    logging.debug("Starting "+repr(number_of_workers)+" consumer threads...")
+    workers = []
+    for i in range(number_of_workers):
+        logging.debug("Starting worker "+repr(i))
+        worker = threading.Thread(
+            target=blog_consumer,
+            args=(blog_url_queue,)
+            )
+        workers.append(worker)
+        worker.start()
+        logging.debug("Worker "+repr(i)+" started.")
+    logging.info("All consumers started.")
+    # Wait until processed finish
+    for w in workers:
+        w.join()
+    logging.info("Finished processing posts.")
+    return
+#
 
 def list_blogs():
     """Return a list of up to maximum_blogs blogids"""
@@ -398,7 +465,7 @@ def main():
         log_file_path=os.path.join("debug","get_posts_log.txt"),
         )
         # Program
-        save_blogs()
+        mt_process_blogs(target_blog=None)
         # /Program
         logging.info("Finished, exiting.")
 
