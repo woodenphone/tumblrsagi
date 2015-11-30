@@ -31,6 +31,7 @@ import hashlib# Needed to hash file data
 import base64 # Needed to do base32 encoding of filenames
 import ssl # So we can turn SSL off
 #import requests # Because urllib2 has a hang issue
+import threading# For watchdog stuff
 
 import config# Local config
 import lockfiles
@@ -215,7 +216,7 @@ def getwithinfo(url):
 ##                allow_fail = True
 ##                )
             delay(request_delay)
-            suicide_timer = threading.Timer(600, throw_exception)# Kill after 10 minutes (600 seconds)
+            suicide_timer = threading.Timer(600, throw_watchdog_exception)# Kill after 10 minutes (600 seconds)
             suicide_timer.start()
             request = urllib2.Request(url_with_protocol)
             request.add_header("User-agent", "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1")
@@ -250,7 +251,9 @@ def getwithinfo(url):
                 continue
 
             return reply,info,r
-
+        except WatchdogError, err:
+            logging.error("WatchdogError caught.")
+            return None
         except urllib2.HTTPError, err:
             logging.exception(err)
             logging.error(repr(err))
@@ -312,7 +315,7 @@ def getwithinfo(url):
 class WatchdogError(Exception):
     pass
 
-def throw_exception():
+def throw_watchdog_exception():
     raise WatchdogError
 
 
