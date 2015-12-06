@@ -252,8 +252,9 @@ def getwithinfo(url):
 
             return reply,info,r
         except WatchdogError, err:
+            # Getting the URL took too long, so we canceled the transfer.
             logging.error("WatchdogError caught.")
-            return None
+            return
         except urllib2.HTTPError, err:
             logging.exception(err)
             logging.error(repr(err))

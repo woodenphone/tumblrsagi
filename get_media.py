@@ -23,7 +23,7 @@ import sql_functions# Database interaction
 from media_handlers import *# Media finding, extractiong, ect
 import config # Settings and configuration
 from tables import RawPosts
-import mp_logging_setup
+
 
 
 global LOCK_FILE_PATH

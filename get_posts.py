@@ -77,6 +77,9 @@ class tumblr_blog:
         else:
             # If the blog is dead, update the time last saved so we don't scan it again too soon
             self.update_last_saved()
+            logging.info("Committing changes to last_saved timefor dead blog: "+repr(self.blog_url))
+            self.session.commit()
+            logging.info("last_saved Changes committed. "+repr(self.blog_url))
         return
 
     def load_info(self):
@@ -387,7 +390,7 @@ def mt_process_blogs(target_blog=None):
     # To kill workers once jobs are done
     for n in xrange(100):
         blog_url_queue.put(None)
-    # Start workers    
+    # Start workers
     # Start post processors/consumers
     number_of_workers = config.number_of_media_workers
     logging.debug("Starting "+repr(number_of_workers)+" consumer threads...")
