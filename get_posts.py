@@ -27,14 +27,6 @@ global LOCK_FILE_PATH
 LOCK_FILE_PATH = os.path.join(config.lockfile_dir, "get_posts.lock")
 
 
-def suicider_posts():
-    """Force script to exit but give a log message first"""
-    logging.critical("suicider_posts(): Exiting.")
-    lockfiles.remove_lock(LOCK_FILE_PATH)
-    sys.exit()
-
-
-
 def strip_invalid_unicode_From_json(json_in):
     """Take a JSON string and strip bad unicode"""
     json_out = json_in.replace("\\u0000", "")
@@ -308,13 +300,8 @@ def save_blog(blog_url):
                 )
             return
 
-        #suicide_timer = threading.Timer(1200, suicider_posts)# Kill after 20 minutes (1200 seconds)
-        #suicide_timer.start()
-
         # Add new posts for the blog
         posts = blog.save_new_posts(config.max_pages_to_check)
-
-        #suicide_timer.cancel()# Remove suicide timer after each post
 
         logging.info("Finished saving blog: "+repr(blog_url))
         appendlist(blog_url,list_file_path=config.done_list_path,initial_text="# List of completed items.\n")

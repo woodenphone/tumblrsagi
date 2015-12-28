@@ -216,8 +216,6 @@ def getwithinfo(url):
 ##                allow_fail = True
 ##                )
             delay(request_delay)
-            suicide_timer = threading.Timer(600, throw_watchdog_exception)# Kill after 10 minutes (600 seconds)
-            suicide_timer.start()
             request = urllib2.Request(url_with_protocol)
             request.add_header("User-agent", "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1")
             #request.add_header('Referer', 'http://www.tumblr.com/')
@@ -228,7 +226,6 @@ def getwithinfo(url):
                 )
             info = r.info()
             reply = r.read()
-            suicide_timer.cancel()# Remove suicide timer after each post
 ##            # Save html responses for debugging
 ##            if "html" in info["content-type"]:
 ##                save_file(
@@ -251,10 +248,6 @@ def getwithinfo(url):
                 continue
 
             return reply,info,r
-        except WatchdogError, err:
-            # Getting the URL took too long, so we canceled the transfer.
-            logging.error("WatchdogError caught.")
-            return
         except urllib2.HTTPError, err:
             logging.exception(err)
             logging.error(repr(err))
@@ -312,13 +305,6 @@ def getwithinfo(url):
 
     logging.error("Too many retries, failing.")
     return
-
-class WatchdogError(Exception):
-    pass
-
-def throw_watchdog_exception():
-    raise WatchdogError
-
 
 
 # def get_url(url):
